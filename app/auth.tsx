@@ -22,8 +22,12 @@ export default function AuthScreen() {
       // Check if device supports biometrics
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      const supportedTypes = await LocalAuthentication.supportedAuthenticationTypesAsync();
+
+      console.log('Biometric Support:', { hasHardware, isEnrolled, supportedTypes });
 
       if (!hasHardware || !isEnrolled) {
+        console.log('No biometric hardware or not enrolled, showing PIN');
         setShowPIN(true);
         return;
       }
@@ -32,14 +36,17 @@ export default function AuthScreen() {
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Authenticate to access Regent',
         fallbackLabel: 'Use PIN',
-        disableDeviceFallback: true,
+        disableDeviceFallback: false, // Allow device fallback
         cancelLabel: 'Cancel',
       });
+
+      console.log('Auth result:', result);
 
       if (result.success) {
         // Navigate to home screen
         router.replace('/home');
       } else {
+        console.log('Auth failed, showing PIN');
         setShowPIN(true);
       }
     } catch (err) {
@@ -168,6 +175,8 @@ export default function AuthScreen() {
               setShowPIN(false);
               setPin('');
               setError('');
+              // Trigger Face ID after switching back
+              setTimeout(() => handleFaceID(), 100);
             }}
             activeOpacity={0.6}
           >
