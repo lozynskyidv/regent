@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, StatusBar, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import * as LocalAuthentication from 'expo-local-authentication';
@@ -8,14 +8,14 @@ import Svg, { Circle } from 'react-native-svg';
 import { Colors, Typography, Spacing, BorderRadius } from '../constants';
 import { hashPIN, verifyPIN } from '../utils/encryption';
 import { useData } from '../contexts/DataContext';
-import { supabase } from '../utils/supabase';
+import { getSupabaseClient } from '../utils/supabase';
 
-type OnboardingStage = 'face_id_prompt' | 'pin_setup' | 'pin_entry';
+type OnboardingStage = 'face_id_prompt' | 'pin_setup' | 'pin_entry' | null;
 
 export default function AuthScreen() {
   const router = useRouter();
   const { isAuthenticated } = useData();
-  const [stage, setStage] = useState<OnboardingStage>('face_id_prompt');
+  const [stage, setStage] = useState<OnboardingStage>(null);
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [error, setError] = useState('');
@@ -24,23 +24,32 @@ export default function AuthScreen() {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [isBiometricInProgress, setIsBiometricInProgress] = useState(false);
   const [hasCheckedSetup, setHasCheckedSetup] = useState(false);
+  const [isCheckingSetup, setIsCheckingSetup] = useState(false);
 
   // Check if user is authenticated and has PIN set up
   useEffect(() => {
-    if (!hasCheckedSetup) {
+    if (!hasCheckedSetup && !isCheckingSetup) {
       checkSetupStatus();
     }
   }, []);
 
   const checkSetupStatus = async () => {
+    // Prevent multiple simultaneous checks
+    if (isCheckingSetup) {
+      console.log('⏭️ Setup check already in progress, skipping...');
+      return;
+    }
+    
+    setIsCheckingSetup(true);
+    
     try {
-      // Check Supabase session directly (more reliable than isAuthenticated)
-      // After OAuth, session is immediately available in AsyncStorage
+      // Use isAuthenticated from DataContext instead of calling getSession()
+      // This avoids issues with reinitialized Supabase client
       console.log('🔍 Verifying authentication status...');
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('📡 isAuthenticated from context:', isAuthenticated);
       
-      if (!session) {
-        console.log('❌ No valid session, redirecting to sign-up');
+      if (!isAuthenticated) {
+        console.log('❌ Not authenticated, redirecting to sign-up');
         router.replace('/');
         return;
       }
@@ -48,27 +57,34 @@ export default function AuthScreen() {
       console.log('✅ Session verified');
 
       // Check biometric availability
+      console.log('🔍 Checking biometric hardware...');
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
       const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+      console.log('📱 Biometric available:', hasHardware && isEnrolled);
       setBiometricAvailable(hasHardware && isEnrolled);
 
       // Check if PIN is already set up
+      console.log('🔍 Checking for existing PIN in SecureStore...');
       const pinHash = await SecureStore.getItemAsync('regent_pin_hash');
+      console.log('🔑 PIN hash check result:', pinHash ? `EXISTS (${pinHash.substring(0, 20)}...)` : 'NOT FOUND');
       setStoredPinHash(pinHash);
       
       if (!pinHash) {
         // NEW USER: Onboarding flow
-        console.log('📝 New user - starting onboarding');
+        console.log('📝 New user - starting onboarding (no PIN found)');
         if (hasHardware && isEnrolled) {
           // Show Face ID prompt first
+          console.log('🎯 Setting stage to: face_id_prompt');
           setStage('face_id_prompt');
         } else {
           // No biometric available, go straight to PIN setup
+          console.log('🎯 Setting stage to: pin_setup');
           setStage('pin_setup');
         }
       } else {
         // RETURNING USER: Authentication flow
-        console.log('✅ Returning user - authenticating');
+        console.log('✅ Returning user - authenticating (PIN found)');
+        console.log('🎯 Setting stage to: pin_entry');
         setStage('pin_entry');
         // Auto-trigger biometric if available
         if (hasHardware && isEnrolled) {
@@ -76,10 +92,17 @@ export default function AuthScreen() {
         }
       }
       
+      console.log('✅ Setup check completed');
       setHasCheckedSetup(true);
     } catch (err) {
       console.error('❌ Error checking setup status:', err);
+      console.error('❌ Error details:', JSON.stringify(err));
+      // Set to PIN setup as fallback
+      console.log('⚠️ Fallback: Setting stage to pin_setup due to error');
+      setStage('pin_setup');
       setHasCheckedSetup(true);
+    } finally {
+      setIsCheckingSetup(false);
     }
   };
 
@@ -246,6 +269,21 @@ export default function AuthScreen() {
       setPin('');
     }
   };
+
+  // ============================================
+  // SCREEN: Loading (Checking Setup Status)
+  // ============================================
+  if (stage === null) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <View style={styles.content}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Verifying...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   // ============================================
   // SCREEN: Face ID Prompt (New User Onboarding)
@@ -472,6 +510,13 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: Colors.mutedForeground,
     fontWeight: '500',
+  },
+  
+  // Loading
+  loadingText: {
+    fontSize: 16,
+    color: Colors.mutedForeground,
+    marginTop: Spacing.lg,
   },
   
   // PIN Entry

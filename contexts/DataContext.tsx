@@ -6,6 +6,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Alert } from 'react-native';
+import { useRouter } from 'expo-router';
 import { Asset, Liability, User, Currency } from '../types';
 import {
   loadAssets,
@@ -20,7 +21,7 @@ import {
   clearAllData,
 } from '../utils/storage';
 import { generateId } from '../utils/generateId';
-import { supabase } from '../utils/supabase';
+import { getSupabaseClient, reinitializeSupabaseClient, setOnClientReinitialized } from '../utils/supabase';
 import { deriveKeyFromPIN, encryptData, decryptData } from '../utils/encryption';
 import type { User as SupabaseAuthUser } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
@@ -84,6 +85,7 @@ const DataContext = createContext<DataContextType | undefined>(undefined);
 // ============================================
 
 export function DataProvider({ children }: { children: ReactNode }) {
+  const router = useRouter();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [user, setUserState] = useState<User | null>(null);
@@ -96,31 +98,65 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthProcessing, setIsAuthProcessing] = useState(false); // Global auth lock
 
-  // Check Supabase auth session on mount
+  // Check Supabase auth session on mount and register auth listener
   useEffect(() => {
-    // Get current session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSupabaseUser(session?.user ?? null);
-      setIsAuthenticated(!!session);
-      console.log('🔐 Auth session:', session ? 'Active' : 'None');
-    });
-
-    // Listen for auth changes
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔐 Auth event:', event);
+    let authListener: { subscription: { unsubscribe: () => void } } | null = null;
+    
+    // Function to register auth listener
+    const registerAuthListener = () => {
+      const supabase = getSupabaseClient();
+      
+      console.log('📡 Registering auth listener...');
+      
+      // Unsubscribe from old listener if it exists
+      if (authListener) {
+        console.log('🔌 Unsubscribing from old auth listener...');
+        authListener.subscription.unsubscribe();
+      }
+      
+      // Get current session
+      supabase.auth.getSession().then(({ data: { session } }) => {
         setSupabaseUser(session?.user ?? null);
         setIsAuthenticated(!!session);
-        
-        if (event === 'SIGNED_IN' && session) {
-          // Sync user profile to Supabase
-          await syncUserProfile(session.user);
+        console.log('🔐 Auth session:', session ? 'Active' : 'None');
+      });
+
+      // Listen for auth changes
+      // SINGLE auth listener - eliminates dual-listener race condition
+      const { data: listener } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          console.log('🔐 Auth event:', event);
+          setSupabaseUser(session?.user ?? null);
+          setIsAuthenticated(!!session);
+          
+          if (event === 'SIGNED_IN' && session) {
+            console.log('✅ OAuth success - syncing profile');
+            // Sync user profile to Supabase
+            await syncUserProfile(session.user);
+            // Navigation handled by AuthGuard (prevents duplicate navigation race condition)
+          }
         }
-      }
-    );
+      );
+      
+      authListener = listener;
+      console.log('✅ Auth listener registered');
+    };
+    
+    // Register listener on mount
+    registerAuthListener();
+    
+    // Set callback for client reinitialization
+    // This ensures listener is re-registered after sign-out
+    setOnClientReinitialized(() => {
+      console.log('🔄 Client reinitialized - re-registering auth listener...');
+      registerAuthListener();
+    });
 
     return () => {
-      authListener?.subscription.unsubscribe();
+      if (authListener) {
+        authListener.subscription.unsubscribe();
+      }
+      setOnClientReinitialized(null);
     };
   }, []);
 
@@ -318,6 +354,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
    */
   const syncUserProfile = async (authUser: SupabaseAuthUser) => {
     try {
+      const supabase = getSupabaseClient();
+      
       const { data: existingUser, error: fetchError } = await supabase
         .from('users')
         .select('*')
@@ -365,10 +403,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
    * Clears Supabase session but keeps PIN and financial data
    * User will need to re-enter PIN on next app launch
    * 
-   * CRITICAL FIX v4: Nuclear AsyncStorage cleanup AFTER sign-out
-   * - Let Supabase signOut() do its thing first
-   * - Then forcibly clean ALL Supabase keys from AsyncStorage
-   * - This prevents accumulation that causes getSession() to slow down
+   * CRITICAL FIX v5: Reinitialize Supabase Client
+   * - signOut() clears session from AsyncStorage
+   * - Nuclear cleanup removes ALL Supabase keys
+   * - Reinitialize client to eliminate in-memory corruption
+   * - This provides truly clean slate for next sign-in
    */
   const signOut = async () => {
     console.log('🔐 DataContext: Starting sign out...');
@@ -377,6 +416,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setIsAuthProcessing(true);
     
     try {
+      const supabase = getSupabaseClient();
+      
       // STEP 1: Call Supabase signOut and wait for completion
       console.log('🔐 DataContext: Calling Supabase signOut...');
       const signOutPromise = supabase.auth.signOut();
@@ -393,6 +434,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       try {
         const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
         const allKeys = await AsyncStorage.getAllKeys();
+        console.log('📋 All AsyncStorage keys before cleanup:', allKeys);
+        
         const supabaseKeys = allKeys.filter(key => 
           key.startsWith('sb-') || 
           key.includes('auth-token') ||
@@ -400,26 +443,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
         );
         
         if (supabaseKeys.length > 0) {
-          console.log(`🗑️ Removing ${supabaseKeys.length} Supabase keys from AsyncStorage`);
+          console.log(`🗑️ Removing ${supabaseKeys.length} Supabase keys from AsyncStorage:`, supabaseKeys);
           await AsyncStorage.multiRemove(supabaseKeys);
           console.log('✅ AsyncStorage cleaned');
         } else {
           console.log('✅ AsyncStorage already clean');
         }
+        
+        // Verify PIN is still in SecureStore (should NOT be affected by AsyncStorage cleanup)
+        const pinHash = await SecureStore.getItemAsync('regent_pin_hash');
+        console.log('🔑 PIN hash in SecureStore after cleanup:', pinHash ? 'EXISTS ✅' : 'MISSING ❌');
       } catch (cleanupError) {
         console.warn('⚠️ AsyncStorage cleanup failed (non-critical):', cleanupError);
       }
       
-      // STEP 3: Mandatory cooldown to let AsyncStorage settle
+      // STEP 3: REINITIALIZE SUPABASE CLIENT (NEW!)
+      // This eliminates in-memory corruption (refresh timers, listeners, cache)
+      // Provides truly clean slate - addresses root cause of auth race condition
+      console.log('🔄 Reinitializing Supabase client to clear in-memory state...');
+      reinitializeSupabaseClient();
+      console.log('✅ Supabase client reinitialized - all corruption cleared');
+      
+      // STEP 4: Mandatory cooldown to let AsyncStorage settle
       console.log('⏳ Auth cooldown: Waiting 1000ms for AsyncStorage to settle...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // STEP 4: Clear local React state (triggers AuthGuard redirect)
+      // STEP 5: Clear local React state (triggers AuthGuard redirect)
       console.log('🔐 DataContext: Clearing local auth state (will trigger redirect)...');
       setSupabaseUser(null);
       setIsAuthenticated(false);
       
-      console.log('✅ Signed out successfully - Fresh start ready for next sign-in');
+      console.log('✅ Signed out successfully - Fresh client ready for next sign-in');
     } catch (err) {
       console.error('❌ Sign out error:', err);
       // Even if there's an error, clear local state to unblock UI
@@ -446,6 +500,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (!supabaseUser) {
         throw new Error('No user to delete');
       }
+
+      const supabase = getSupabaseClient();
 
       // Delete backups from Supabase
       await supabase
@@ -494,6 +550,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
         throw new Error('Not authenticated');
       }
 
+      const supabase = getSupabaseClient();
+
       // Prepare backup data
       const backupPayload = {
         assets,
@@ -541,6 +599,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
       if (!supabaseUser) {
         throw new Error('Not authenticated');
       }
+
+      const supabase = getSupabaseClient();
 
       // Download backup from Supabase
       const { data: backup, error } = await supabase

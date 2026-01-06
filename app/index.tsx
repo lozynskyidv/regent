@@ -6,7 +6,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { makeRedirectUri } from 'expo-auth-session';
 import Svg, { Path } from 'react-native-svg';
 import { Colors, Typography, Spacing, Layout, BorderRadius } from '../constants';
-import { supabase } from '../utils/supabase';
+import { getSupabaseClient } from '../utils/supabase';
 import { useData } from '../contexts/DataContext';
 
 // Required for Expo web browser
@@ -42,6 +42,7 @@ export default function SignUpScreen() {
       console.log('🔐 Starting Google OAuth...');
       console.log('🔗 Using redirect URI:', redirectUri);
       
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -125,6 +126,7 @@ export default function SignUpScreen() {
       setIsLoadingApple(true);
       console.log('🔐 Starting Apple OAuth...');
       
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {

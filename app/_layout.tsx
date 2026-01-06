@@ -3,7 +3,6 @@ import { Slot, useRouter, useSegments } from 'expo-router';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { DataProvider, useData } from '../contexts/DataContext';
 import { ModalProvider } from '../contexts/ModalContext';
-import { supabase } from '../utils/supabase';
 
 /**
  * Auth guard component
@@ -37,28 +36,12 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
 
 /**
  * Root layout with providers and auth guard
+ * 
+ * NOTE: Auth listener removed from here to eliminate dual-listener race condition
+ * All auth state management now handled by DataContext (single source of truth)
+ * Navigation is handled by AuthGuard based on isAuthenticated state
  */
 export default function RootLayout() {
-  const router = useRouter();
-
-  useEffect(() => {
-    // Handle OAuth success only (SIGNED_IN event)
-    // SIGNED_OUT is handled by AuthGuard automatically
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          console.log('✅ OAuth success, navigating to auth screen');
-          router.replace('/auth');
-        }
-        // Note: SIGNED_OUT navigation handled by AuthGuard
-      }
-    );
-
-    return () => {
-      authListener?.subscription.unsubscribe();
-    };
-  }, []);
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <DataProvider>
