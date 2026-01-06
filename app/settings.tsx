@@ -1,10 +1,10 @@
 /**
  * Settings Screen
- * User profile, currency selection, Face ID toggle, logout
- * Matches web prototype design
+ * Subscription status, currency, preferences, account management
+ * Matches web prototype structure with smart progressive disclosure
  */
 
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
@@ -15,9 +15,13 @@ import { clearAllData } from '../utils/storage';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { user, primaryCurrency, setCurrency } = useData();
+  const { primaryCurrency, setCurrency } = useData();
   const [faceIDEnabled, setFaceIDEnabled] = useState(true); // Mock state for now
   const [pendingCurrency, setPendingCurrency] = useState<'GBP' | 'USD' | 'EUR' | null>(null);
+  
+  // Free trial state (accurate - all users start with 7-day trial)
+  const trialDaysRemaining = 7;
+  const isTrialActive = trialDaysRemaining > 0;
 
   const handleCurrencyChange = (newCurrency: 'GBP' | 'USD' | 'EUR') => {
     if (newCurrency === primaryCurrency) return;
@@ -129,18 +133,25 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Profile Section */}
+        {/* Subscription Section */}
         <View style={styles.section}>
-          <View style={styles.profileCard}>
-            <View style={styles.avatarContainer}>
-              <Text style={styles.avatarText}>
-                {user?.name ? user.name.charAt(0).toUpperCase() : 'U'}
-              </Text>
+          <Text style={styles.sectionTitle}>Subscription</Text>
+          
+          <View style={styles.card}>
+            <View style={styles.subscriptionRow}>
+              <Text style={styles.subscriptionLabel}>Status</Text>
+              <View style={[styles.badge, isTrialActive && styles.badgeTrial]}>
+                <Text style={[styles.badgeText, isTrialActive && styles.badgeTextTrial]}>
+                  {isTrialActive ? `Trial (${trialDaysRemaining}d left)` : 'Expired'}
+                </Text>
+              </View>
             </View>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileName}>{user?.name || 'User'}</Text>
-              <Text style={styles.profileEmail}>{user?.email || 'No email'}</Text>
-            </View>
+            
+            <Text style={styles.subscriptionDescription}>
+              {isTrialActive 
+                ? `${trialDaysRemaining === 1 ? '1 day' : `${trialDaysRemaining} days`} remaining in your free trial`
+                : 'Your trial has ended. Subscribe to continue.'}
+            </Text>
           </View>
         </View>
 
@@ -223,15 +234,15 @@ export default function SettingsScreen() {
           <Text style={styles.sectionTitle}>Account</Text>
           
           <TouchableOpacity
-            style={styles.signOutButton}
+            style={styles.accountButton}
             onPress={handleSignOut}
             activeOpacity={0.7}
           >
-            <Text style={styles.signOutText}>Sign Out</Text>
+            <Text style={styles.accountButtonText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Danger Zone */}
+        {/* Data & Privacy Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Data & Privacy</Text>
           
@@ -243,6 +254,22 @@ export default function SettingsScreen() {
             <Text style={styles.deleteText}>Delete Account</Text>
             <Text style={styles.deleteDescription}>
               Permanently delete your account and all data
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Contact & Feedback Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Contact & Feedback</Text>
+          
+          <TouchableOpacity
+            style={styles.feedbackButton}
+            onPress={() => Linking.openURL('mailto:support@regent.app?subject=Regent%20App%20Feedback')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.feedbackButtonText}>Send Feedback</Text>
+            <Text style={styles.feedbackButtonDescription}>
+              We'd love to hear from you
             </Text>
           </TouchableOpacity>
         </View>
@@ -314,42 +341,39 @@ const styles = StyleSheet.create({
     marginTop: Spacing.sm,
   },
 
-  // Profile Card
-  profileCard: {
+  // Subscription Card
+  subscriptionRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: Spacing.xl,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    backgroundColor: Colors.card,
+    marginBottom: Spacing.sm,
   },
-  avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: Colors.primary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#FFFFFF',
-  },
-  profileInfo: {
-    marginLeft: Spacing.md,
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 17,
+  subscriptionLabel: {
+    fontSize: 15,
     fontWeight: '500',
     color: Colors.foreground,
-    marginBottom: 4,
   },
-  profileEmail: {
+  badge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+  },
+  badgeTrial: {
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+  },
+  badgeText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: 'rgb(239, 68, 68)',
+  },
+  badgeTextTrial: {
+    color: 'rgb(59, 130, 246)',
+  },
+  subscriptionDescription: {
     fontSize: 14,
     color: Colors.mutedForeground,
+    lineHeight: 21,
   },
 
   // Currency Selector
@@ -441,8 +465,8 @@ const styles = StyleSheet.create({
     color: Colors.foreground,
   },
 
-  // Sign Out Button
-  signOutButton: {
+  // Account Button
+  accountButton: {
     padding: Spacing.md,
     borderRadius: BorderRadius.xl,
     borderWidth: 1,
@@ -450,10 +474,30 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     alignItems: 'center',
   },
-  signOutText: {
+  accountButtonText: {
     fontSize: 15,
     fontWeight: '500',
     color: Colors.foreground,
+  },
+
+  // Feedback Button
+  feedbackButton: {
+    padding: Spacing.md,
+    borderRadius: BorderRadius.xl,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    backgroundColor: Colors.card,
+  },
+  feedbackButtonText: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: Colors.foreground,
+    marginBottom: 4,
+  },
+  feedbackButtonDescription: {
+    fontSize: 13,
+    color: Colors.mutedForeground,
+    lineHeight: 18,
   },
 
   // Delete Button
