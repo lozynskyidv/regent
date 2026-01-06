@@ -1,47 +1,25 @@
 /**
  * Assets Card Component
  * Displays list of assets with clean, professional design
+ * Tap chevron to navigate to full Assets Detail Screen
  */
 
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Asset } from '../types';
 import { Colors, Spacing, BorderRadius } from '../constants';
-import { useData } from '../contexts/DataContext';
 
 interface AssetsCardProps {
   assets: Asset[];
   totalAssets: number;
   currency: string;
   onAddAsset: () => void;
+  onNavigateToDetail?: () => void;
 }
 
-export default function AssetsCard({ assets, totalAssets, currency, onAddAsset }: AssetsCardProps) {
-  const { deleteAsset } = useData();
-
+export default function AssetsCard({ assets, totalAssets, currency, onAddAsset, onNavigateToDetail }: AssetsCardProps) {
   const formatCurrency = (value: number) => {
     const symbol = currency === 'GBP' ? '£' : currency === 'USD' ? '$' : '€';
     return `${symbol}${value.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-  };
-
-  const handleDeleteAsset = (asset: Asset) => {
-    Alert.alert(
-      'Delete Asset',
-      `Are you sure you want to delete "${asset.name}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteAsset(asset.id);
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete asset');
-            }
-          },
-        },
-      ]
-    );
   };
 
   return (
@@ -66,7 +44,7 @@ export default function AssetsCard({ assets, totalAssets, currency, onAddAsset }
           {/* ChevronRight Icon */}
           <TouchableOpacity
             style={[styles.iconButton, styles.chevronButton]}
-            onPress={() => console.log('Navigate to Assets Detail')}
+            onPress={onNavigateToDetail}
             activeOpacity={0.6}
           >
             <Text style={styles.chevronIcon}>›</Text>
@@ -78,17 +56,15 @@ export default function AssetsCard({ assets, totalAssets, currency, onAddAsset }
       {assets.length > 0 && (
         <View style={styles.list}>
           {assets.slice(0, 3).map((asset) => (
-            <TouchableOpacity
+            <View
               key={asset.id}
               style={styles.listItem}
-              onLongPress={() => handleDeleteAsset(asset)}
-              activeOpacity={0.6}
             >
               <Text style={styles.itemName} numberOfLines={1}>
                 {asset.name}
               </Text>
               <Text style={styles.itemValue}>{formatCurrency(asset.value)}</Text>
-            </TouchableOpacity>
+            </View>
           ))}
           
           {/* Show "+X more" if there are more than 3 assets */}

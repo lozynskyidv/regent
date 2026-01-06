@@ -1,18 +1,19 @@
 /**
  * Liabilities Card Component
  * Displays list of liabilities with clean, professional design
+ * Tap chevron to navigate to full Liabilities Detail Screen
  */
 
-import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Liability } from '../types';
 import { Colors, Spacing, BorderRadius } from '../constants';
-import { useData } from '../contexts/DataContext';
 
 interface LiabilitiesCardProps {
   liabilities: Liability[];
   totalLiabilities: number;
   currency: string;
   onAddLiability: () => void;
+  onNavigateToDetail?: () => void;
 }
 
 export default function LiabilitiesCard({
@@ -20,33 +21,11 @@ export default function LiabilitiesCard({
   totalLiabilities,
   currency,
   onAddLiability,
+  onNavigateToDetail,
 }: LiabilitiesCardProps) {
-  const { deleteLiability } = useData();
-
   const formatCurrency = (value: number) => {
     const symbol = currency === 'GBP' ? '£' : currency === 'USD' ? '$' : '€';
     return `${symbol}${value.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-  };
-
-  const handleDeleteLiability = (liability: Liability) => {
-    Alert.alert(
-      'Delete Liability',
-      `Are you sure you want to delete "${liability.name}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await deleteLiability(liability.id);
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete liability');
-            }
-          },
-        },
-      ]
-    );
   };
 
   return (
@@ -71,7 +50,7 @@ export default function LiabilitiesCard({
           {/* ChevronRight Icon */}
           <TouchableOpacity
             style={[styles.iconButton, styles.chevronButton]}
-            onPress={() => console.log('Navigate to Liabilities Detail')}
+            onPress={onNavigateToDetail}
             activeOpacity={0.6}
           >
             <Text style={styles.chevronIcon}>›</Text>
@@ -83,17 +62,15 @@ export default function LiabilitiesCard({
       {liabilities.length > 0 && (
         <View style={styles.list}>
           {liabilities.slice(0, 3).map((liability) => (
-            <TouchableOpacity
+            <View
               key={liability.id}
               style={styles.listItem}
-              onLongPress={() => handleDeleteLiability(liability)}
-              activeOpacity={0.6}
             >
               <Text style={styles.itemName} numberOfLines={1}>
                 {liability.name}
               </Text>
               <Text style={styles.itemValue}>{formatCurrency(liability.value)}</Text>
-            </TouchableOpacity>
+            </View>
           ))}
           
           {/* Show "+X more" if there are more than 3 liabilities */}

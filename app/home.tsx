@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Settings } from 'lucide-react-native';
 import { Colors, Spacing } from '../constants';
 import { useData } from '../contexts/DataContext';
@@ -18,6 +19,7 @@ import AddLoanModal from '../components/AddLoanModal';
 import AddOtherLiabilityModal from '../components/AddOtherLiabilityModal';
 
 export default function HomeScreen() {
+  const router = useRouter();
   const {
     user,
     assets,
@@ -171,6 +173,7 @@ export default function HomeScreen() {
           totalAssets={totalAssets}
           currency={user?.primaryCurrency || 'GBP'}
           onAddAsset={() => setShowAssetTypePicker(true)}
+          onNavigateToDetail={() => router.push('/assets-detail')}
         />
 
         {/* Liabilities Card */}
@@ -179,6 +182,7 @@ export default function HomeScreen() {
           totalLiabilities={totalLiabilities}
           currency={user?.primaryCurrency || 'GBP'}
           onAddLiability={() => setShowLiabilityTypePicker(true)}
+          onNavigateToDetail={() => router.push('/liabilities-detail')}
         />
 
         {/* Bottom Spacer */}

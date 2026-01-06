@@ -37,12 +37,12 @@ interface DataContextType {
   
   // Actions - Assets
   addAsset: (asset: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
-  updateAsset: (asset: Asset) => Promise<void>;
+  updateAsset: (id: string, updates: Partial<Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>>) => Promise<void>;
   deleteAsset: (id: string) => Promise<void>;
   
   // Actions - Liabilities
   addLiability: (liability: Omit<Liability, 'id' | 'createdAt' | 'updatedAt'>) => Promise<void>;
-  updateLiability: (liability: Liability) => Promise<void>;
+  updateLiability: (id: string, updates: Partial<Omit<Liability, 'id' | 'createdAt' | 'updatedAt'>>) => Promise<void>;
   deleteLiability: (id: string) => Promise<void>;
   
   // Actions - User
@@ -136,20 +136,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateAsset = async (updatedAsset: Asset) => {
+  const updateAsset = async (id: string, updates: Partial<Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>>) => {
     try {
-      const updatedAssetWithTimestamp = {
-        ...updatedAsset,
-        updatedAt: new Date().toISOString(),
-      };
-      
-      const updatedAssets = assets.map((asset) =>
-        asset.id === updatedAssetWithTimestamp.id ? updatedAssetWithTimestamp : asset
-      );
+      const updatedAssets = assets.map((asset) => {
+        if (asset.id === id) {
+          return {
+            ...asset,
+            ...updates,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return asset;
+      });
       
       await saveAssets(updatedAssets);
       setAssets(updatedAssets);
-      console.log('✅ Asset updated in context:', updatedAsset.name);
+      console.log('✅ Asset updated in context:', id);
     } catch (err) {
       console.error('❌ Error updating asset:', err);
       throw err;
@@ -191,20 +193,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const updateLiability = async (updatedLiability: Liability) => {
+  const updateLiability = async (id: string, updates: Partial<Omit<Liability, 'id' | 'createdAt' | 'updatedAt'>>) => {
     try {
-      const updatedLiabilityWithTimestamp = {
-        ...updatedLiability,
-        updatedAt: new Date().toISOString(),
-      };
-      
-      const updatedLiabilities = liabilities.map((liability) =>
-        liability.id === updatedLiabilityWithTimestamp.id ? updatedLiabilityWithTimestamp : liability
-      );
+      const updatedLiabilities = liabilities.map((liability) => {
+        if (liability.id === id) {
+          return {
+            ...liability,
+            ...updates,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return liability;
+      });
       
       await saveLiabilities(updatedLiabilities);
       setLiabilities(updatedLiabilities);
-      console.log('✅ Liability updated in context:', updatedLiability.name);
+      console.log('✅ Liability updated in context:', id);
     } catch (err) {
       console.error('❌ Error updating liability:', err);
       throw err;
