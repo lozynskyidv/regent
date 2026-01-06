@@ -11,16 +11,28 @@
 **What is Regent?**  
 Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber modernism + JPM restraint." Local storage, no backend.
 
-**Current State:**  
-✅ P0 MVP COMPLETE - Sign Up, Auth (Face ID/PIN), Home Screen, Settings, Edit/Delete, Detail Screens, Modals, Charts, CRUD, Currency Switcher  
-❌ NOT BUILT - Stock tracking (Twelve Data), Bank connections (TrueLayer), Subscriptions (RevenueCat)
+**Current State (What's ACTUALLY Built):**  
+✅ **P0 MVP COMPLETE:**
+- Sign Up screen (Google OAuth UI, not functional yet)
+- Auth screen (Face ID/PIN, placeholder logic)
+- Home Screen (Net Worth + Assets + Liabilities cards with live data)
+- **Edit Modals** (EditAssetModal, EditLiabilityModal - pre-populated forms, delete buttons)
+- **Detail Screens** (Assets/Liabilities full lists with swipe-to-edit/delete gestures)
+- **Global Modal Context** (centralized modal state, eliminated 66% code duplication)
+- **Charts** (horizontal bar charts, category breakdown with colors)
+- **CRUD** (Create, Read, Update, Delete all working)
+- **Currency Switcher** (GBP/USD/EUR - **symbol-only, NO value conversion**)
+- **Settings Screen** (currency selection, sign out, delete account)
+
+❌ **NOT BUILT (P1):** Stock tracking, Bank connections, Subscriptions (RevenueCat), Performance chart
 
 **Tech Stack:**  
 - React Native (Expo SDK 54), React 19.1.0, TypeScript 5.9  
 - Local storage: AsyncStorage (data) + SecureStore (PIN/tokens)  
-- Icons: Lucide React Native  
-- State: React Context API  
-- Navigation: Expo Router (file-based, uses `<Slot />` not `<Stack>`)
+- Icons: Lucide React Native 0.562.0  
+- Gestures: react-native-gesture-handler 2.30.0 (swipe-to-edit/delete)  
+- State: React Context API (DataContext, ModalContext)  
+- Navigation: Expo Router (file-based, **ALWAYS use `<Slot />` not `<Stack>`**)
 
 ---
 
@@ -38,11 +50,12 @@ app/                  # Expo Router screens
 
 components/           # Modals & Cards
 ├── NetWorthCard, AssetsCard, LiabilitiesCard
-├── AssetTypePickerModal, LiabilityTypePickerModal (2-step flow)
+├── AssetTypePickerModal, LiabilityTypePickerModal
+│   └── (2-step flow: Step 1 = type picker, Step 2 = specific form)
 ├── Add[Bank|Property|OtherAsset]Modal.tsx
 ├── Add[Mortgage|Loan|OtherLiability]Modal.tsx
-├── EditAssetModal, EditLiabilityModal
-└── SwipeableAssetItem, SwipeableLiabilityItem
+├── EditAssetModal, EditLiabilityModal (pre-populated, delete button)
+└── SwipeableAssetItem, SwipeableLiabilityItem (gesture handlers)
 
 contexts/
 ├── DataContext.tsx   # Global state (assets, liabilities, user)
@@ -157,9 +170,12 @@ types/
 - Fixed via `useSafeAreaInsets()` + LayoutAnimation (300ms fade)
 - Never use `SafeAreaView` with `edges` prop (React 19 serialization issue)
 
-**Currency Handling:**
-- Symbol-only change (no conversion) - matches web prototype
-- Future: Live conversion with exchange rate API
+**Currency Handling (Critical):**
+- **Symbol-only change** - When user switches from GBP → USD → EUR, ONLY the symbol changes (£ → $ → €)
+- **NO value conversion** - A £10,000 asset becomes $10,000 (NOT $12,700 via exchange rate)
+- **Underlying numeric values remain unchanged** - This matches web prototype behavior
+- **Why:** Simpler UX, no API dependency, no compounding conversion errors
+- **Future:** May add optional live conversion with exchange rate API
 
 ---
 
@@ -180,10 +196,12 @@ types/
    - Refresh token storage (SecureStore)
 
 3. **Subscriptions** (RevenueCat)
-   - Free tier: 3 assets, 2 liabilities (manual only)
-   - Premium tier: Unlimited + bank connections + live stocks
-   - Paywall modal (£49.99/year, 7-day trial)
-   - Restore purchases
+   - **Free tier:** 3 assets max, 2 liabilities max, manual entry only
+   - **Premium tier:** £149/year (or $149/€149 based on user currency)
+   - **Features:** Unlimited assets/liabilities + bank connections + live stock prices
+   - **Trial:** 7 days free, then £149/year
+   - **Paywall:** Triggers when user tries to add 4th asset
+   - Restore purchases functionality
 
 4. **Performance Chart**
    - Net worth over time (line chart)
@@ -223,18 +241,47 @@ types/
 
 ---
 
+## 🏗️ KEY ARCHITECTURAL DECISIONS (Recent)
+
+**Why Global Modal Context?**
+- **Problem:** Modal state duplicated in 3 screens (Home, Assets Detail, Liabilities Detail) = ~300 lines of redundant code
+- **Solution:** Centralized all modal logic in `ModalContext.tsx`
+- **Result:** 66% code reduction, single source of truth, easier maintenance
+- **Usage:** Import `useModals()` hook, call `openAddAssetFlow()`, `openEditAsset(asset)`, etc.
+
+**Why `<Slot />` Not `<Stack>`?**
+- **Problem:** React 19 JSI serialization crashes when passing `screenOptions` props to `<Stack>`
+- **Solution:** Use `<Slot />` in `_layout.tsx` - bypasses serialization, Expo Router handles transitions
+- **Critical:** NEVER go back to `<Stack>` with options unless React 19 compatibility improves
+
+**Why `useSafeAreaInsets()` Not `SafeAreaView`?**
+- **Problem:** `SafeAreaView` with `edges` prop causes React 19 serialization errors + async measurement causes layout shift
+- **Solution:** Manual padding with `useSafeAreaInsets()` + LayoutAnimation (300ms fade) for smooth mount
+- **Where:** Settings screen, any full-screen views
+
+**Why 2-Step Modal Flow?**
+- **Matches web prototype:** Step 1 = Type Picker (Bank/Portfolio/Property/Other), Step 2 = Specific Form
+- **Better UX:** Clear separation, easier to extend (add new asset types)
+- **Implementation:** `AssetTypePickerModal` → opens → `AddBankModal` / `AddPropertyModal` / etc.
+
+---
+
 ## 📚 REFERENCE DOCS
 
 **Full Specs (Only When Needed):**
 - `REGENT_CURSOR_SPEC.md` - Complete product vision, user flows, design system (3000+ lines)
 - `README.md` - Technical implementation details, setup, testing
-- `CHANGELOG.md` - Full build history
-- `web-prototype/` - Design reference only (NOT for production)
+- `docs/archive/CHANGELOG.md` - Full build history (archived for token optimization)
+- **`web-prototype/`** - **Figma-to-React code (REFERENCE ONLY)**
+  - ⚠️ **DO NOT copy code directly** (it's React web, not React Native)
+  - ✅ **USE FOR:** Design patterns, logic flow, component structure
+  - ✅ **DO NOT USE:** Tailwind classes, web components (div/span), localStorage
 
 **Quick Lookups:**
 - Design system: `/constants/` folder
 - Data models: `/types/index.ts`
 - API patterns: `contexts/DataContext.tsx`, `utils/storage.ts`
+- Modal patterns: `contexts/ModalContext.tsx`
 
 ---
 

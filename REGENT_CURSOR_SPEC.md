@@ -195,7 +195,7 @@ Regent is a **premium iOS net worth tracking app** for mass affluent professiona
 - Create iOS app
 - Configure App Store Connect integration
 - Create entitlements: "premium"
-- Create products: Annual (£49.99/year)
+- Create products: Annual (£149/year)
 
 ### 6. Expo Account
 **Why:** Building and testing  
@@ -623,8 +623,8 @@ Before building, register and test:
      - ✓ Bank account connections
      - ✓ Priority support
    - Pricing:
-     - Annual: £49.99/year
-   - CTA: "Start 7-Day Free Trial" (then £49.99/year)
+     - Annual: £149/year
+   - CTA: "Start 7-Day Free Trial" (then £149/year)
 
 2. **User Taps "Start 7-Day Free Trial"**
    - RevenueCat handles:
@@ -640,7 +640,7 @@ Before building, register and test:
    - Badge in Settings: "Premium"
 
 4. **Free Trial → Paid Subscription**
-   - After 7 days, user charged £49.99
+   - After 7 days, user charged £149
    - Recurring annually (until cancelled)
    - Managed in iOS Settings → Subscriptions
 
@@ -1291,7 +1291,7 @@ Each feature:
 - Solid white background
 - Clean, minimal design
 - "Annual" label (14pt, dark gray)
-- "£49.99" large (48pt, dark gray, bold)
+- "£149" large (48pt, dark gray, bold)
 - "/year" small (14pt, gray)
 - Subtext: "£4.16 per month" (14pt, muted gray)
 
@@ -1299,7 +1299,7 @@ Each feature:
 - "Start 7-Day Free Trial"
 - Full width, blue, rounded
 - White text, 18pt, bold
-- Subtext below: "Then £49.99/year. Cancel anytime."
+- Subtext below: "Then £149/year. Cancel anytime."
 
 **Footer:**
 - Small text: "Terms apply" (link)
@@ -1309,7 +1309,7 @@ Each feature:
 
 **User Taps "Start 7-Day Free Trial":**
 - iOS purchase sheet appears
-- Shows: "£49.99/year after 7-day trial"
+- Shows: "£149/year after 7-day trial"
 - User confirms via Face ID/PIN
 - RevenueCat validates
 - Modal closes, user now Premium
@@ -2351,7 +2351,7 @@ External API → Update Asset Metadata → Recalculate Net Worth → Update UI
 1. Create in-app purchases:
    - Type: Auto-renewable subscription
    - Product ID: `regent_annual`
-   - Price: £49.99/year
+   - Price: £149/year
    - Free trial: 7 days
 2. Submit for review (required before testing)
 
@@ -2376,7 +2376,7 @@ External API → Update Asset Metadata → Recalculate Net Worth → Update UI
 1. User taps "Start 7-Day Free Trial"
 2. App fetches offerings from RevenueCat:
    - `Purchases.getOfferings()`
-3. RevenueCat returns annual product (£49.99/year)
+3. RevenueCat returns annual product (£149/year)
 4. App initiates purchase:
    - `Purchases.purchasePackage(annualPackage)`
 5. iOS shows native subscription confirmation sheet (Face ID/PIN)
@@ -2408,7 +2408,7 @@ External API → Update Asset Metadata → Recalculate Net Worth → Update UI
 **Free Trial:**
 - 7 days, auto-converts to paid unless cancelled
 - RevenueCat handles trial logic (no manual code)
-- After trial → User charged £49.99 (annual subscription)
+- After trial → User charged £149 (annual subscription)
 
 **Subscription Management:**
 - User manages in iOS Settings → Subscriptions
@@ -2773,7 +2773,7 @@ External API → Update Asset Metadata → Recalculate Net Worth → Update UI
 - No stock tracking
 - Basic net worth calculation
 
-**Premium Tier (£49.99/year):**
+**Premium Tier (£149/year):**
 - Unlimited assets
 - Unlimited liabilities
 - Bank connections (TrueLayer)
@@ -2807,7 +2807,7 @@ External API → Update Asset Metadata → Recalculate Net Worth → Update UI
 - 500 sign-ups
 - 40% activation rate (200 users add assets)
 - 10% conversion to Premium (50 paying users)
-- £2,500/year revenue (50 × £49.99)
+- £2,500/year revenue (50 × £149)
 
 ---
 
