@@ -6,6 +6,23 @@
 
 ---
 
+## ⚠️ **READ PROJECT_CONTEXT.MD FIRST - DO NOT START HERE**
+
+**This is a comprehensive 3000+ line specification document.**
+
+**For 95% of tasks, use `PROJECT_CONTEXT.md` instead.**
+
+Only reference specific sections of THIS doc when:
+- Building complex integrations (TrueLayer, Twelve Data, RevenueCat)
+- Need detailed API specifications or OAuth flows
+- Need complete user flow descriptions (e.g., "Flow 3: Connecting Bank Account")
+- Need regulatory compliance details (FCA, disclaimers)
+- Need complete design system specifications
+
+**Start here:** Read `PROJECT_CONTEXT.md`, build feature, come back here only if stuck.
+
+---
+
 # TABLE OF CONTENTS
 
 1. [TL;DR - Executive Summary](#1-tldr---executive-summary)
