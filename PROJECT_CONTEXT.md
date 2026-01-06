@@ -101,6 +101,21 @@ types/
   email: string
   primaryCurrency: 'GBP' | 'USD' | 'EUR'
   profilePhotoUrl?: string
+  createdAt: string (ISO timestamp)
+  lastLoginAt: string
+  hasFaceIDEnabled: boolean
+  hasCompletedOnboarding: boolean
+}
+```
+
+**SubscriptionState** (AsyncStorage `@regent_subscription`)
+```typescript
+{
+  isActive: boolean (true if subscribed OR in trial)
+  trialStartDate?: string (ISO timestamp of first app launch)
+  trialDaysRemaining: number (14 → 0)
+  expiresAt?: string (subscription expiry date)
+  productId?: string ('regent_annual_149')
 }
 ```
 
@@ -159,6 +174,31 @@ types/
 
 ---
 
+## ⚡ WHAT'S REAL VS PLACEHOLDER
+
+**Fully Functional:**
+- ✅ Home Screen (live data, charts, CRUD)
+- ✅ Add/Edit/Delete Modals (all working)
+- ✅ Detail Screens (swipe gestures, edit/delete)
+- ✅ Settings (currency switcher, sign out, delete account)
+- ✅ AsyncStorage persistence (all data saves/loads)
+- ✅ Global Modal Context (production-ready)
+- ✅ Charts (real-time category breakdown)
+
+**UI Only (Not Functional Yet):**
+- ❌ **Google OAuth** - UI buttons exist, but no actual OAuth integration
+- ❌ **Face ID/PIN Auth** - Screen exists, but just placeholder validation (any PIN works)
+- ❌ **Sign Out** - Button exists, but doesn't clear data yet
+- ❌ **Delete Account** - Button exists, but doesn't wipe data yet
+
+**Not Built At All (P1):**
+- ❌ Stock tracking (Twelve Data API)
+- ❌ Bank connections (TrueLayer OAuth)
+- ❌ Subscriptions (RevenueCat SDK, paywall, trial enforcement)
+- ❌ Performance chart (net worth over time)
+
+---
+
 ## 🔥 KNOWN ISSUES & WORKAROUNDS
 
 **Face ID in Expo Go:**
@@ -196,12 +236,12 @@ types/
    - Refresh token storage (SecureStore)
 
 3. **Subscriptions** (RevenueCat)
-   - **Free tier:** 3 assets max, 2 liabilities max, manual entry only
-   - **Premium tier:** £149/year (or $149/€149 based on user currency)
-   - **Features:** Unlimited assets/liabilities + bank connections + live stock prices
-   - **Trial:** 7 days free, then £149/year
-   - **Paywall:** Triggers when user tries to add 4th asset
-   - Restore purchases functionality
+   - **14-day free trial** - Full app access, no limits, no paywall
+   - **After trial:** Subscription required to continue using app (£149/year or $149/€149)
+   - **No feature limits** - All features available during trial (stocks, banks, unlimited assets)
+   - **Pricing:** Single tier only - £149/year (GBP), $149/year (USD), €149/year (EUR)
+   - **Paywall:** Shows on day 15 (after trial expires)
+   - **Restore purchases** functionality for users who already subscribed
 
 4. **Performance Chart**
    - Net worth over time (line chart)
@@ -211,6 +251,27 @@ types/
    - Build with EAS
    - Beta testing
    - Feedback implementation
+
+---
+
+## 💾 ASYNCSTORAGE KEYS (Implementation Reference)
+
+**Core Data:**
+- `@regent_user` - User profile (name, email, currency, etc.)
+- `@regent_assets` - Assets array (JSON)
+- `@regent_liabilities` - Liabilities array (JSON)
+- `@regent_subscription` - Subscription state (trial days, expiry, etc.)
+
+**SecureStore (Encrypted):**
+- `@regent_auth` - PIN hash (bcrypt)
+- `@regent_truelayer_tokens` - Bank OAuth tokens
+- `@regent_google_token` - Google OAuth tokens
+
+**Trial Tracking Logic:**
+- On first app launch: `trialStartDate = new Date().toISOString()`, `trialDaysRemaining = 14`
+- On each launch: Calculate days passed since `trialStartDate`
+- `trialDaysRemaining = 14 - daysPassed`
+- If `trialDaysRemaining <= 0` AND `isActive = false` → Show paywall/subscription screen
 
 ---
 
@@ -314,6 +375,23 @@ types/
 - Muted colors, elegant typography, minimal decoration  
 - No bright colors, no playful elements, no streaks/badges  
 - Professional, discreet, premium
+
+---
+
+## ⚖️ REGULATORY NOTES (Critical)
+
+**Why Regent Avoids FCA Regulation:**
+- ❌ NO direct investment account connections (avoids FCA licensing)
+- ✅ TrueLayer ONLY for bank account balances (NOT investments)
+- ✅ Manual stock entry (user enters ticker + quantity, we fetch prices)
+- ✅ Read-only data (no trades, no management, no advice)
+- ✅ "For informational purposes only" disclaimer
+
+**What This Means:**
+- Users manually add stock holdings (can't connect Fidelity/Vanguard/etc.)
+- We fetch live prices via Twelve Data API
+- We calculate portfolio value (quantity × price)
+- We NEVER execute trades or provide investment advice
 
 ---
 

@@ -25,8 +25,8 @@ export default function SettingsScreen() {
   const [faceIDEnabled, setFaceIDEnabled] = useState(true); // Mock state for now
   const [pendingCurrency, setPendingCurrency] = useState<'GBP' | 'USD' | 'EUR' | null>(null);
   
-  // Free trial state (accurate - all users start with 7-day trial)
-  const trialDaysRemaining = 7;
+  // Free trial state (accurate - all users start with 14-day trial)
+  const trialDaysRemaining = 14;
   const isTrialActive = trialDaysRemaining > 0;
 
   // Smooth layout animation on mount
