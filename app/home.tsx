@@ -1,22 +1,235 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Colors, Typography, Spacing } from '../constants';
+import { Settings } from 'lucide-react-native';
+import { Colors, Spacing } from '../constants';
+import { useData } from '../contexts/DataContext';
+import { AssetType, LiabilityType } from '../types';
+import NetWorthCard from '../components/NetWorthCard';
+import AssetsCard from '../components/AssetsCard';
+import LiabilitiesCard from '../components/LiabilitiesCard';
+import AssetTypePickerModal from '../components/AssetTypePickerModal';
+import AddBankModal from '../components/AddBankModal';
+import AddPropertyModal from '../components/AddPropertyModal';
+import AddOtherAssetModal from '../components/AddOtherAssetModal';
+import LiabilityTypePickerModal from '../components/LiabilityTypePickerModal';
+import AddMortgageModal from '../components/AddMortgageModal';
+import AddLoanModal from '../components/AddLoanModal';
+import AddOtherLiabilityModal from '../components/AddOtherLiabilityModal';
 
 export default function HomeScreen() {
+  const {
+    user,
+    assets,
+    liabilities,
+    netWorth,
+    isLoading,
+  } = useData();
+
+  // Modal states - Two-step flow
+  const [showAssetTypePicker, setShowAssetTypePicker] = useState(false);
+  const [showBankModal, setShowBankModal] = useState(false);
+  const [showPropertyModal, setShowPropertyModal] = useState(false);
+  const [showOtherAssetModal, setShowOtherAssetModal] = useState(false);
+  
+  const [showLiabilityTypePicker, setShowLiabilityTypePicker] = useState(false);
+  const [showMortgageModal, setShowMortgageModal] = useState(false);
+  const [showLoanModal, setShowLoanModal] = useState(false);
+  const [showOtherLiabilityModal, setShowOtherLiabilityModal] = useState(false);
+  
+  const [lastUpdated, setLastUpdated] = useState(new Date());
+
+  // Handle asset type selection
+  const handleAssetTypeSelect = (type: AssetType) => {
+    switch (type) {
+      case 'bank':
+        setShowBankModal(true);
+        break;
+      case 'property':
+        setShowPropertyModal(true);
+        break;
+      case 'portfolio':
+        // TODO: Add portfolio modal when implementing stock tracking
+        console.log('Portfolio modal coming soon');
+        break;
+      case 'other':
+        setShowOtherAssetModal(true);
+        break;
+    }
+  };
+
+  // Handle liability type selection
+  const handleLiabilityTypeSelect = (type: LiabilityType) => {
+    switch (type) {
+      case 'mortgage':
+        setShowMortgageModal(true);
+        break;
+      case 'loan':
+        setShowLoanModal(true);
+        break;
+      case 'creditcard':
+        // TODO: Add credit card modal with TrueLayer integration
+        console.log('Credit card modal coming soon');
+        break;
+      case 'other':
+        setShowOtherLiabilityModal(true);
+        break;
+    }
+  };
+
+  // Update timestamp when data changes
+  useEffect(() => {
+    setLastUpdated(new Date());
+  }, [assets, liabilities]);
+
+  // Format display name as "J. Rothschild"
+  const formatDisplayName = (fullName: string): string => {
+    if (!fullName || !fullName.trim()) return 'User';
+    
+    const parts = fullName.trim().split(' ');
+    if (parts.length === 1) return parts[0];
+    
+    const firstName = parts[0];
+    const lastName = parts[parts.length - 1];
+    const firstInitial = firstName.charAt(0).toUpperCase();
+    
+    return `${firstInitial}. ${lastName}`;
+  };
+
+  // Get time ago text
+  const getTimeAgo = () => {
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - lastUpdated.getTime()) / 1000 / 60);
+    if (diff < 1) return 'just now';
+    if (diff === 1) return '1m ago';
+    if (diff < 60) return `${diff}m ago`;
+    const hours = Math.floor(diff / 60);
+    if (hours === 1) return '1h ago';
+    return `${hours}h ago`;
+  };
+
+  // Calculate totals
+  const totalAssets = assets.reduce((sum, asset) => sum + asset.value, 0);
+  const totalLiabilities = liabilities.reduce((sum, liability) => sum + liability.value, 0);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Loading your data...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Welcome to Regent</Text>
-        <Text style={styles.subtitle}>Home Screen - Coming Soon</Text>
-        <Text style={styles.body}>
-          This is a placeholder for the Home screen.{'\n\n'}
-          Week 2 will build:{'\n'}
-          • Net Worth Card{'\n'}
-          • Assets List{'\n'}
-          • Liabilities List{'\n'}
-          • Add Asset/Liability buttons
-        </Text>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Header */}
+      <View style={styles.headerContainer}>
+        <View style={styles.headerTop}>
+          {/* User Name */}
+          <Text style={styles.userName}>
+            {formatDisplayName(user?.name || 'Test User')}
+          </Text>
+          
+          {/* Settings Icon */}
+          <TouchableOpacity 
+            style={styles.settingsButton}
+            activeOpacity={0.6}
+            onPress={() => console.log('Settings pressed')}
+          >
+            <Settings size={20} color={Colors.mutedForeground} strokeWidth={2} />
+          </TouchableOpacity>
+        </View>
+        
+        {/* Page Title */}
+        <Text style={styles.pageTitle}>Overview</Text>
+        
+        {/* Timestamp */}
+        <Text style={styles.timestamp}>Updated {getTimeAgo()}</Text>
       </View>
+
+      {/* Scrollable Content */}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Net Worth Card */}
+        <View style={{ marginBottom: Spacing.lg }}>
+          <NetWorthCard 
+            netWorth={netWorth} 
+            currency={user?.primaryCurrency || 'GBP'} 
+          />
+        </View>
+
+        {/* Assets Card */}
+        <AssetsCard
+          assets={assets}
+          totalAssets={totalAssets}
+          currency={user?.primaryCurrency || 'GBP'}
+          onAddAsset={() => setShowAssetTypePicker(true)}
+        />
+
+        {/* Liabilities Card */}
+        <LiabilitiesCard
+          liabilities={liabilities}
+          totalLiabilities={totalLiabilities}
+          currency={user?.primaryCurrency || 'GBP'}
+          onAddLiability={() => setShowLiabilityTypePicker(true)}
+        />
+
+        {/* Bottom Spacer */}
+        <View style={{ height: Spacing['2xl'] }} />
+      </ScrollView>
+
+      {/* Asset Type Picker Modal - Step 1 */}
+      <AssetTypePickerModal
+        visible={showAssetTypePicker}
+        onClose={() => setShowAssetTypePicker(false)}
+        onSelectType={handleAssetTypeSelect}
+      />
+
+      {/* Asset-specific Modals - Step 2 */}
+      <AddBankModal
+        visible={showBankModal}
+        onClose={() => setShowBankModal(false)}
+      />
+
+      <AddPropertyModal
+        visible={showPropertyModal}
+        onClose={() => setShowPropertyModal(false)}
+      />
+
+      <AddOtherAssetModal
+        visible={showOtherAssetModal}
+        onClose={() => setShowOtherAssetModal(false)}
+      />
+
+      {/* Liability Type Picker Modal - Step 1 */}
+      <LiabilityTypePickerModal
+        visible={showLiabilityTypePicker}
+        onClose={() => setShowLiabilityTypePicker(false)}
+        onSelectType={handleLiabilityTypeSelect}
+      />
+
+      {/* Liability-specific Modals - Step 2 */}
+      <AddMortgageModal
+        visible={showMortgageModal}
+        onClose={() => setShowMortgageModal(false)}
+      />
+
+      <AddLoanModal
+        visible={showLoanModal}
+        onClose={() => setShowLoanModal(false)}
+      />
+
+      <AddOtherLiabilityModal
+        visible={showOtherLiabilityModal}
+        onClose={() => setShowOtherLiabilityModal(false)}
+      />
     </SafeAreaView>
   );
 }
@@ -26,23 +239,62 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  content: {
-    flex: 1,
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing['2xl'],
+  
+  // Header
+  headerContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.lg,
+    paddingBottom: Spacing.md,
   },
-  title: {
-    ...Typography.h1,
-    marginBottom: Spacing.sm,
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.xs,
   },
-  subtitle: {
-    ...Typography.h3,
+  userName: {
+    fontSize: 14,
+    fontWeight: '500',
     color: Colors.mutedForeground,
-    marginBottom: Spacing.xl,
+    letterSpacing: 0.42, // 0.03em
   },
-  body: {
-    ...Typography.body,
+  settingsButton: {
+    padding: 6,
+    marginRight: -6,
+  },
+  pageTitle: {
+    fontSize: 32,
+    fontWeight: '500',
     color: Colors.foreground,
-    lineHeight: 24,
+    letterSpacing: -0.64,
+    marginTop: Spacing.xs,
+  },
+  timestamp: {
+    fontSize: 13,
+    color: Colors.mutedForeground,
+    marginTop: Spacing.xs,
+    opacity: 0.7,
+  },
+  
+  // Loading
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: Spacing.md,
+  },
+  loadingText: {
+    fontSize: 15,
+    color: Colors.mutedForeground,
+  },
+  
+  // Scroll
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingTop: Spacing.md,
+    gap: Spacing.md, // 16px between Assets/Liabilities
   },
 });
