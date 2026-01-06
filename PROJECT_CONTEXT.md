@@ -42,7 +42,8 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 app/                  # Expo Router screens
 ├── _layout.tsx       # Root (Slot routing, GestureHandlerRootView)
 ├── index.tsx         # Sign Up (Google OAuth UI)
-├── auth.tsx          # Face ID/PIN auth
+├── paywall.tsx       # TO BUILD: Paywall ("Start 14-Day Free Trial")
+├── auth.tsx          # Face ID/PIN auth (placeholder)
 ├── home.tsx          # Dashboard (Net Worth + Assets + Liabilities)
 ├── assets-detail.tsx # Full asset list (swipe gestures)
 ├── liabilities-detail.tsx
@@ -111,13 +112,21 @@ types/
 **SubscriptionState** (AsyncStorage `@regent_subscription`)
 ```typescript
 {
-  isActive: boolean (true if subscribed OR in trial)
-  trialStartDate?: string (ISO timestamp of first app launch)
-  trialDaysRemaining: number (14 → 0)
-  expiresAt?: string (subscription expiry date)
+  isActive: boolean (true after "Start Trial" button tapped)
+  trialStartDate?: string (ISO timestamp when user started trial)
+  trialDaysRemaining: number (14 → 0, calculated from trialStartDate)
+  expiresAt?: string (subscription expiry date from RevenueCat)
   productId?: string ('regent_annual_149')
+  willRenew?: boolean (from RevenueCat, true if auto-renewing)
 }
 ```
+
+**Trial Flow:**
+- User signs up → Paywall appears → User taps "Start 14-Day Free Trial"
+- RevenueCat subscription starts (with 14-day trial period)
+- `trialStartDate = new Date().toISOString()`, `isActive = true`
+- App grants full access for 14 days
+- After 14 days: RevenueCat auto-charges £149/year, `expiresAt = 1 year from now`
 
 **Net Worth:** `totalAssets - totalLiabilities` (calculated, not stored)
 
@@ -188,14 +197,16 @@ types/
 **UI Only (Not Functional Yet):**
 - ❌ **Google OAuth** - UI buttons exist, but no actual OAuth integration
 - ❌ **Face ID/PIN Auth** - Screen exists, but just placeholder validation (any PIN works)
-- ❌ **Sign Out** - Button exists, but doesn't clear data yet
-- ❌ **Delete Account** - Button exists, but doesn't wipe data yet
+- ❌ **Sign Out** - Button exists in Settings, but doesn't clear data yet
+- ❌ **Delete Account** - Button exists in Settings, but doesn't wipe data yet
+- ❌ **Subscription Badge** - Settings shows "Trial (14d left)" hardcoded, not dynamic
 
-**Not Built At All (P1):**
-- ❌ Stock tracking (Twelve Data API)
-- ❌ Bank connections (TrueLayer OAuth)
-- ❌ Subscriptions (RevenueCat SDK, paywall, trial enforcement)
-- ❌ Performance chart (net worth over time)
+**Not Built At All (P1 - Next Priorities):**
+- ❌ **Paywall Screen** - Needs to appear after sign-up, before app usage
+- ❌ **RevenueCat SDK** - Not integrated (subscription purchase, trial tracking, auto-charge)
+- ❌ Stock tracking (Twelve Data API integration)
+- ❌ Bank connections (TrueLayer OAuth flow)
+- ❌ Performance chart (net worth over time, line chart)
 
 ---
 
@@ -236,12 +247,13 @@ types/
    - Refresh token storage (SecureStore)
 
 3. **Subscriptions** (RevenueCat)
-   - **14-day free trial** - Full app access, no limits, no paywall
-   - **After trial:** Subscription required to continue using app (£149/year or $149/€149)
-   - **No feature limits** - All features available during trial (stocks, banks, unlimited assets)
+   - **Paywall at sign-up** - Appears immediately after user signs up (before using app)
+   - **"Start 14-Day Free Trial" button** - Subscribes via RevenueCat, starts trial
+   - **Full access for 14 days** - All features available during trial (stocks, banks, unlimited assets)
+   - **Auto-charge after trial** - After 14 days, user charged £149/year automatically
    - **Pricing:** Single tier only - £149/year (GBP), $149/year (USD), €149/year (EUR)
-   - **Paywall:** Shows on day 15 (after trial expires)
-   - **Restore purchases** functionality for users who already subscribed
+   - **Restore purchases** functionality for returning users
+   - **Flow:** Sign Up → Paywall → Start Trial → Auth → Home (use app for 14 days) → Auto-charged £149
 
 4. **Performance Chart**
    - Net worth over time (line chart)
@@ -267,11 +279,14 @@ types/
 - `@regent_truelayer_tokens` - Bank OAuth tokens
 - `@regent_google_token` - Google OAuth tokens
 
-**Trial Tracking Logic:**
-- On first app launch: `trialStartDate = new Date().toISOString()`, `trialDaysRemaining = 14`
-- On each launch: Calculate days passed since `trialStartDate`
-- `trialDaysRemaining = 14 - daysPassed`
-- If `trialDaysRemaining <= 0` AND `isActive = false` → Show paywall/subscription screen
+**Trial Tracking Logic (Model A - Paywall at Sign-Up):**
+- User signs up → Navigate to Paywall screen (`/paywall`)
+- User taps "Start 14-Day Free Trial" → RevenueCat subscription starts
+- `trialStartDate = new Date().toISOString()`, `isActive = true`
+- User gets full app access for 14 days
+- On each app launch: Calculate `trialDaysRemaining = 14 - daysPassed`
+- After 14 days: RevenueCat auto-charges £149/year
+- If user cancels trial → `isActive = false`, show paywall again
 
 ---
 
@@ -283,22 +298,121 @@ types/
 3. Import design constants from `/constants`
 4. Use `StyleSheet.create()` for styles (not inline)
 5. Add LayoutAnimation for smooth transitions
+6. **Example:** See `app/home.tsx` or `app/settings.tsx`
 
 **Adding New Modal:**
 1. Create `components/ModalName.tsx`
-2. Register in `ModalContext.tsx`
-3. Use `openModalName()` from `useModals()` hook
+2. Register in `ModalContext.tsx` (add state + open function)
+3. Use `openModalName()` from `useModals()` hook in screen
 4. Style: `presentationStyle="pageSheet"`, `animationType="slide"`
+5. **Example:** See `components/EditAssetModal.tsx` + `contexts/ModalContext.tsx`
 
 **Data Operations:**
 1. Use `DataContext` for global state
-2. Update AsyncStorage after every change
+2. Update AsyncStorage after every change (auto-saves)
 3. Re-render UI automatically (React Context handles)
+4. **Example:** See `contexts/DataContext.tsx` methods (addAsset, updateAsset, deleteAsset)
 
 **Swipe Gestures:**
 1. Use `react-native-gesture-handler` (`PanGestureHandler`)
 2. Wrap items in `SwipeableAssetItem` or `SwipeableLiabilityItem`
 3. Requires `GestureHandlerRootView` at app root
+4. **Example:** See `components/SwipeableAssetItem.tsx`
+
+---
+
+## 💻 COMMON CODE PATTERNS (Copy-Paste Reference)
+
+**Modal Registration (ModalContext.tsx):**
+```typescript
+// 1. Add state
+const [isMyModalVisible, setIsMyModalVisible] = useState(false);
+
+// 2. Add open function
+const openMyModal = () => setIsMyModalVisible(true);
+
+// 3. Add to return value
+return { isMyModalVisible, setIsMyModalVisible, openMyModal, ... };
+
+// 4. In screen, use hook
+const { openMyModal } = useModals();
+```
+
+**AsyncStorage Save/Load Pattern:**
+```typescript
+// Save
+await AsyncStorage.setItem('@regent_assets', JSON.stringify(assets));
+
+// Load
+const stored = await AsyncStorage.getItem('@regent_assets');
+const assets = stored ? JSON.parse(stored) : [];
+
+// Update (load → modify → save)
+const assets = await loadAssets();
+assets.push(newAsset);
+await saveAssets(assets);
+```
+
+**Currency Symbol Helper:**
+```typescript
+const getCurrencySymbol = (currency: Currency) => {
+  return { GBP: '£', USD: '$', EUR: '€' }[currency];
+};
+```
+
+**LayoutAnimation Pattern (Smooth Transitions):**
+```typescript
+import { LayoutAnimation, UIManager, Platform } from 'react-native';
+
+// Enable on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+// Use in component
+useEffect(() => {
+  LayoutAnimation.configureNext(LayoutAnimation.create(
+    300, // Duration
+    LayoutAnimation.Types.easeInEaseOut,
+    LayoutAnimation.Properties.opacity
+  ));
+}, []);
+```
+
+**Safe Area Pattern (Instead of SafeAreaView):**
+```typescript
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+
+const insets = useSafeAreaInsets();
+return (
+  <View style={[styles.container, { paddingTop: insets.top }]}>
+    {/* content */}
+  </View>
+);
+```
+
+**Design Constants Import:**
+```typescript
+import { Colors, Spacing, BorderRadius, Typography } from '../constants';
+
+const styles = StyleSheet.create({
+  card: {
+    backgroundColor: Colors.card,
+    padding: Spacing.xl,
+    borderRadius: BorderRadius.lg,
+  },
+  title: {
+    ...Typography.h3,
+    color: Colors.primary,
+  },
+});
+```
+
+**When to Reference Code Directly:**
+- ❓ Stuck implementing a pattern → Check example file listed above
+- ❓ Need exact modal structure → Read `components/EditAssetModal.tsx`
+- ❓ Need design reference → Check `web-prototype/src/components/HomeScreen.tsx`
+- ❓ Need to understand data flow → Read `contexts/DataContext.tsx`
 
 ---
 
