@@ -444,7 +444,10 @@ const styles = StyleSheet.create({
 ## 📚 REFERENCE DOCS
 
 **Full Specs (Only When Needed):**
-- `REGENT_CURSOR_SPEC.md` - Complete product vision, user flows, design system (3000+ lines)
+- `docs/archive/REGENT_CURSOR_SPEC.md` - Complete product vision, user flows, design system (3000+ lines)
+  - ⚠️ **DO NOT READ unless user explicitly requests it** (e.g., "check the full spec" or "read REGENT_CURSOR_SPEC")
+  - ⚠️ **This is archived for token optimization** - PROJECT_CONTEXT.md contains 95% of what you need
+  - ✅ **Only reference when:** User asks for detailed user flows, complete design system specs, or integration deep-dives
 - `README.md` - Technical implementation details, setup, testing
 - `docs/archive/CHANGELOG.md` - Full build history (archived for token optimization)
 - **`web-prototype/`** - **Figma-to-React code (REFERENCE ONLY)**
@@ -509,4 +512,4 @@ const styles = StyleSheet.create({
 
 ---
 
-**For detailed specs, see `REGENT_CURSOR_SPEC.md`. This doc is your 80/20 reference - everything you need 95% of the time.** 🎯
+**For detailed specs, see `docs/archive/REGENT_CURSOR_SPEC.md` (only if explicitly asked). This doc is your 80/20 reference - everything you need 95% of the time.** 🎯
