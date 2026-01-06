@@ -1,11 +1,12 @@
 import { View, Text, TouchableOpacity, Image, StyleSheet, StatusBar, Platform } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import Svg, { Path } from 'react-native-svg';
 import { Colors, Typography, Spacing, Layout, BorderRadius } from '../constants';
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   const handleSignIn = (method: 'apple' | 'google' | 'email') => {
     console.log(`Sign in with ${method}`);
@@ -15,8 +16,8 @@ export default function SignUpScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" translucent backgroundColor="transparent" />
       
       {/* Hero Section with Cityscape */}
       <View style={styles.heroContainer}>
@@ -94,7 +95,7 @@ export default function SignUpScreen() {
         </View>
 
         {/* Legal Text */}
-        <View style={styles.legalContainer}>
+        <View style={[styles.legalContainer, { paddingBottom: Math.max(insets.bottom, Spacing.lg) }]}>
           <Text style={styles.legalText}>
             <Text style={styles.legalLink}>Terms of Service</Text>
             {' • '}
@@ -102,7 +103,7 @@ export default function SignUpScreen() {
           </Text>
         </View>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -143,9 +144,9 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   
-  // Hero Section (FIXED for image display)
+  // Hero Section (extends behind status bar)
   heroContainer: {
-    height: 280,
+    height: 320,
     width: '100%',
     position: 'relative',
     overflow: 'hidden',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -11,6 +11,11 @@ export default function AuthScreen() {
   const [showPIN, setShowPIN] = useState(false);
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
+
+  // Auto-trigger Face ID on screen load
+  useEffect(() => {
+    handleFaceID();
+  }, []);
 
   const handleFaceID = async () => {
     try {
@@ -27,7 +32,8 @@ export default function AuthScreen() {
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Authenticate to access Regent',
         fallbackLabel: 'Use PIN',
-        disableDeviceFallback: false,
+        disableDeviceFallback: true,
+        cancelLabel: 'Cancel',
       });
 
       if (result.success) {
