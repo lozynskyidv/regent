@@ -4,17 +4,23 @@
  * Matches web prototype structure with smart progressive disclosure
  */
 
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch, Linking } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch, Linking, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { useData } from '../contexts/DataContext';
 import { clearAllData } from '../utils/storage';
 
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 export default function SettingsScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets(); // Get safe area insets immediately
   const { primaryCurrency, setCurrency } = useData();
   const [faceIDEnabled, setFaceIDEnabled] = useState(true); // Mock state for now
   const [pendingCurrency, setPendingCurrency] = useState<'GBP' | 'USD' | 'EUR' | null>(null);
@@ -22,6 +28,15 @@ export default function SettingsScreen() {
   // Free trial state (accurate - all users start with 7-day trial)
   const trialDaysRemaining = 7;
   const isTrialActive = trialDaysRemaining > 0;
+
+  // Smooth layout animation on mount
+  useEffect(() => {
+    LayoutAnimation.configureNext(LayoutAnimation.create(
+      300, // Duration: 300ms
+      LayoutAnimation.Types.easeInEaseOut,
+      LayoutAnimation.Properties.opacity
+    ));
+  }, []);
 
   const handleCurrencyChange = (newCurrency: 'GBP' | 'USD' | 'EUR') => {
     if (newCurrency === primaryCurrency) return;
@@ -107,7 +122,7 @@ export default function SettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerRow}>
@@ -277,7 +292,7 @@ export default function SettingsScreen() {
         {/* Bottom Spacer */}
         <View style={{ height: Spacing['2xl'] }} />
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 
