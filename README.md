@@ -10,8 +10,8 @@
 
 **New to this project?**  
 1. Read **`PROJECT_CONTEXT.md`** ← **START HERE** (2-3 pages, 80/20 essentials)
-2. For full product spec: **`REGENT_CURSOR_SPEC.md`** (3000+ lines, comprehensive)
-3. For build history: **`docs/archive/CHANGELOG.md`**
+2. For full product spec: **`REGENT_CURSOR_SPEC.md`** (3000+ lines, use only when needed)
+3. Start building!
 
 ---
 
@@ -112,10 +112,9 @@ web-prototype/        # Reference only (NOT for production)
 
 | Doc | Purpose | When to Use |
 |-----|---------|-------------|
-| **`PROJECT_CONTEXT.md`** | Quick reference (2-3 pages) | **Start here, use 95% of the time** |
-| **`REGENT_CURSOR_SPEC.md`** | Full product spec (3000+ lines) | Deep dives, design decisions |
-| **`docs/archive/CHANGELOG.md`** | Full build history | Understanding past decisions |
-| **`docs/archive/AI_CONTEXT.md`** | Old handoff guide | Historical reference only |
+| **`PROJECT_CONTEXT.md`** | Self-sufficient quick reference | **Start here, use 95% of the time** |
+| **`REGENT_CURSOR_SPEC.md`** | Complete product specification | Complex integrations only (TrueLayer, RevenueCat, etc.) |
+| **Git History** | Build history & decisions | `git log --oneline` for past changes |
 
 ---
 
@@ -155,7 +154,7 @@ web-prototype/        # Reference only (NOT for production)
 
 **Product Decisions:** See `REGENT_CURSOR_SPEC.md` sections 1-4  
 **Technical Patterns:** See `PROJECT_CONTEXT.md` "Development Patterns"  
-**Build History:** See `docs/archive/CHANGELOG.md`
+**Build History:** Run `git log --oneline` or check commit messages
 
 ---
 
