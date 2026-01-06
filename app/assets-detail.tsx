@@ -8,28 +8,20 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Plus } from 'lucide-react-native';
-import { useState } from 'react';
 import { Colors, Spacing, BorderRadius, Typography } from '../constants';
 import { useData } from '../contexts/DataContext';
+import { useModals } from '../contexts/ModalContext';
 import { Asset } from '../types';
 import SwipeableAssetItem from '../components/SwipeableAssetItem';
-import EditAssetModal from '../components/EditAssetModal';
 
 export default function AssetsDetailScreen() {
   const router = useRouter();
   const { assets, totalAssets, primaryCurrency, deleteAsset } = useData();
-
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
+  const { openAddAssetFlow, openEditAsset } = useModals();
 
   const formatCurrency = (value: number) => {
     const symbol = primaryCurrency === 'GBP' ? '£' : primaryCurrency === 'USD' ? '$' : '€';
     return `${symbol}${value.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-  };
-
-  const handleEdit = (asset: Asset) => {
-    setSelectedAsset(asset);
-    setShowEditModal(true);
   };
 
   const handleDelete = (asset: Asset) => {
@@ -53,11 +45,6 @@ export default function AssetsDetailScreen() {
     );
   };
 
-  const handleAddAsset = () => {
-    router.back();
-    // HomeScreen will handle showing the AssetTypePicker
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
@@ -72,7 +59,7 @@ export default function AssetsDetailScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handleAddAsset}
+            onPress={openAddAssetFlow}
             style={styles.addButton}
             activeOpacity={0.6}
           >
@@ -104,7 +91,7 @@ export default function AssetsDetailScreen() {
               <SwipeableAssetItem
                 key={asset.id}
                 asset={asset}
-                onEdit={() => handleEdit(asset)}
+                onEdit={() => openEditAsset(asset)}
                 onDelete={() => handleDelete(asset)}
                 showEdit={asset.type === 'property' || asset.type === 'other'}
                 formatCurrency={formatCurrency}
@@ -113,16 +100,6 @@ export default function AssetsDetailScreen() {
           </View>
         )}
       </ScrollView>
-
-      {/* Edit Modal */}
-      <EditAssetModal
-        visible={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedAsset(null);
-        }}
-        asset={selectedAsset}
-      />
     </SafeAreaView>
   );
 }

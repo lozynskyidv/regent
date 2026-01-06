@@ -5,79 +5,17 @@ import { useRouter } from 'expo-router';
 import { Settings } from 'lucide-react-native';
 import { Colors, Spacing } from '../constants';
 import { useData } from '../contexts/DataContext';
-import { AssetType, LiabilityType } from '../types';
+import { useModals } from '../contexts/ModalContext';
 import NetWorthCard from '../components/NetWorthCard';
 import AssetsCard from '../components/AssetsCard';
 import LiabilitiesCard from '../components/LiabilitiesCard';
-import AssetTypePickerModal from '../components/AssetTypePickerModal';
-import AddBankModal from '../components/AddBankModal';
-import AddPropertyModal from '../components/AddPropertyModal';
-import AddOtherAssetModal from '../components/AddOtherAssetModal';
-import LiabilityTypePickerModal from '../components/LiabilityTypePickerModal';
-import AddMortgageModal from '../components/AddMortgageModal';
-import AddLoanModal from '../components/AddLoanModal';
-import AddOtherLiabilityModal from '../components/AddOtherLiabilityModal';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const {
-    user,
-    assets,
-    liabilities,
-    netWorth,
-    isLoading,
-  } = useData();
-
-  // Modal states - Two-step flow
-  const [showAssetTypePicker, setShowAssetTypePicker] = useState(false);
-  const [showBankModal, setShowBankModal] = useState(false);
-  const [showPropertyModal, setShowPropertyModal] = useState(false);
-  const [showOtherAssetModal, setShowOtherAssetModal] = useState(false);
-  
-  const [showLiabilityTypePicker, setShowLiabilityTypePicker] = useState(false);
-  const [showMortgageModal, setShowMortgageModal] = useState(false);
-  const [showLoanModal, setShowLoanModal] = useState(false);
-  const [showOtherLiabilityModal, setShowOtherLiabilityModal] = useState(false);
+  const { user, assets, liabilities, netWorth, isLoading } = useData();
+  const { openAddAssetFlow, openAddLiabilityFlow } = useModals();
   
   const [lastUpdated, setLastUpdated] = useState(new Date());
-
-  // Handle asset type selection
-  const handleAssetTypeSelect = (type: AssetType) => {
-    switch (type) {
-      case 'bank':
-        setShowBankModal(true);
-        break;
-      case 'property':
-        setShowPropertyModal(true);
-        break;
-      case 'portfolio':
-        // TODO: Add portfolio modal when implementing stock tracking
-        console.log('Portfolio modal coming soon');
-        break;
-      case 'other':
-        setShowOtherAssetModal(true);
-        break;
-    }
-  };
-
-  // Handle liability type selection
-  const handleLiabilityTypeSelect = (type: LiabilityType) => {
-    switch (type) {
-      case 'mortgage':
-        setShowMortgageModal(true);
-        break;
-      case 'loan':
-        setShowLoanModal(true);
-        break;
-      case 'creditcard':
-        // TODO: Add credit card modal with TrueLayer integration
-        console.log('Credit card modal coming soon');
-        break;
-      case 'other':
-        setShowOtherLiabilityModal(true);
-        break;
-    }
-  };
 
   // Update timestamp when data changes
   useEffect(() => {
@@ -172,7 +110,7 @@ export default function HomeScreen() {
           assets={assets}
           totalAssets={totalAssets}
           currency={user?.primaryCurrency || 'GBP'}
-          onAddAsset={() => setShowAssetTypePicker(true)}
+          onAddAsset={openAddAssetFlow}
           onNavigateToDetail={() => router.push('/assets-detail')}
         />
 
@@ -181,59 +119,13 @@ export default function HomeScreen() {
           liabilities={liabilities}
           totalLiabilities={totalLiabilities}
           currency={user?.primaryCurrency || 'GBP'}
-          onAddLiability={() => setShowLiabilityTypePicker(true)}
+          onAddLiability={openAddLiabilityFlow}
           onNavigateToDetail={() => router.push('/liabilities-detail')}
         />
 
         {/* Bottom Spacer */}
         <View style={{ height: Spacing['2xl'] }} />
       </ScrollView>
-
-      {/* Asset Type Picker Modal - Step 1 */}
-      <AssetTypePickerModal
-        visible={showAssetTypePicker}
-        onClose={() => setShowAssetTypePicker(false)}
-        onSelectType={handleAssetTypeSelect}
-      />
-
-      {/* Asset-specific Modals - Step 2 */}
-      <AddBankModal
-        visible={showBankModal}
-        onClose={() => setShowBankModal(false)}
-      />
-
-      <AddPropertyModal
-        visible={showPropertyModal}
-        onClose={() => setShowPropertyModal(false)}
-      />
-
-      <AddOtherAssetModal
-        visible={showOtherAssetModal}
-        onClose={() => setShowOtherAssetModal(false)}
-      />
-
-      {/* Liability Type Picker Modal - Step 1 */}
-      <LiabilityTypePickerModal
-        visible={showLiabilityTypePicker}
-        onClose={() => setShowLiabilityTypePicker(false)}
-        onSelectType={handleLiabilityTypeSelect}
-      />
-
-      {/* Liability-specific Modals - Step 2 */}
-      <AddMortgageModal
-        visible={showMortgageModal}
-        onClose={() => setShowMortgageModal(false)}
-      />
-
-      <AddLoanModal
-        visible={showLoanModal}
-        onClose={() => setShowLoanModal(false)}
-      />
-
-      <AddOtherLiabilityModal
-        visible={showOtherLiabilityModal}
-        onClose={() => setShowOtherLiabilityModal(false)}
-      />
     </SafeAreaView>
   );
 }

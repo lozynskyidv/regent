@@ -8,28 +8,20 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Plus } from 'lucide-react-native';
-import { useState } from 'react';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { useData } from '../contexts/DataContext';
+import { useModals } from '../contexts/ModalContext';
 import { Liability } from '../types';
 import SwipeableLiabilityItem from '../components/SwipeableLiabilityItem';
-import EditLiabilityModal from '../components/EditLiabilityModal';
 
 export default function LiabilitiesDetailScreen() {
   const router = useRouter();
   const { liabilities, totalLiabilities, primaryCurrency, deleteLiability } = useData();
-
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedLiability, setSelectedLiability] = useState<Liability | null>(null);
+  const { openAddLiabilityFlow, openEditLiability } = useModals();
 
   const formatCurrency = (value: number) => {
     const symbol = primaryCurrency === 'GBP' ? '£' : primaryCurrency === 'USD' ? '$' : '€';
     return `${symbol}${value.toLocaleString('en-GB', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
-  };
-
-  const handleEdit = (liability: Liability) => {
-    setSelectedLiability(liability);
-    setShowEditModal(true);
   };
 
   const handleDelete = (liability: Liability) => {
@@ -53,11 +45,6 @@ export default function LiabilitiesDetailScreen() {
     );
   };
 
-  const handleAddLiability = () => {
-    router.back();
-    // HomeScreen will handle showing the LiabilityTypePicker
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
@@ -72,7 +59,7 @@ export default function LiabilitiesDetailScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
-            onPress={handleAddLiability}
+            onPress={openAddLiabilityFlow}
             style={styles.addButton}
             activeOpacity={0.6}
           >
@@ -104,7 +91,7 @@ export default function LiabilitiesDetailScreen() {
               <SwipeableLiabilityItem
                 key={liability.id}
                 liability={liability}
-                onEdit={() => handleEdit(liability)}
+                onEdit={() => openEditLiability(liability)}
                 onDelete={() => handleDelete(liability)}
                 showEdit={true} // All liabilities can be edited
                 formatCurrency={formatCurrency}
@@ -113,16 +100,6 @@ export default function LiabilitiesDetailScreen() {
           </View>
         )}
       </ScrollView>
-
-      {/* Edit Modal */}
-      <EditLiabilityModal
-        visible={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setSelectedLiability(null);
-        }}
-        liability={selectedLiability}
-      />
     </SafeAreaView>
   );
 }
