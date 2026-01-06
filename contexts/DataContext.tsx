@@ -5,6 +5,7 @@
  */
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Alert } from 'react-native';
 import { Asset, Liability, User, Currency } from '../types';
 import {
   loadAssets,
@@ -16,8 +17,13 @@ import {
   loadPreferences,
   savePreferences,
   Preferences,
+  clearAllData,
 } from '../utils/storage';
 import { generateId } from '../utils/generateId';
+import { supabase } from '../utils/supabase';
+import { deriveKeyFromPIN, encryptData, decryptData } from '../utils/encryption';
+import type { User as SupabaseAuthUser } from '@supabase/supabase-js';
+import * as SecureStore from 'expo-secure-store';
 
 // ============================================
 // TYPES
@@ -29,6 +35,11 @@ interface DataContextType {
   liabilities: Liability[];
   user: User | null;
   primaryCurrency: Currency;
+  
+  // Auth
+  supabaseUser: SupabaseAuthUser | null;
+  isAuthenticated: boolean;
+  isAuthProcessing: boolean; // Global lock to prevent concurrent auth operations
   
   // Computed
   netWorth: number;
@@ -50,6 +61,12 @@ interface DataContextType {
   
   // Actions - Preferences
   setCurrency: (currency: Currency) => Promise<void>;
+  
+  // Actions - Auth & Backup
+  signOut: () => Promise<void>;
+  deleteAccount: () => Promise<void>;
+  backupData: (pin: string) => Promise<void>;
+  restoreData: (pin: string) => Promise<void>;
   
   // State
   isLoading: boolean;
@@ -73,6 +90,39 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [primaryCurrency, setPrimaryCurrency] = useState<Currency>('GBP');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Supabase auth state
+  const [supabaseUser, setSupabaseUser] = useState<SupabaseAuthUser | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthProcessing, setIsAuthProcessing] = useState(false); // Global auth lock
+
+  // Check Supabase auth session on mount
+  useEffect(() => {
+    // Get current session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSupabaseUser(session?.user ?? null);
+      setIsAuthenticated(!!session);
+      console.log('🔐 Auth session:', session ? 'Active' : 'None');
+    });
+
+    // Listen for auth changes
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔐 Auth event:', event);
+        setSupabaseUser(session?.user ?? null);
+        setIsAuthenticated(!!session);
+        
+        if (event === 'SIGNED_IN' && session) {
+          // Sync user profile to Supabase
+          await syncUserProfile(session.user);
+        }
+      }
+    );
+
+    return () => {
+      authListener?.subscription.unsubscribe();
+    };
+  }, []);
 
   // Load data from AsyncStorage on mount
   useEffect(() => {
@@ -259,6 +309,266 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   // ============================================
+  // AUTH ACTIONS
+  // ============================================
+
+  /**
+   * Sync user profile to Supabase database
+   * Called after successful OAuth sign-in
+   */
+  const syncUserProfile = async (authUser: SupabaseAuthUser) => {
+    try {
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', authUser.id)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        // Error other than "not found"
+        throw fetchError;
+      }
+
+      if (!existingUser) {
+        // Create new user record
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: authUser.id,
+            email: authUser.email || '',
+            name: authUser.user_metadata?.full_name || authUser.user_metadata?.name || null,
+            photo_url: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null,
+            primary_currency: 'GBP',
+            last_login_at: new Date().toISOString(),
+          });
+
+        if (insertError) throw insertError;
+        console.log('✅ User profile created in Supabase');
+      } else {
+        // Update last login
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({ last_login_at: new Date().toISOString() })
+          .eq('id', authUser.id);
+
+        if (updateError) throw updateError;
+        console.log('✅ User profile updated in Supabase');
+      }
+    } catch (err) {
+      console.error('❌ Error syncing user profile:', err);
+      // Non-critical error, don't throw
+    }
+  };
+
+  /**
+   * Sign out user
+   * Clears Supabase session but keeps PIN and financial data
+   * User will need to re-enter PIN on next app launch
+   */
+  const signOut = async () => {
+    console.log('🔐 DataContext: Starting sign out...');
+    
+    // Set auth processing lock to block other auth operations
+    setIsAuthProcessing(true);
+    
+    try {
+      // Clear local React state FIRST
+      console.log('🔐 DataContext: Clearing local auth state...');
+      setSupabaseUser(null);
+      setIsAuthenticated(false);
+      
+      // Wait for Supabase signOut to complete (with timeout)
+      // This ensures clean state for next OAuth
+      console.log('🔐 DataContext: Calling Supabase signOut...');
+      const signOutPromise = supabase.auth.signOut();
+      const timeoutPromise = new Promise((resolve) => 
+        setTimeout(resolve, 2000) // 2s max wait
+      );
+      
+      await Promise.race([signOutPromise, timeoutPromise]);
+      console.log('✅ Supabase signOut completed');
+      
+      // Mandatory cooldown period to let Supabase fully clean up
+      console.log('⏳ Auth cooldown: Waiting 500ms...');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('✅ Signed out successfully');
+    } catch (err) {
+      console.error('❌ Sign out error:', err);
+      throw err;
+    } finally {
+      // Always release the lock, even if there's an error
+      setIsAuthProcessing(false);
+      console.log('🔓 Auth lock released');
+    }
+    
+    // NOTE: We do NOT delete the PIN here
+    // PIN is tied to the device, not the Supabase session
+    // User will use the same PIN when they sign back in
+  };
+
+  /**
+   * Delete account
+   * Removes user from Supabase and wipes ALL local data
+   */
+  const deleteAccount = async () => {
+    try {
+      if (!supabaseUser) {
+        throw new Error('No user to delete');
+      }
+
+      // Delete backups from Supabase
+      await supabase
+        .from('backups')
+        .delete()
+        .eq('user_id', supabaseUser.id);
+
+      // Delete user from Supabase
+      await supabase
+        .from('users')
+        .delete()
+        .eq('id', supabaseUser.id);
+
+      // Clear all local data
+      await clearAllData();
+      await SecureStore.deleteItemAsync('regent_pin_hash');
+
+      // Sign out
+      await supabase.auth.signOut();
+
+      // Clear state
+      setAssets([]);
+      setLiabilities([]);
+      setUserState(null);
+      setSupabaseUser(null);
+      setIsAuthenticated(false);
+
+      console.log('✅ Account deleted successfully');
+    } catch (err) {
+      console.error('❌ Error deleting account:', err);
+      throw err;
+    }
+  };
+
+  // ============================================
+  // BACKUP/RESTORE ACTIONS
+  // ============================================
+
+  /**
+   * Backup financial data to Supabase (encrypted)
+   * Data is encrypted with PIN-derived key before upload
+   */
+  const backupData = async (pin: string) => {
+    try {
+      if (!supabaseUser) {
+        throw new Error('Not authenticated');
+      }
+
+      // Prepare backup data
+      const backupPayload = {
+        assets,
+        liabilities,
+        preferences: { primaryCurrency },
+        version: '1.0',
+        timestamp: new Date().toISOString(),
+      };
+
+      // Derive encryption key from PIN
+      const encryptionKey = await deriveKeyFromPIN(pin, supabaseUser.id);
+
+      // Encrypt data
+      const encryptedData = await encryptData(
+        JSON.stringify(backupPayload),
+        encryptionKey
+      );
+
+      // Upload to Supabase
+      const { error } = await supabase
+        .from('backups')
+        .upsert({
+          user_id: supabaseUser.id,
+          encrypted_data: encryptedData,
+          updated_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+
+      console.log('✅ Data backed up successfully');
+      Alert.alert('Success', 'Your data has been backed up securely.');
+    } catch (err) {
+      console.error('❌ Backup error:', err);
+      Alert.alert('Error', 'Failed to backup data. Please try again.');
+      throw err;
+    }
+  };
+
+  /**
+   * Restore financial data from Supabase backup
+   * Data is decrypted with PIN-derived key after download
+   */
+  const restoreData = async (pin: string) => {
+    try {
+      if (!supabaseUser) {
+        throw new Error('Not authenticated');
+      }
+
+      // Download backup from Supabase
+      const { data: backup, error } = await supabase
+        .from('backups')
+        .select('encrypted_data')
+        .eq('user_id', supabaseUser.id)
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          throw new Error('No backup found for this account');
+        }
+        throw error;
+      }
+
+      if (!backup) {
+        throw new Error('No backup found');
+      }
+
+      // Derive encryption key from PIN
+      const encryptionKey = await deriveKeyFromPIN(pin, supabaseUser.id);
+
+      // Decrypt data
+      const decryptedData = await decryptData(
+        backup.encrypted_data,
+        encryptionKey
+      );
+
+      const restored = JSON.parse(decryptedData);
+
+      // Restore to state
+      setAssets(restored.assets || []);
+      setLiabilities(restored.liabilities || []);
+      setPrimaryCurrency(restored.preferences?.primaryCurrency || 'GBP');
+
+      // Save to AsyncStorage
+      await saveAssets(restored.assets || []);
+      await saveLiabilities(restored.liabilities || []);
+      await savePreferences(restored.preferences || { primaryCurrency: 'GBP' });
+
+      console.log('✅ Data restored successfully');
+      Alert.alert('Success', 'Your data has been restored successfully.');
+    } catch (err) {
+      console.error('❌ Restore error:', err);
+      if (err instanceof Error) {
+        if (err.message.includes('No backup found')) {
+          Alert.alert('No Backup', 'No backup found for this account.');
+        } else if (err.message.includes('decrypt')) {
+          Alert.alert('Wrong PIN', 'Failed to decrypt data. Please check your PIN.');
+        } else {
+          Alert.alert('Error', 'Failed to restore data. Please try again.');
+        }
+      }
+      throw err;
+    }
+  };
+
+  // ============================================
   // CONTEXT VALUE
   // ============================================
 
@@ -268,6 +578,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
     liabilities,
     user,
     primaryCurrency,
+    
+    // Auth
+    supabaseUser,
+    isAuthenticated,
+    isAuthProcessing,
     
     // Computed
     netWorth,
@@ -283,6 +598,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
     deleteLiability,
     setUser,
     setCurrency,
+    signOut,
+    deleteAccount,
+    backupData,
+    restoreData,
     
     // State
     isLoading,

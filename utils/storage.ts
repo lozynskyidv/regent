@@ -6,12 +6,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Asset, Liability, User } from '../types';
 
-// Storage keys
+// Storage keys (no @ prefix - not needed for AsyncStorage)
 const STORAGE_KEYS = {
-  ASSETS: '@regent_assets',
-  LIABILITIES: '@regent_liabilities',
-  USER: '@regent_user',
-  PREFERENCES: '@regent_preferences',
+  ASSETS: 'regent_assets',
+  LIABILITIES: 'regent_liabilities',
+  USER: 'regent_user',
+  PREFERENCES: 'regent_preferences',
 } as const;
 
 // ============================================

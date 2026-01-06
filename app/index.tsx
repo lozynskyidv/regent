@@ -1,18 +1,195 @@
-import { View, Text, TouchableOpacity, Image, StyleSheet, StatusBar, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, Image, StyleSheet, StatusBar, Platform, Alert, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import { makeRedirectUri } from 'expo-auth-session';
 import Svg, { Path } from 'react-native-svg';
 import { Colors, Typography, Spacing, Layout, BorderRadius } from '../constants';
+import { supabase } from '../utils/supabase';
+import { useData } from '../contexts/DataContext';
+
+// Required for Expo web browser
+WebBrowser.maybeCompleteAuthSession();
 
 export default function SignUpScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { isAuthProcessing } = useData(); // Global auth lock
+  const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
+  const [isLoadingApple, setIsLoadingApple] = useState(false);
 
-  const handleSignIn = (method: 'apple' | 'google' | 'email') => {
-    console.log(`Sign in with ${method}`);
-    // TODO: Implement real authentication
-    // For now, navigate directly to Face ID screen
-    router.push('/auth');
+  // Get the proper redirect URI for this platform (must be inside component to work correctly)
+  // In dev: exp://localhost:8081/--/auth/callback
+  // In production: regent://auth/callback
+  const redirectUri = makeRedirectUri({
+    path: 'auth/callback',
+  });
+
+  // Log the redirect URI for debugging
+  console.log('🔗 Redirect URI:', redirectUri);
+
+  const handleGoogleSignIn = async () => {
+    // Check if auth is already processing (e.g. sign out in progress)
+    if (isAuthProcessing) {
+      console.log('⏸️ Auth operation in progress, please wait...');
+      Alert.alert('Please Wait', 'An authentication operation is in progress. Please try again in a moment.');
+      return;
+    }
+    
+    try {
+      setIsLoadingGoogle(true);
+      console.log('🔐 Starting Google OAuth...');
+      console.log('🔗 Using redirect URI:', redirectUri);
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: redirectUri, // Use Expo's proper redirect URI
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) throw error;
+
+      // Open the OAuth URL in browser
+      if (data?.url) {
+        console.log('🌐 Opening browser for OAuth...');
+        console.log('📍 OAuth URL:', data.url);
+        
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          redirectUri // Use the same redirect URI
+        );
+        
+        console.log('📱 Browser result:', result);
+        
+        if (result.type === 'success' && result.url) {
+          console.log('✅ Redirect URL:', result.url);
+          
+          // Parse the URL to extract tokens
+          const url = new URL(result.url);
+          
+          // Check for tokens in URL params (Supabase returns them here)
+          let access_token = url.searchParams.get('access_token');
+          let refresh_token = url.searchParams.get('refresh_token');
+          
+          // If not in params, check hash fragment (alternative OAuth flow)
+          if (!access_token && url.hash) {
+            const hashParams = new URLSearchParams(url.hash.substring(1));
+            access_token = hashParams.get('access_token');
+            refresh_token = hashParams.get('refresh_token');
+          }
+          
+          if (access_token && refresh_token) {
+            console.log('🔑 Setting session with tokens');
+            await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
+            console.log('✅ Session set successfully!');
+          } else {
+            console.error('❌ No tokens found in redirect URL');
+            console.error('URL params:', Array.from(url.searchParams.entries()));
+            console.error('URL hash:', url.hash);
+            throw new Error('No authentication tokens received');
+          }
+        } else if (result.type === 'cancel') {
+          console.log('❌ User cancelled OAuth');
+          Alert.alert('Cancelled', 'Sign in was cancelled.');
+        } else {
+          console.log('⚠️ Unexpected result:', result);
+        }
+      }
+    } catch (err) {
+      console.error('❌ Google sign-in error:', err);
+      Alert.alert(
+        'Sign In Failed',
+        'Could not sign in with Google. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoadingGoogle(false);
+    }
+  };
+
+  const handleAppleSignIn = async () => {
+    // Check if auth is already processing (e.g. sign out in progress)
+    if (isAuthProcessing) {
+      console.log('⏸️ Auth operation in progress, please wait...');
+      Alert.alert('Please Wait', 'An authentication operation is in progress. Please try again in a moment.');
+      return;
+    }
+    
+    try {
+      setIsLoadingApple(true);
+      console.log('🔐 Starting Apple OAuth...');
+      
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'apple',
+        options: {
+          skipBrowserRedirect: true,
+        },
+      });
+
+      if (error) throw error;
+
+      // Open the OAuth URL in browser
+      if (data?.url) {
+        console.log('🌐 Opening browser for OAuth...');
+        const result = await WebBrowser.openAuthSessionAsync(
+          data.url,
+          undefined // Let it auto-detect
+        );
+        
+        console.log('📱 Browser result:', result);
+        
+        if (result.type === 'success' && result.url) {
+          console.log('✅ Redirect URL:', result.url);
+          const url = new URL(result.url);
+          
+          let access_token = url.searchParams.get('access_token');
+          let refresh_token = url.searchParams.get('refresh_token');
+          
+          if (!access_token && url.hash) {
+            const hashParams = new URLSearchParams(url.hash.substring(1));
+            access_token = hashParams.get('access_token');
+            refresh_token = hashParams.get('refresh_token');
+          }
+          
+          if (access_token && refresh_token) {
+            await supabase.auth.setSession({
+              access_token,
+              refresh_token,
+            });
+            console.log('✅ Session set successfully!');
+          } else {
+            throw new Error('No authentication tokens received');
+          }
+        } else if (result.type === 'cancel') {
+          console.log('❌ User cancelled OAuth');
+          Alert.alert('Cancelled', 'Sign in was cancelled.');
+        }
+      }
+    } catch (err) {
+      console.error('❌ Apple sign-in error:', err);
+      Alert.alert(
+        'Sign In Failed',
+        'Could not sign in with Apple. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsLoadingApple(false);
+    }
+  };
+
+  const handleEmailSignIn = () => {
+    // TODO: Implement email/password sign-in flow
+    Alert.alert(
+      'Coming Soon',
+      'Email sign-in will be available in a future update.',
+      [{ text: 'OK' }]
+    );
   };
 
   return (
@@ -47,32 +224,47 @@ export default function SignUpScreen() {
             {/* Apple Sign In (Primary) */}
             <TouchableOpacity
               style={[styles.button, styles.buttonPrimary]}
-              onPress={() => handleSignIn('apple')}
+              onPress={handleAppleSignIn}
               activeOpacity={0.8}
+              disabled={isLoadingGoogle || isLoadingApple || isAuthProcessing}
             >
               <View style={styles.buttonContent}>
-                <AppleIcon />
-                <Text style={styles.buttonTextPrimary}>Continue with Apple</Text>
+                {isLoadingApple ? (
+                  <ActivityIndicator color={Colors.white} />
+                ) : (
+                  <>
+                    <AppleIcon />
+                    <Text style={styles.buttonTextPrimary}>Continue with Apple</Text>
+                  </>
+                )}
               </View>
             </TouchableOpacity>
 
             {/* Google Sign In */}
             <TouchableOpacity
               style={[styles.button, styles.buttonSecondary]}
-              onPress={() => handleSignIn('google')}
+              onPress={handleGoogleSignIn}
               activeOpacity={0.8}
+              disabled={isLoadingGoogle || isLoadingApple || isAuthProcessing}
             >
               <View style={styles.buttonContent}>
-                <GoogleIcon />
-                <Text style={styles.buttonTextSecondary}>Continue with Google</Text>
+                {isLoadingGoogle ? (
+                  <ActivityIndicator color={Colors.foreground} />
+                ) : (
+                  <>
+                    <GoogleIcon />
+                    <Text style={styles.buttonTextSecondary}>Continue with Google</Text>
+                  </>
+                )}
               </View>
             </TouchableOpacity>
 
             {/* Email Sign In */}
             <TouchableOpacity
               style={[styles.button, styles.buttonSecondary]}
-              onPress={() => handleSignIn('email')}
+              onPress={handleEmailSignIn}
               activeOpacity={0.8}
+              disabled={isLoadingGoogle || isLoadingApple || isAuthProcessing}
             >
               <View style={styles.buttonContent}>
                 <EmailIcon />
@@ -84,8 +276,9 @@ export default function SignUpScreen() {
           {/* Already have account link */}
           <TouchableOpacity
             style={styles.linkContainer}
-            onPress={() => handleSignIn('apple')}
+            onPress={handleGoogleSignIn}
             activeOpacity={0.6}
+            disabled={isLoadingGoogle || isLoadingApple || isAuthProcessing}
           >
             <Text style={styles.linkText}>
               Already have an account?{' '}

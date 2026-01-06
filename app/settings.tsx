@@ -4,14 +4,13 @@
  * Matches web prototype structure with smart progressive disclosure
  */
 
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch, Linking, LayoutAnimation, Platform, UIManager } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch, Linking, LayoutAnimation, Platform, UIManager, TextInput, Modal, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Upload, Download, Cloud } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { useData } from '../contexts/DataContext';
-import { clearAllData } from '../utils/storage';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -21,9 +20,16 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets(); // Get safe area insets immediately
-  const { primaryCurrency, setCurrency } = useData();
+  const { primaryCurrency, setCurrency, signOut, deleteAccount, backupData, restoreData, supabaseUser, isAuthProcessing } = useData();
   const [faceIDEnabled, setFaceIDEnabled] = useState(true); // Mock state for now
   const [pendingCurrency, setPendingCurrency] = useState<'GBP' | 'USD' | 'EUR' | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
+  
+  // PIN modal state
+  const [showPINModal, setShowPINModal] = useState(false);
+  const [pinModalAction, setPinModalAction] = useState<'backup' | 'restore' | null>(null);
+  const [pin, setPin] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
   
   // Free trial state (accurate - all users start with 14-day trial)
   const trialDaysRemaining = 14;
@@ -37,6 +43,15 @@ export default function SettingsScreen() {
       LayoutAnimation.Properties.opacity
     ));
   }, []);
+
+  // Cleanup: Reset signing out state if component unmounts
+  useEffect(() => {
+    return () => {
+      if (isSigningOut) {
+        console.log('👤 Settings: Component unmounting, resetting sign out state');
+      }
+    };
+  }, [isSigningOut]);
 
   const handleCurrencyChange = (newCurrency: 'GBP' | 'USD' | 'EUR') => {
     if (newCurrency === primaryCurrency) return;
@@ -63,32 +78,97 @@ export default function SettingsScreen() {
     );
   };
 
+  const handleBackup = () => {
+    setPinModalAction('backup');
+    setShowPINModal(true);
+  };
+
+  const handleRestore = () => {
+    setPinModalAction('restore');
+    setShowPINModal(true);
+  };
+
+  const handlePINSubmit = async () => {
+    if (pin.length !== 4) {
+      Alert.alert('Invalid PIN', 'Please enter a 4-digit PIN.');
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      if (pinModalAction === 'backup') {
+        await backupData(pin);
+      } else if (pinModalAction === 'restore') {
+        await restoreData(pin);
+      }
+
+      // Success - close modal
+      setShowPINModal(false);
+      setPin('');
+      setPinModalAction(null);
+    } catch (error) {
+      // Error alerts are handled in DataContext
+      console.error('PIN action error:', error);
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleSignOut = () => {
+    if (isSigningOut || isAuthProcessing) {
+      console.log('⏭️ Sign out already in progress, ignoring tap');
+      return;
+    }
+    
+    // Set loading state BEFORE showing alert to prevent double-taps
+    setIsSigningOut(true);
+    
     Alert.alert(
       'Sign Out',
-      'Are you sure you want to sign out? All your data is stored locally on this device.',
+      'Your financial data will remain on this device. Sign in again to access it.',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Cancel', 
+          style: 'cancel',
+          onPress: () => {
+            // User cancelled, reset loading state
+            console.log('👤 Settings: Sign out cancelled');
+            setIsSigningOut(false);
+          }
+        },
         {
           text: 'Sign Out',
           style: 'destructive',
           onPress: async () => {
             try {
-              await clearAllData();
-              router.replace('/');
+              console.log('👤 Settings: Starting sign out...');
+              await signOut();
+              console.log('👤 Settings: Sign out completed');
+              // Navigation handled automatically by AuthGuard
+              // Don't reset isSigningOut here - component will unmount on navigation
             } catch (error) {
+              console.error('👤 Settings: Sign out error:', error);
+              setIsSigningOut(false);
               Alert.alert('Error', 'Failed to sign out. Please try again.');
             }
           },
         },
-      ]
+      ],
+      {
+        onDismiss: () => {
+          // Alert dismissed by tapping outside, reset loading state
+          console.log('👤 Settings: Alert dismissed');
+          setIsSigningOut(false);
+        }
+      }
     );
   };
 
   const handleDeleteAccount = () => {
     Alert.alert(
       'Delete Account',
-      'This will permanently delete all your data from this device. This action cannot be undone.',
+      'This will permanently delete your account and ALL data (cloud backups and local). This action cannot be undone.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -98,7 +178,7 @@ export default function SettingsScreen() {
             // Second confirmation
             Alert.alert(
               'Are You Absolutely Sure?',
-              'This will erase all your assets, liabilities, and settings. This is permanent.',
+              'This will erase your account, all backups, assets, liabilities, and settings. This is permanent and irreversible.',
               [
                 { text: 'Cancel', style: 'cancel' },
                 {
@@ -106,10 +186,10 @@ export default function SettingsScreen() {
                   style: 'destructive',
                   onPress: async () => {
                     try {
-                      await clearAllData();
-                      router.replace('/');
+                      await deleteAccount();
+                      // Navigation handled automatically by AuthGuard
                     } catch (error) {
-                      Alert.alert('Error', 'Failed to delete data. Please try again.');
+                      Alert.alert('Error', 'Failed to delete account. Please try again.');
                     }
                   },
                 },
@@ -244,16 +324,78 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {/* Data & Backup Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Data & Backup</Text>
+          
+          <View style={styles.card}>
+            <TouchableOpacity
+              style={styles.backupRow}
+              onPress={handleBackup}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconContainer}>
+                <Upload size={20} color={Colors.primary} />
+              </View>
+              <View style={styles.backupContent}>
+                <Text style={styles.backupLabel}>Backup Data</Text>
+                <Text style={styles.backupDescription}>
+                  Securely backup your financial data
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.backupRow}
+              onPress={handleRestore}
+              activeOpacity={0.7}
+            >
+              <View style={styles.iconContainer}>
+                <Download size={20} color={Colors.primary} />
+              </View>
+              <View style={styles.backupContent}>
+                <Text style={styles.backupLabel}>Restore Data</Text>
+                <Text style={styles.backupDescription}>
+                  Restore from a previous backup
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.sectionNote}>
+            <Cloud size={12} color={Colors.mutedForeground} /> Your data is encrypted with your PIN before backup. Only you can decrypt it.
+          </Text>
+        </View>
+
         {/* Account Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Account</Text>
           
+          <View style={styles.card}>
+            <View style={styles.accountInfoRow}>
+              <Text style={styles.accountLabel}>Email</Text>
+              <Text style={styles.accountValue}>{supabaseUser?.email || 'Not signed in'}</Text>
+            </View>
+          </View>
+
           <TouchableOpacity
-            style={styles.accountButton}
+            style={[
+              styles.accountButton, 
+              { marginTop: Spacing.md },
+              isSigningOut && styles.accountButtonDisabled
+            ]}
             onPress={handleSignOut}
             activeOpacity={0.7}
+            disabled={isSigningOut}
           >
-            <Text style={styles.accountButtonText}>Sign Out</Text>
+            <Text style={[
+              styles.accountButtonText,
+              isSigningOut && styles.accountButtonTextDisabled
+            ]}>
+              {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -292,6 +434,75 @@ export default function SettingsScreen() {
         {/* Bottom Spacer */}
         <View style={{ height: Spacing['2xl'] }} />
       </ScrollView>
+
+      {/* PIN Modal */}
+      <Modal
+        visible={showPINModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          setShowPINModal(false);
+          setPin('');
+          setPinModalAction(null);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>
+              {pinModalAction === 'backup' ? 'Backup Data' : 'Restore Data'}
+            </Text>
+            <Text style={styles.modalDescription}>
+              Enter your 4-digit PIN to {pinModalAction === 'backup' ? 'encrypt and backup' : 'decrypt and restore'} your data
+            </Text>
+
+            <TextInput
+              style={styles.pinInput}
+              value={pin}
+              onChangeText={setPin}
+              placeholder="Enter PIN"
+              keyboardType="number-pad"
+              maxLength={4}
+              secureTextEntry
+              autoFocus
+              editable={!isProcessing}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonCancel]}
+                onPress={() => {
+                  setShowPINModal(false);
+                  setPin('');
+                  setPinModalAction(null);
+                }}
+                disabled={isProcessing}
+              >
+                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.modalButton, styles.modalButtonConfirm]}
+                onPress={handlePINSubmit}
+                disabled={pin.length !== 4 || isProcessing}
+              >
+                <Text style={styles.modalButtonTextConfirm}>
+                  {isProcessing ? 'Processing...' : 'Confirm'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Full-Screen Loading Overlay During Auth Operations */}
+      {isAuthProcessing && (
+        <View style={styles.authOverlay}>
+          <View style={styles.authOverlayContent}>
+            <ActivityIndicator size="large" color={Colors.primary} />
+            <Text style={styles.authOverlayText}>Signing out...</Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -480,6 +691,57 @@ const styles = StyleSheet.create({
     color: Colors.foreground,
   },
 
+  // Backup/Restore Rows
+  backupRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Spacing.sm,
+  },
+  iconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: Spacing.md,
+  },
+  backupContent: {
+    flex: 1,
+  },
+  backupLabel: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: Colors.foreground,
+    marginBottom: 2,
+  },
+  backupDescription: {
+    fontSize: 13,
+    color: Colors.mutedForeground,
+    lineHeight: 18,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginVertical: Spacing.sm,
+  },
+
+  // Account Info
+  accountInfoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  accountLabel: {
+    fontSize: 14,
+    color: Colors.mutedForeground,
+  },
+  accountValue: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: Colors.foreground,
+  },
+
   // Account Button
   accountButton: {
     padding: Spacing.md,
@@ -493,6 +755,90 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '500',
     color: Colors.foreground,
+  },
+  accountButtonDisabled: {
+    opacity: 0.5,
+    backgroundColor: Colors.secondary,
+  },
+  accountButtonTextDisabled: {
+    color: Colors.mutedForeground,
+  },
+
+  // PIN Modal
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: Spacing.xl,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: Colors.foreground,
+    marginBottom: Spacing.sm,
+    textAlign: 'center',
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: Colors.mutedForeground,
+    lineHeight: 21,
+    marginBottom: Spacing.xl,
+    textAlign: 'center',
+  },
+  pinInput: {
+    height: 56,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: BorderRadius.lg,
+    paddingHorizontal: Spacing.lg,
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    letterSpacing: 8,
+    marginBottom: Spacing.xl,
+    backgroundColor: Colors.background,
+  },
+  modalButtons: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  modalButton: {
+    flex: 1,
+    height: 48,
+    borderRadius: BorderRadius.lg,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalButtonCancel: {
+    backgroundColor: Colors.background,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  modalButtonConfirm: {
+    backgroundColor: Colors.primary,
+  },
+  modalButtonTextCancel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.foreground,
+  },
+  modalButtonTextConfirm: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.white,
   },
 
   // Feedback Button
@@ -533,5 +879,31 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.mutedForeground,
     lineHeight: 18,
+  },
+
+  // Auth Processing Overlay
+  authOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  authOverlayContent: {
+    backgroundColor: Colors.card,
+    borderRadius: BorderRadius.xl,
+    padding: Spacing['2xl'],
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  authOverlayText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.foreground,
+    marginTop: Spacing.md,
   },
 });

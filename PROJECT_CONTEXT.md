@@ -230,6 +230,208 @@ types/
 
 ---
 
+## 🔐 AUTHENTICATION IMPLEMENTATION & KNOWN ISSUES
+
+**Last Updated:** January 6, 2026  
+**Status:** ⚠️ CRITICAL ISSUE - Sign-in infinite loading after 3rd sign-out cycle
+
+### What We've Built
+
+**Architecture: Hybrid Cloud Auth + Local Data**
+- ✅ **Supabase** for user identity & OAuth (Google, Apple)
+- ✅ **Local storage** for financial data (AsyncStorage)
+- ✅ **Encrypted cloud backups** (PIN-derived encryption key)
+- ✅ **Device PIN** + optional Face ID (fintech-standard onboarding)
+- ✅ **RevenueCat** integration architecture (not implemented yet)
+
+**Implementation Details:**
+- Google OAuth via `supabase.auth.signInWithOAuth()` + `expo-web-browser`
+- Session storage in `SecureStore` (iOS Keychain)
+- Deep linking with `expo-auth-session` (`makeRedirectUri()`)
+- PIN hashing with `expo-crypto` (SHA-256, 100k iterations)
+- Mandatory PIN + optional Face ID during onboarding (see `app/auth.tsx`)
+
+**Files Modified:**
+- `utils/supabase.ts` - Supabase client with SecureStore adapter
+- `utils/encryption.ts` - PIN-derived key + XOR encryption
+- `contexts/DataContext.tsx` - Auth state, sign-out logic, backup/restore
+- `app/index.tsx` - OAuth implementation (Google/Apple)
+- `app/auth.tsx` - 3-stage onboarding (Face ID prompt → PIN setup → PIN entry)
+- `app/_layout.tsx` - AuthGuard, session listener
+- `app/settings.tsx` - Sign-out button, backup/restore UI
+
+### Critical Issue: Infinite Loading on 3rd Sign-Out
+
+**Problem:**
+After 2-3 rapid sign-out/sign-in cycles, "Continue with Google" button shows infinite loading and OAuth never initiates.
+
+**Root Cause (Suspected):**
+Race condition between `signOut()` and `signInWithOAuth()`:
+1. User signs out → `supabase.auth.signOut()` starts (takes 2-3 seconds)
+2. User immediately taps "Continue with Google" → `signInWithOAuth()` starts
+3. Supabase is processing sign-out WHILE processing sign-in
+4. Internal session storage becomes corrupted/inconsistent
+5. Subsequent OAuth attempts hang indefinitely
+
+**Evidence from Logs:**
+```
+924  LOG  🔐 Starting Google OAuth...
+927  LOG  🌐 Opening browser for OAuth...
+929  LOG  ✅ Supabase signOut completed  ← Sign-out completes AFTER OAuth started!
+```
+
+### Attempted Fixes (What Didn't Work)
+
+**Attempt 1: Fire-and-Forget Sign-Out**
+- Cleared local state immediately, let Supabase signOut run in background
+- Result: ❌ Still caused race condition
+
+**Attempt 2: Timeout for Supabase SignOut**
+- Added 3-second timeout using `Promise.race()`
+- Result: ❌ Sometimes timed out before completion, leaving orphaned sessions
+
+**Attempt 3: Manual SecureStore Cleanup**
+- Manually deleted `supabase.auth.token` from SecureStore during sign-out
+- Result: ❌ Corrupted Supabase's internal storage, made problem worse
+
+**Attempt 4: Pre-OAuth Session Check**
+- Checked for existing session before OAuth, called `signOut()` if found
+- Result: ❌ Created nested race condition (sign-out within OAuth flow)
+
+**Attempt 5: Global Auth Lock + Cooldown (Current Implementation)**
+- Added `isAuthProcessing` flag to block concurrent auth operations
+- Added 500ms cooldown after sign-out completes
+- Added full-screen loading overlay to prevent user interaction
+- Result: ⚠️ **STILL FAILING** - Issue persists after 2-3 cycles
+
+**Current Code State:**
+```typescript
+// contexts/DataContext.tsx
+const signOut = async () => {
+  setIsAuthProcessing(true); // 🔒 Global lock
+  
+  try {
+    setSupabaseUser(null);
+    setIsAuthenticated(false);
+    
+    await Promise.race([
+      supabase.auth.signOut(),
+      new Promise(resolve => setTimeout(resolve, 2000))
+    ]);
+    
+    // 500ms cooldown for Supabase cleanup
+    await new Promise(resolve => setTimeout(resolve, 500));
+  } finally {
+    setIsAuthProcessing(false); // 🔓 Release lock
+  }
+};
+
+// app/index.tsx
+const handleGoogleSignIn = async () => {
+  if (isAuthProcessing) {
+    Alert.alert('Please Wait', 'Auth operation in progress');
+    return;
+  }
+  // ... OAuth flow
+};
+```
+
+### Potential Solutions (Not Yet Tried)
+
+**Option 1: Reinitialize Supabase Client on Sign-Out**
+```typescript
+// Create new Supabase client instance after sign-out
+await supabase.auth.signOut();
+supabaseClient = createClient(url, key, { ... }); // Fresh client
+```
+
+**Option 2: Clear ALL SecureStore Keys**
+```typescript
+// Nuclear option - wipe all Supabase-related keys
+const supabaseKeys = [
+  'supabase.auth.token',
+  'supabase.session',
+  'sb-localhost-auth-token', // Development
+  'sb-auth-token', // Production
+];
+await Promise.all(supabaseKeys.map(key => 
+  SecureStore.deleteItemAsync(key).catch(() => {})
+));
+```
+
+**Option 3: Use Supabase stopAutoRefresh/startAutoRefresh**
+```typescript
+// Pause Supabase internal refresh cycle during sign-out
+await supabase.auth.stopAutoRefresh();
+await supabase.auth.signOut();
+await new Promise(resolve => setTimeout(resolve, 1000)); // Cooldown
+await supabase.auth.startAutoRefresh(); // Restart for next sign-in
+```
+
+**Option 4: Implement Exponential Backoff**
+```typescript
+// Prevent rapid sign-out/sign-in cycles
+let lastSignOutTime = 0;
+const MIN_SIGNOUT_INTERVAL = 3000; // 3 seconds
+
+if (Date.now() - lastSignOutTime < MIN_SIGNOUT_INTERVAL) {
+  Alert.alert('Please wait before signing in again');
+  return;
+}
+```
+
+**Option 5: Switch to Alternative Auth Provider**
+- Consider using `expo-auth-session` directly (bypass Supabase Auth)
+- Or use Firebase Auth instead of Supabase
+- Pro: More mature OAuth handling
+- Con: Major refactor, lose Supabase database integration
+
+**Option 6: Add Manual Session Validation**
+```typescript
+// Before OAuth, verify Supabase is in clean state
+const { data: { session } } = await supabase.auth.getSession();
+if (session) {
+  console.warn('Stale session detected, forcing cleanup');
+  await supabase.auth.signOut({ scope: 'local' }); // Force local-only signout
+  await new Promise(resolve => setTimeout(resolve, 2000));
+}
+```
+
+### Recommendations for Future Developer
+
+**Immediate Priority:**
+1. Try **Option 3** (stopAutoRefresh/startAutoRefresh) - most elegant
+2. If that fails, try **Option 2** (nuclear SecureStore wipe) - brute force but reliable
+3. If both fail, consider **Option 5** (switch auth provider) - last resort
+
+**Testing Protocol:**
+- Test 20 rapid sign-out/sign-in cycles before declaring fix
+- Monitor Supabase dashboard for orphaned sessions
+- Check Xcode device logs for native-level errors
+- Test on REAL device (not Expo Go) - auth behaves differently
+
+**Debug Logging to Add:**
+```typescript
+// Log ALL Supabase internal state
+const session = await supabase.auth.getSession();
+console.log('Supabase session state:', JSON.stringify(session));
+console.log('SecureStore keys:', await listAllSecureStoreKeys()); // Implement helper
+```
+
+**Related Files:**
+- `utils/supabase.ts` - Client initialization
+- `contexts/DataContext.tsx` - Sign-out logic (lines 366-394)
+- `app/index.tsx` - OAuth flow (lines 30-105)
+- `SETUP_GUIDE.md` - Supabase configuration instructions
+- `AUTH_IMPLEMENTATION_SUMMARY.md` - Original implementation plan
+
+**External Resources:**
+- Supabase Auth docs: https://supabase.com/docs/guides/auth
+- Expo SecureStore docs: https://docs.expo.dev/versions/latest/sdk/securestore/
+- Known Supabase Auth issues: https://github.com/supabase/auth-js/issues
+
+---
+
 ## 📋 NEXT PRIORITIES (P1 Features)
 
 **Week 4-5: P1 MVP (Launch-Ready)**
