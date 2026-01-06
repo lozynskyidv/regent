@@ -35,9 +35,8 @@ export default function AuthScreen() {
       // Attempt Face ID authentication
       const result = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Authenticate to access Regent',
-        fallbackLabel: 'Use PIN',
-        disableDeviceFallback: false, // Allow device fallback
-        cancelLabel: 'Cancel',
+        cancelLabel: 'Use PIN instead',
+        disableDeviceFallback: true, // Force Face ID only, don't fall back to device passcode
       });
 
       console.log('Auth result:', result);
