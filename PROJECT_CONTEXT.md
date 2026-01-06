@@ -260,25 +260,283 @@ types/
 - `app/_layout.tsx` - AuthGuard, session listener
 - `app/settings.tsx` - Sign-out button, backup/restore UI
 
-### Critical Issue: Infinite Loading on 3rd Sign-Out
+### ⚠️ CRITICAL BLOCKER: Auth Sign-Out/Sign-In Race Condition (UNRESOLVED)
 
-**Problem:**
-After 2-3 rapid sign-out/sign-in cycles, "Continue with Google" button shows infinite loading and OAuth never initiates.
+**Last Updated:** January 6, 2026  
+**Status:** 🔴 **BLOCKING** - 4 iterations attempted, all failed  
+**Symptoms:** After 2-3 sign-out/sign-in cycles → infinite loading, session timeouts, or infinite redirect loops
 
-**Root Cause (Suspected):**
-Race condition between `signOut()` and `signInWithOAuth()`:
-1. User signs out → `supabase.auth.signOut()` starts (takes 2-3 seconds)
-2. User immediately taps "Continue with Google" → `signInWithOAuth()` starts
-3. Supabase is processing sign-out WHILE processing sign-in
-4. Internal session storage becomes corrupted/inconsistent
-5. Subsequent OAuth attempts hang indefinitely
+---
 
-**Evidence from Logs:**
+#### The Problem
+
+**What happens:**
+1. User signs in successfully → Uses app → Signs out
+2. User immediately signs in again → Works
+3. **After 2-3 cycles:** One of these failures occurs:
+   - "Continue with Google" button shows infinite loading (OAuth never initiates)
+   - OAuth completes but infinite redirect loop between `/` and `/auth`
+   - Session check times out (2+ seconds instead of <100ms)
+
+**Root causes identified (multiple, compounding):**
+1. **AsyncStorage accumulation** - Orphaned Supabase session keys accumulate over cycles
+2. **State management race** - Local React state updates before/after Supabase async operations
+3. **Auth listener timing** - `onAuthStateChange` fires before state updates complete
+4. **SecureStore size limit** - Session tokens exceed 2048-byte iOS limit (fixed in v2)
+
+---
+
+#### 🔄 What We've Tried (4 Iterations)
+
+##### **Attempt #1: State Order Reversal + Stop/Start Auto-Refresh**
+**Date:** Jan 6, 2026 morning  
+**Theory:** Supabase cleanup must complete BEFORE clearing local state
+
+**Implementation:**
+```typescript
+// DataContext.tsx signOut():
+await supabase.auth.stopAutoRefresh();  // Stop refresh
+await supabase.auth.signOut();  // Sign out
+await new Promise(resolve => setTimeout(resolve, 1000));  // Wait
+await supabase.auth.startAutoRefresh();  // Restart ← PROBLEM!
+setIsAuthenticated(false);  // Then clear state
 ```
-924  LOG  🔐 Starting Google OAuth...
-927  LOG  🌐 Opening browser for OAuth...
-929  LOG  ✅ Supabase signOut completed  ← Sign-out completes AFTER OAuth started!
+
+**Result:** ❌ **FAILED - Caused new hang issue**
+- `startAutoRefresh()` after sign-out corrupted Supabase client
+- Client tried to refresh non-existent session
+- Next `getSession()` call hung indefinitely (2+ second timeout)
+
+**Logs showed:**
 ```
+Line 969: Restarting token auto-refresh...
+Line 978: Checking for existing session...
+Line 980: [HANG - no more logs]
+```
+
+**Lesson learned:** Don't manually call `stopAutoRefresh()` / `startAutoRefresh()` - Supabase handles internally
+
+---
+
+##### **Attempt #2: Remove Manual Auto-Refresh Calls**
+**Date:** Jan 6, 2026 afternoon  
+**Theory:** Let Supabase manage its own lifecycle, add timeout to prevent hanging
+
+**Implementation:**
+```typescript
+// DataContext.tsx signOut():
+await supabase.auth.signOut();  // Just sign out, no manual stop/start
+await new Promise(resolve => setTimeout(resolve, 1500));
+setIsAuthenticated(false);
+
+// app/index.tsx - Added timeout to getSession():
+const { data: { session } } = await Promise.race([
+  supabase.auth.getSession(),
+  new Promise(resolve => setTimeout(() => resolve({ data: { session: null } }), 2000))
+]);
+```
+
+**Result:** ✅ **Partially worked** - First 2 cycles succeeded  
+❌ **Then failed** - After 2-3 cycles:
+- `getSession()` started timing out (2+ seconds)
+- OAuth completed but infinite redirect loop between `/` and `/auth`
+
+**Logs showed:**
+```
+Line 900: WARN ⏱️ Session check timed out
+Line 929: WARN ⏱️ Session check timed out ← Getting progressively worse
+```
+
+**Lesson learned:** Timeout prevents hang but doesn't fix root cause (AsyncStorage accumulation)
+
+---
+
+##### **Attempt #3: Pre-OAuth AsyncStorage Cleanup + Session Retry**
+**Date:** Jan 6, 2026 evening  
+**Theory:** Clean AsyncStorage BEFORE OAuth to prevent accumulation, add retry logic in `/auth`
+
+**Implementation:**
+```typescript
+// app/index.tsx - BEFORE OAuth:
+const allKeys = await AsyncStorage.getAllKeys();
+const supabaseKeys = allKeys.filter(key => 
+  key.startsWith('sb-') || key.includes('auth-token')
+);
+await AsyncStorage.multiRemove(supabaseKeys);  // Nuclear cleanup
+await new Promise(resolve => setTimeout(resolve, 500));  // Wait for flush
+// Then start OAuth
+
+// app/auth.tsx - Retry up to 3 times:
+for (let attempt = 1; attempt <= 3; attempt++) {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (session) break;
+  await new Promise(resolve => setTimeout(resolve, 500));
+}
+```
+
+**Result:** ❌ **FAILED - Race condition + PIN deletion**
+- Cleaning AsyncStorage BEFORE OAuth created race condition
+- OAuth `setSession()` wrote to AsyncStorage
+- `/auth` tried to read before write completed
+- Session unavailable → infinite loop
+- **Bonus issue:** Sometimes PIN was deleted (user prompted to create new PIN)
+
+**Logs showed:**
+```
+Cleaning AsyncStorage... → OAuth completes → Session write → /auth reads → null → Loop
+```
+
+**Lesson learned:** Cleaning BEFORE OAuth is too early - causes race with session write
+
+---
+
+##### **Attempt #4: Post-Sign-Out AsyncStorage Cleanup**
+**Date:** Jan 6, 2026 late evening  
+**Theory:** Clean AsyncStorage AFTER sign-out (not before sign-in)
+
+**Implementation:**
+```typescript
+// DataContext.tsx signOut():
+await supabase.auth.signOut();
+// Then nuclear AsyncStorage cleanup:
+const allKeys = await AsyncStorage.getAllKeys();
+const supabaseKeys = allKeys.filter(key => 
+  key.startsWith('sb-') || key.includes('auth-token')
+);
+await AsyncStorage.multiRemove(supabaseKeys);
+await new Promise(resolve => setTimeout(resolve, 1000));
+setIsAuthenticated(false);
+
+// app/index.tsx - No cleanup, just OAuth
+// app/auth.tsx - Simple session check (no retry)
+```
+
+**Result:** ❌ **STILL FAILING** (user report: "same issue persists")
+- Exact failure mode unknown (user didn't provide logs)
+- Likely still infinite loop or timeout after 2-3 cycles
+
+**Lesson learned:** Moving cleanup timing alone doesn't solve underlying issue
+
+---
+
+#### 🤔 Current Hypothesis (For Next Developer)
+
+**The issue is likely deeper than timing or cleanup:**
+
+1. **Supabase client state corruption** - After multiple auth cycles, the Supabase client enters an invalid state that persists across operations
+2. **AsyncStorage read/write conflicts** - React Native AsyncStorage may have concurrency issues we're not handling
+3. **Auth listener memory leak** - Multiple `onAuthStateChange` listeners may be accumulating
+4. **Expo OAuth flow issues** - `expo-web-browser` may not properly clean up between cycles
+
+**Potential solutions to explore:**
+
+##### **Option A: Reinitialize Supabase Client on Sign-Out**
+```typescript
+// Create entirely new client instance after sign-out
+await supabase.auth.signOut();
+supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: { storage: AsyncStorageAdapter, ... }
+});
+```
+**Pros:** Forces fresh start, no accumulated state  
+**Cons:** Loses all listeners, need to re-register  
+**Risk:** Medium - Major refactor but cleanest solution
+
+##### **Option B: Sequential AsyncStorage Operations with Locks**
+```typescript
+// Use mutex/lock to prevent concurrent AsyncStorage operations
+import AsyncLock from 'async-lock';
+const lock = new AsyncLock();
+
+await lock.acquire('supabase-storage', async () => {
+  await supabase.auth.signOut();
+  await cleanAsyncStorage();
+});
+```
+**Pros:** Prevents race conditions  
+**Cons:** Adds dependency, complexity  
+**Risk:** Low - Non-invasive addition
+
+##### **Option C: Switch to Alternative Auth Provider**
+```typescript
+// Use Firebase Auth or expo-auth-session directly
+// Bypass Supabase Auth entirely for sign-in/sign-out
+```
+**Pros:** More mature OAuth handling  
+**Cons:** Massive refactor, lose Supabase integration  
+**Risk:** High - 2-3 days work, architectural change
+
+##### **Option D: Add Auth State Machine**
+```typescript
+// Explicit state machine to prevent invalid transitions
+enum AuthState { SIGNED_OUT, SIGNING_IN, SIGNED_IN, SIGNING_OUT }
+// Block operations if state transition in progress
+```
+**Pros:** Prevents race conditions at application level  
+**Cons:** Added complexity, doesn't fix root cause  
+**Risk:** Medium - Architectural change
+
+##### **Option E: Debug with Supabase Logs**
+```typescript
+// Enable verbose Supabase client logging
+supabase.auth.onAuthStateChange((event, session) => {
+  console.log('🔐 Auth event:', event);
+  console.log('📦 Session state:', JSON.stringify(session));
+  console.log('💾 AsyncStorage keys:', await AsyncStorage.getAllKeys());
+});
+```
+**Pros:** May reveal root cause  
+**Cons:** Doesn't provide solution, only diagnostic  
+**Risk:** Low - Diagnostic only
+
+---
+
+#### 📚 Related Files & Documentation
+
+**Implementation files:**
+- `contexts/DataContext.tsx` - Sign-out logic (lines 371-443)
+- `app/index.tsx` - OAuth flow (lines 32-114)
+- `app/auth.tsx` - Session validation (lines 34-59)
+- `utils/supabase.ts` - Client config with AsyncStorage adapter
+- `app/_layout.tsx` - Auth listeners and AuthGuard
+
+**Documentation files:**
+- `AUTH_FIX_SUMMARY.md` - Attempt #1 documentation
+- `AUTH_FIX_V2_SUMMARY.md` - Attempt #2 documentation
+- `AUTH_FIX_V3_FINAL.md` - Attempt #3 documentation
+- `AUTH_FIX_V4_FINAL.md` - Attempt #4 documentation
+
+**External resources:**
+- [Supabase Auth Issues](https://github.com/supabase/auth-js/issues)
+- [React Native AsyncStorage](https://react-native-async-storage.github.io/async-storage/)
+- [Expo OAuth Deep Linking](https://docs.expo.dev/guides/authentication/#oauth-and-openid-connect)
+
+---
+
+#### 💡 Recommendations for Next Developer
+
+**Before attempting another fix:**
+1. **Add comprehensive logging** - Log every auth state change, AsyncStorage operation, and Supabase call
+2. **Test with real device** - Expo Go behaves differently than standalone builds
+3. **Monitor Supabase dashboard** - Check for orphaned sessions on server
+4. **Test incrementally** - Make one small change, test 10 cycles, iterate
+
+**Most promising approach:**
+**Option A (Reinitialize Supabase Client)** seems most likely to succeed because:
+- Forces truly clean state
+- Eliminates any accumulated corruption
+- Used successfully by other projects with similar issues
+- Risk is manageable with careful implementation
+
+**If all else fails:**
+Consider this a **known limitation** and implement:
+- "Force refresh" button that clears all app data
+- Automatic app restart after 3 failed auth attempts
+- Clear user messaging: "If sign-in fails, restart the app"
+
+---
+
+**Status:** 🔴 **BLOCKING P0 ISSUE** - Must be resolved before production launch
 
 ### Attempted Fixes (What Didn't Work)
 

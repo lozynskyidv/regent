@@ -364,6 +364,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
    * Sign out user
    * Clears Supabase session but keeps PIN and financial data
    * User will need to re-enter PIN on next app launch
+   * 
+   * CRITICAL FIX v4: Nuclear AsyncStorage cleanup AFTER sign-out
+   * - Let Supabase signOut() do its thing first
+   * - Then forcibly clean ALL Supabase keys from AsyncStorage
+   * - This prevents accumulation that causes getSession() to slow down
    */
   const signOut = async () => {
     console.log('🔐 DataContext: Starting sign out...');
@@ -372,29 +377,54 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setIsAuthProcessing(true);
     
     try {
-      // Clear local React state FIRST
-      console.log('🔐 DataContext: Clearing local auth state...');
-      setSupabaseUser(null);
-      setIsAuthenticated(false);
-      
-      // Wait for Supabase signOut to complete (with timeout)
-      // This ensures clean state for next OAuth
+      // STEP 1: Call Supabase signOut and wait for completion
       console.log('🔐 DataContext: Calling Supabase signOut...');
       const signOutPromise = supabase.auth.signOut();
       const timeoutPromise = new Promise((resolve) => 
-        setTimeout(resolve, 2000) // 2s max wait
+        setTimeout(resolve, 3000) // 3s timeout
       );
       
       await Promise.race([signOutPromise, timeoutPromise]);
       console.log('✅ Supabase signOut completed');
       
-      // Mandatory cooldown period to let Supabase fully clean up
-      console.log('⏳ Auth cooldown: Waiting 500ms...');
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // STEP 2: Nuclear AsyncStorage cleanup - remove ALL Supabase keys
+      // This prevents accumulation that causes getSession() to slow down over cycles
+      console.log('🧹 Nuclear cleanup: Removing ALL Supabase keys from AsyncStorage...');
+      try {
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        const allKeys = await AsyncStorage.getAllKeys();
+        const supabaseKeys = allKeys.filter(key => 
+          key.startsWith('sb-') || 
+          key.includes('auth-token') ||
+          key.includes('supabase.auth')
+        );
+        
+        if (supabaseKeys.length > 0) {
+          console.log(`🗑️ Removing ${supabaseKeys.length} Supabase keys from AsyncStorage`);
+          await AsyncStorage.multiRemove(supabaseKeys);
+          console.log('✅ AsyncStorage cleaned');
+        } else {
+          console.log('✅ AsyncStorage already clean');
+        }
+      } catch (cleanupError) {
+        console.warn('⚠️ AsyncStorage cleanup failed (non-critical):', cleanupError);
+      }
       
-      console.log('✅ Signed out successfully');
+      // STEP 3: Mandatory cooldown to let AsyncStorage settle
+      console.log('⏳ Auth cooldown: Waiting 1000ms for AsyncStorage to settle...');
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // STEP 4: Clear local React state (triggers AuthGuard redirect)
+      console.log('🔐 DataContext: Clearing local auth state (will trigger redirect)...');
+      setSupabaseUser(null);
+      setIsAuthenticated(false);
+      
+      console.log('✅ Signed out successfully - Fresh start ready for next sign-in');
     } catch (err) {
       console.error('❌ Sign out error:', err);
+      // Even if there's an error, clear local state to unblock UI
+      setSupabaseUser(null);
+      setIsAuthenticated(false);
       throw err;
     } finally {
       // Always release the lock, even if there's an error

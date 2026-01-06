@@ -8,6 +8,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { Colors, Typography, Spacing, BorderRadius } from '../constants';
 import { hashPIN, verifyPIN } from '../utils/encryption';
 import { useData } from '../contexts/DataContext';
+import { supabase } from '../utils/supabase';
 
 type OnboardingStage = 'face_id_prompt' | 'pin_setup' | 'pin_entry';
 
@@ -33,12 +34,18 @@ export default function AuthScreen() {
 
   const checkSetupStatus = async () => {
     try {
-      // Check if user is authenticated with Supabase
-      if (!isAuthenticated) {
-        console.log('❌ Not authenticated, redirecting to sign-up');
+      // Check Supabase session directly (more reliable than isAuthenticated)
+      // After OAuth, session is immediately available in AsyncStorage
+      console.log('🔍 Verifying authentication status...');
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        console.log('❌ No valid session, redirecting to sign-up');
         router.replace('/');
         return;
       }
+      
+      console.log('✅ Session verified');
 
       // Check biometric availability
       const hasHardware = await LocalAuthentication.hasHardwareAsync();
