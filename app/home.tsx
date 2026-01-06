@@ -78,7 +78,7 @@ export default function HomeScreen() {
           <TouchableOpacity 
             style={styles.settingsButton}
             activeOpacity={0.6}
-            onPress={() => console.log('Settings pressed')}
+            onPress={() => router.push('/settings')}
           >
             <Settings size={20} color={Colors.mutedForeground} strokeWidth={2} />
           </TouchableOpacity>
