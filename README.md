@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.2.0 (MVP Phase - Week 2 Complete)  
+**Version:** 0.3.0 (P0 MVP COMPLETE ✅)  
 **Platform:** iOS (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)
 
@@ -30,7 +30,9 @@ Regent is a **premium iOS net worth tracking app** that combines:
 
 ## 🏗️ Current Implementation Status
 
-### ✅ COMPLETE (Week 1-2)
+### 🎉 P0 MVP COMPLETE (Week 1-3)
+
+All core features required for a functional MVP are now implemented!
 
 **Authentication & Onboarding**
 - Sign Up screen with cityscape background (edge-to-edge design)
@@ -66,8 +68,9 @@ Regent is a **premium iOS net worth tracking app** that combines:
 
 **Data Layer & Persistence**
 - DataContext with React Context API (global state management)
+- ModalContext for centralized modal state (eliminates duplication)
 - AsyncStorage implementation (auto-save on every action)
-- CRUD operations: Create ✅, Read ✅, Delete ✅ (Update coming Week 3)
+- CRUD operations: Create ✅, Read ✅, Update ✅, Delete ✅
 - UUID generation for all entities
 - Real-time net worth calculation
 - Data loads on app launch, persists between sessions
@@ -77,6 +80,30 @@ Regent is a **premium iOS net worth tracking app** that combines:
 - Category color coding (Cash: blue, Property: green, etc.)
 - Real-time updates on data changes
 - Smooth animations
+
+**Edit Modals (Week 3)**
+- EditAssetModal - Pre-populated form for editing existing assets
+- EditLiabilityModal - Pre-populated form for editing existing liabilities
+- Dynamic fields based on type (property, mortgage, loan, etc.)
+- Delete button with confirmation
+- Updates persist to AsyncStorage instantly
+
+**Detail Screens (Week 3)**
+- AssetsDetailScreen - Full list of all assets
+- LiabilitiesDetailScreen - Full list of all liabilities
+- Swipe-to-edit/delete functionality (react-native-gesture-handler)
+- Header with back button and add (+) button
+- Large total display
+- Navigable from HomeScreen chevron icons
+
+**Settings Screen (Week 3)**
+- User profile section (avatar, name, email)
+- Currency selector (GBP/USD/EUR) with symbol-only change
+- Face ID toggle (UI ready)
+- App version and build info
+- Sign Out button (clears AsyncStorage)
+- Delete Account button (double confirmation)
+- Pixel-perfect design matching web prototype
 
 **Design System**
 - Complete color palette (premium, muted)

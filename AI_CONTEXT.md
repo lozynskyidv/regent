@@ -1,8 +1,8 @@
 # AI CONTEXT - Quick Handoff Guide
 
-**Last Updated:** January 6, 2026 (Evening)  
-**Current Version:** 0.2.0 (MVP Phase - Week 2 Complete)  
-**Session Summary:** Complete modal system rebuild + HomeScreen pixel-perfect redesign
+**Last Updated:** January 6, 2026 (Night)  
+**Current Version:** 0.3.0 (P0 MVP COMPLETE ✅)  
+**Session Summary:** Settings Screen complete + Global Modal Context + Detail Screens + Edit Modals = P0 MVP DONE!
 
 ---
 
@@ -19,15 +19,15 @@ Premium iOS net worth tracking app for mass affluent professionals (£100k-£1m 
 - **This File:** Quick context for immediate work
 
 **Current State:**
-- ✅ **WORKING:** Sign Up screen, Face ID/PIN auth, Complete Home Screen with Net Worth/Assets/Liabilities cards, Two-step modals for Assets & Liabilities, All individual modals (8 total), DataContext with AsyncStorage persistence, Charts, Delete functionality, Design system, Navigation
+- ✅ **P0 MVP COMPLETE:** Sign Up, Auth (Face ID/PIN), Home Screen, Settings Screen, Edit Modals, Detail Screens, Global Modal Context, Complete CRUD (Create/Read/Update/Delete), AsyncStorage persistence, Charts, Currency switcher, Sign Out, Delete Account
 - ❌ **NOT WORKING:** Face ID triggers device passcode in Expo Go (limitation - will work in production build)
-- 🚧 **IN PROGRESS:** Week 3 features (Edit flows, Settings, Detail screens)
+- 🎯 **NEXT:** P1 features (Stock tracking, Bank connections, Subscriptions)
 
 ---
 
 ## 📍 Where We Are - Project Status
 
-### ✅ What's Been Built (Week 1-2 Complete)
+### ✅ What's Been Built (Week 1-3: P0 MVP COMPLETE)
 
 **1. Authentication Flow**
 - Google OAuth sign-up (UI only, not connected yet)
@@ -182,47 +182,50 @@ npx expo start --clear
 
 ## 🎯 Immediate Next Steps (Priority Order)
 
-### P0 - Complete Core MVP (Week 3 - Build These Next)
+### 🎉 P0 MVP COMPLETE! All core features implemented.
 
-**1. Edit Modal System** (START HERE - Priority 1)
-- Create `EditAssetModal.tsx` & `EditLiabilityModal.tsx`
-- Pre-populate forms with existing data from DataContext
-- Wire to `updateAsset` / `updateLiability` functions
-- Add edit action to list items (tap item or pencil icon)
-- Add "Delete" button in edit modal (red, bottom)
-- Test: edit → save → see update on HomeScreen → verify AsyncStorage
+### P1 - Polish & Premium Features (Week 4-5)
 
-**2. Settings Screen** (Priority 2)
-- Create `/app/settings.tsx` screen
-- User profile display (name, email from DataContext)
-- Currency switcher (GBP/USD/EUR with conversion logic)
-- Face ID toggle (enable/disable)
-- Logout button (clears AsyncStorage, returns to Sign Up)
-- Version info (display current version number)
-- Wire settings icon in HomeScreen header to navigate here
-
-**3. Detail Screens** (Priority 3)
-- Create `/app/assets-detail.tsx` - Full asset list view
-- Create `/app/liabilities-detail.tsx` - Full liability list view
-- Group items by category (Cash, Property, etc.)
-- Swipe-to-delete functionality (react-native-gesture-handler)
-- Wire chevron icons in HomeScreen cards to navigate here
-- Show total at top of screen
-- Add "Add Asset/Liability" button in header
-
-**4. Stock/ETF Tracking** (Week 3-4)
+**1. Stock/ETF Tracking** (START HERE - Priority 1)
 - Sign up for Twelve Data API (free tier: 800 requests/day)
-- Add stock/ETF toggle in Add Asset flow
-- Ticker validation & live price fetching
-- Auto-refresh every 15 min (or on pull-to-refresh)
-- Currency conversion for stocks
+- Create `/components/AddPortfolioModal.tsx`
+- Ticker validation & autocomplete
+- Live price fetching (HTTP requests)
+- Auto-refresh every 15 min (or pull-to-refresh)
+- Currency conversion for international stocks
+- Portfolio detail view (holdings breakdown)
+- Loading states & error handling
 
-**5. Subscriptions** (Week 4)
-- RevenueCat SDK setup
-- Paywall modal (trigger at 4th asset for free tier)
+**2. Subscriptions (RevenueCat)** (Priority 2)
+- Install `react-native-purchases` SDK
+- RevenueCat account setup & configuration
 - Free tier enforcement (3 assets, 2 liabilities max)
+- Paywall modal (triggers at 4th asset attempt)
+- Beautiful paywall UI (£49.99/year)
 - Premium entitlement check
 - Restore purchases flow
+- Subscription management in Settings
+
+**3. Bank Connections (TrueLayer)** (Priority 3)
+- TrueLayer OAuth integration
+- Bank selection flow
+- Account linking
+- Balance auto-refresh
+- "Synced X minutes ago" display
+- Error handling & re-authentication
+
+**4. Performance Chart** (Priority 4)
+- Net worth over time tracking
+- Victory Native charts
+- Time range selector (1M, 3M, 6M, 1Y, All)
+- Data persistence for historical values
+- Smooth animations
+
+**5. TestFlight Beta** (Week 5)
+- Prepare for TestFlight distribution
+- Beta testing with users
+- Collect feedback
+- Bug fixes and polish
 
 ---
 

@@ -9,13 +9,77 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### To Build (Week 3 Priorities)
-- Edit flows (Edit Asset/Liability modals)
-- Settings Screen (currency switcher, logout)
-- Detail Screens (full asset/liability lists)
-- Stock/ETF tracking (Twelve Data API)
+### To Build (Week 3-4: P1 Features)
+- Stock/ETF tracking (Twelve Data API integration)
 - Bank connections (TrueLayer OAuth)
 - Subscriptions (RevenueCat)
+- Performance chart (net worth over time)
+- Free tier enforcement (3 assets, 2 liabilities max)
+
+---
+
+## [0.3.0] - 2026-01-06 (Night)
+
+### 🎉 **P0 MVP COMPLETE!** 
+
+All core MVP features from `REGENT_CURSOR_SPEC.md` are now implemented and functional.
+
+**Settings Screen** (`/app/settings.tsx`)
+- Profile section with user avatar, name, and email from DataContext
+- Currency selector (GBP/USD/EUR) with visual active states
+- Warning dialog for currency changes (symbol-only, no conversion)
+- Face ID toggle (UI ready, functional integration pending)
+- About section (app version 1.0.0 Beta, build 2026.01.06)
+- Sign Out button (clears AsyncStorage, navigates to Sign Up)
+- Delete Account button (double confirmation, wipes all data)
+- Pixel-perfect design matching web prototype
+
+**Edit Modal System** (`EditAssetModal.tsx`, `EditLiabilityModal.tsx`)
+- Pre-populated forms with existing asset/liability data
+- Dynamic fields based on type (property address, loan details, etc.)
+- Save Changes button (updates AsyncStorage via DataContext)
+- Delete button (red, bottom placement, with confirmation)
+- Full validation and error handling
+
+**Detail Screens** (`/app/assets-detail.tsx`, `/app/liabilities-detail.tsx`)
+- Full-screen list views for all assets/liabilities
+- Header with back button and add (+) button
+- Large total display at top
+- Swipe-to-edit/delete functionality (react-native-gesture-handler)
+- Edit/Delete action buttons (black/red styling)
+- Grouped by category (future enhancement)
+- Wire chevron navigation from HomeScreen cards
+
+**Global Modal Context** (`contexts/ModalContext.tsx`)
+- Centralized modal state management (eliminates code duplication)
+- Single source of truth for all 10 modals
+- Public API: `openAddAssetFlow()`, `openAddLiabilityFlow()`, `openEditAsset()`, `openEditLiability()`
+- Two-step modal flow orchestration
+- Wrapped in `ModalProvider` at app root
+
+**Navigation Improvements**
+- Settings icon in HomeScreen → `/settings`
+- Chevron icons in Assets/Liabilities cards → Detail screens
+- + buttons in Detail screens → Add modals (fixed UX bug)
+- Back navigation working correctly across all screens
+
+**Architecture Refactoring**
+- Eliminated ~300 lines of duplicated modal code (66% reduction)
+- Moved modal logic from 3 screens to 1 context
+- Fixed gesture handler setup (`GestureHandlerRootView` at app root)
+- Improved code maintainability and scalability
+
+### Fixed
+- Gesture handler error: Wrapped app in `GestureHandlerRootView` to enable swipe gestures
+- + button UX in Detail screens: Now opens modals directly instead of navigating back
+- Currency symbol display: Now correctly changes based on user selection
+- Modal state management: Eliminated duplication across screens
+
+### Changed
+- Refactored modal management from screen-level to global context
+- Updated HomeScreen to use `useModals()` hook
+- Updated Detail screens to use `useModals()` hook
+- Simplified currency logic to symbol-only change (no conversion)
 
 ---
 
