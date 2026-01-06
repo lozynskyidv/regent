@@ -1,305 +1,802 @@
 # Regent - Premium Net Worth Tracking
 
-**Status:** 🟢 Clean Setup Complete - Ready to Build  
-**Last Updated:** January 6, 2026  
-**Progress:** Week 1 Complete (25% MVP)
+**Version:** 0.1.0 (MVP Phase)  
+**Platform:** iOS (React Native + Expo)  
+**Target:** Mass Affluent Professionals (£100k-£1m net worth)
 
 ---
 
-## 🎉 Fresh Start Complete!
+## 📖 Documentation Overview
 
-This project was **completely rebuilt** from scratch with stable, production-ready dependencies. All React 19 + incompatibility issues have been eliminated.
+**New to this project? Start here:**
 
-### ✅ What's Fixed
-
-- **React 18.2.0** (stable, not experimental React 19)
-- **Expo SDK 52** (battle-tested, production-ready)
-- **React Native 0.76.5** (latest stable)
-- **0 vulnerabilities** in dependency tree
-- **All packages compatible** with each other
+1. **`AI_CONTEXT.md`** ← START HERE for quick orientation (5 min read)
+2. **`README.md`** ← This file - Technical implementation guide
+3. **`REGENT_CURSOR_SPEC.md`** ← Complete product specification (comprehensive)
+4. **`CHANGELOG.md`** ← What's been built, week by week
 
 ---
 
-## 📁 Project Structure
+## 🎯 Project Vision
+
+Regent is a **premium iOS net worth tracking app** that combines:
+- **Uber-like modernism** (clean, spacious, fast)
+- **JPM private banking restraint** (sophisticated, discreet)
+- **Muted warmth** (NYC/London cityscapes, never cold or sterile)
+
+**Core Value:** Financial clarity for discerning professionals who value discretion over gamification.
+
+---
+
+## 🏗️ Current Implementation Status
+
+### ✅ COMPLETE (Week 1)
+
+**Authentication & Onboarding**
+- Sign Up screen with cityscape background (edge-to-edge design)
+- Google OAuth UI (ready for integration)
+- Face ID authentication with auto-trigger
+- PIN entry fallback (4-digit numeric keypad)
+- Navigation flow: Sign Up → Auth → Home
+
+**Design System**
+- Complete color palette (premium, muted)
+- Typography hierarchy (6 levels)
+- Spacing scale (4pt base unit)
+- Layout system (border radius, shadows)
+- All constants exported from `/constants/`
+
+**Data Architecture**
+- TypeScript interfaces for all data models
+- Asset, Liability, User types defined
+- SubscriptionState, AuthState structures
+- Currency, AssetType, LiabilityType enums
+
+**Developer Experience**
+- Expo Router (file-based routing)
+- TypeScript strict mode
+- Modular folder structure
+- Comprehensive documentation
+
+### 🚧 IN PROGRESS
+
+None currently - ready for Week 2 features
+
+### ❌ NOT STARTED (Planned)
+
+**Week 2 Priorities**
+- Home Screen (Net Worth Card, Assets Card, Liabilities Card)
+- Add Asset modal (manual entry)
+- Add Liability modal (manual entry)
+- AsyncStorage persistence
+- Edit/Delete flows
+
+**Future Phases**
+- Charts (horizontal bar, asset/liability breakdown)
+- Stock tracking (Twelve Data API integration)
+- Bank connections (TrueLayer OAuth)
+- Subscriptions (RevenueCat)
+- Settings screen
+- Currency conversion
+
+---
+
+## 🛠️ Tech Stack
+
+### Core Framework
+- **React Native:** 0.81.5
+- **React:** 19.1.0
+- **Expo SDK:** 54.0.0
+- **TypeScript:** 5.9.0
+- **Node.js:** 18+ (LTS)
+
+### Navigation & Routing
+- **expo-router:** 6.0.0 (file-based routing)
+- **react-navigation:** (via Expo Router)
+
+### Authentication
+- **expo-local-authentication:** 17.0.0 (Face ID/Touch ID)
+- **expo-secure-store:** 15.0.0 (encrypted storage for PIN)
+- `@react-native-google-signin/google-signin` (planned)
+
+### Data & Storage
+- **@react-native-async-storage/async-storage:** 2.2.0 (local persistence)
+- **expo-secure-store:** 15.0.0 (sensitive data)
+
+### UI & Animations
+- **react-native-reanimated:** 4.2.0 (smooth animations)
+- **react-native-gesture-handler:** 2.30.0 (touch interactions)
+- **react-native-safe-area-context:** 5.6.0 (safe area handling)
+- **react-native-svg:** 15.15.0 (icons, charts)
+- **react-native-worklets:** 0.7.1 (Reanimated 4 dependency)
+
+### Planned Integrations
+- **TrueLayer:** Bank account connections (OAuth)
+- **Twelve Data:** Live stock prices
+- **RevenueCat:** Subscription management
+- **Victory Native:** Charts (react-native-victory)
+
+---
+
+## 📂 Project Structure
 
 ```
 regent/
-├── app/                        ✅ Screens (Expo Router)
-│   ├── _layout.tsx            → Navigation wrapper
-│   ├── index.tsx              → Sign Up Screen (complete)
-│   ├── auth.tsx               → Face ID/PIN Screen (complete)
-│   └── home.tsx               → Home Dashboard (placeholder)
-├── constants/                  ✅ Design System
-│   ├── Colors.ts              → Color palette
-│   ├── Typography.ts          → Font styles
-│   ├── Spacing.ts             → Spacing scale
-│   ├── Layout.ts              → Borders, shadows, dimensions
-│   └── index.ts               → Export all
-├── types/                      ✅ TypeScript
-│   └── index.ts               → Asset, Liability, User types
-├── components/                 📁 Empty (Week 2)
-├── hooks/                      📁 Empty (Week 2)
-├── utils/                      📁 Empty (Week 2)
-├── web-prototype/              📚 Reference (Figma code + spec)
+├── app/                              # Expo Router screens
+│   ├── _layout.tsx                  # Root layout (Slot routing)
+│   ├── index.tsx                    # Sign Up screen (/)
+│   ├── auth.tsx                     # Auth screen (/auth)
+│   └── home.tsx                     # Home dashboard (/home) [placeholder]
+│
+├── constants/                        # Design system (COMPLETE)
+│   ├── Colors.ts                    # Color palette
+│   ├── Spacing.ts                   # Spacing scale (xs to 3xl)
+│   ├── Typography.ts                # Font sizes, weights, line heights
+│   ├── Layout.ts                    # Border radius, shadows
+│   └── index.ts                     # Central export
+│
+├── types/                            # TypeScript definitions (COMPLETE)
+│   └── index.ts                     # Asset, Liability, User, etc.
+│
+├── web-prototype/                    # Original Figma React code
 │   └── src/
-│       ├── REGENT_CURSOR_SPEC.md  ← FULL PRODUCT SPEC (100+ pages)
-│       └── components/             ← Web reference code
-├── assets/                     ✅ Icons and images
-├── app.json                    ✅ Expo configuration
-├── package.json                ✅ Dependencies (stable versions)
-└── tsconfig.json               ✅ TypeScript config
+│       ├── components/              # React web components (reference)
+│       └── REGENT_CURSOR_SPEC.md    # Original spec (copied to root)
+│
+├── REGENT_CURSOR_SPEC.md            # Product specification (3000+ lines)
+├── README.md                        # This file
+├── AI_CONTEXT.md                    # Quick handoff guide for AI
+├── CHANGELOG.md                     # Build history
+│
+├── app.json                         # Expo configuration
+├── babel.config.js                  # Babel setup (Reanimated plugin)
+├── package.json                     # Dependencies
+├── tsconfig.json                    # TypeScript config
+└── .gitignore                       # Git ignore rules
 ```
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Setup & Installation
 
-### 1. Start Development Server
+### Prerequisites
+- **Node.js:** 18+ (LTS recommended)
+- **npm** or **yarn**
+- **Expo CLI:** `npm install -g expo-cli`
+- **iOS Simulator:** Xcode 15+ (Mac only)
+- **Physical iPhone:** For Face ID testing
 
+### Installation Steps
+
+1. **Clone & Install**
 ```bash
-cd "/Users/dmytrolozynskyi/Library/CloudStorage/OneDrive-Personal/Regent - Final/regent"
-npm start
-```
-
-### 2. Run on iOS
-
-**Option A: iOS Simulator**
-```bash
-# Press 'i' in the terminal after npm start
-# OR
-npm run ios
-```
-
-**Option B: Physical iPhone (Recommended for Face ID)**
-1. Install **Expo Go** from App Store
-2. Run `npm start`
-3. Scan QR code with Camera app
-4. App opens in Expo Go
-
----
-
-## 📦 Installed Dependencies
-
-### Core
-- `expo` ~52.0.0 - Expo SDK
-- `react` 18.2.0 - React (stable)
-- `react-native` 0.76.5 - React Native
-
-### Navigation
-- `expo-router` ~4.0.0 - File-based routing
-- `react-native-screens` ~4.0.0 - Native screens
-- `react-native-safe-area-context` 4.12.0 - Safe areas
-
-### Authentication & Storage
-- `expo-local-authentication` ~15.0.0 - Face ID/Touch ID
-- `expo-secure-store` ~14.0.0 - Encrypted storage (PIN)
-- `@react-native-async-storage/async-storage` 2.0.0 - Data persistence
-
-### UI & Animations
-- `react-native-reanimated` ~3.16.0 - Smooth animations
-- `react-native-gesture-handler` ~2.20.0 - Touch gestures
-- `react-native-svg` 15.8.0 - Vector graphics
-
-### Utilities
-- `expo-constants` ~17.0.0 - App constants
-- `expo-linking` ~7.0.0 - Deep linking
-- `expo-status-bar` ~2.0.0 - Status bar
-
----
-
-## ✅ What's Built (Week 1)
-
-### 1. **Sign Up Screen** (`app/index.tsx`)
-- Hero section with NYC cityscape
-- Apple/Google/Email sign-in buttons (UI complete)
-- Premium aesthetic with shadows and spacing
-- Navigation to Face ID screen
-
-### 2. **Face ID/PIN Authentication** (`app/auth.tsx`)
-- Native Face ID integration
-- Custom 4-digit PIN keypad
-- Graceful fallback between Face ID ↔ PIN
-- Error handling and validation
-- Smooth animations
-
-### 3. **Home Screen Placeholder** (`app/home.tsx`)
-- Basic layout ready
-- Will build dashboard in Week 2
-
-### 4. **Design System** (`constants/`)
-- Complete color palette
-- Typography scale (display → body → labels)
-- Spacing system (8px → 64px)
-- Shadows, borders, radii
-
-### 5. **TypeScript Types** (`types/`)
-- Asset, Liability, User interfaces
-- Currency, AssetType, LiabilityType enums
-- Subscription and Auth state types
-
----
-
-## 🎨 Design Principles
-
-From REGENT_CURSOR_SPEC.md:
-
-1. **Restrained Modernism** - Clean, spacious, minimal
-2. **Muted Warmth** - Cityscapes, soft gradients
-3. **Typography as Hierarchy** - Font weight creates structure
-4. **Progressive Disclosure** - Show essentials first
-5. **No Gamification** - No streaks, badges, or celebrations
-
-**Color Palette:**
-- Background: `#FAFAFA` (off-white)
-- Foreground: `#1A1A1A` (almost black)
-- Primary: `#1A1A1A` (dark buttons)
-- Muted: `#6B6B6B` (secondary text)
-
----
-
-## 🔮 Next Steps (Week 2)
-
-### Priority 1: Home Screen Dashboard
-- [ ] Net Worth Card (large display with £/$/€)
-- [ ] Assets List (collapsible)
-- [ ] Liabilities List (collapsible)
-- [ ] Add Asset/Liability buttons
-- [ ] Empty state messaging
-
-### Priority 2: Data Persistence
-- [ ] AsyncStorage setup for assets/liabilities
-- [ ] Net worth calculation logic
-- [ ] SecureStore for PIN hash (with bcrypt)
-- [ ] Mock data generator for demo
-
-### Priority 3: Add Asset/Liability Modals
-- [ ] Bottom sheet modal component
-- [ ] Form validation
-- [ ] Currency input with formatting
-- [ ] Category picker (Property, Stocks, Other)
-
----
-
-## 📚 Reference Materials
-
-### In This Repo
-- **Product Spec:** `web-prototype/src/REGENT_CURSOR_SPEC.md` (100+ pages, complete)
-- **Web Prototype:** `web-prototype/src/components/` (reference only)
-- **Design System:** `constants/` (source of truth)
-
-### External
-- **Expo Docs:** https://docs.expo.dev
-- **React Native Docs:** https://reactnative.dev
-- **Expo Router Docs:** https://docs.expo.dev/router/introduction/
-
----
-
-## 🛠️ Development Commands
-
-```bash
-# Start dev server
-npm start
-
-# Run on iOS simulator
-npm run ios
-
-# Run on Android (not configured yet)
-# npm run android
-
-# Clear cache and restart
-npm start -- --clear
-
-# Install new dependency
-npm install <package-name>
-
-# Check TypeScript errors
-npx tsc --noEmit
-```
-
----
-
-## 🐛 Troubleshooting
-
-### "Unable to resolve module..."
-```bash
-npm start -- --clear
-# If still broken:
-rm -rf node_modules package-lock.json
+cd "/path/to/Regent - Final/regent"
 npm install
 ```
 
-### Face ID not working
-- Test on **physical device** (simulator has limited Face ID support)
-- Go to Settings → Face ID → Ensure it's enrolled
-- Check `app.json` has `NSFaceIDUsageDescription`
+2. **Start Development Server**
+```bash
+npm start
+# or
+npx expo start
+```
 
-### App crashes on launch
-- Check Metro bundler terminal for errors
-- Verify all imports are correct (no missing modules)
-- Try running on a different device/simulator
+3. **Run on iOS**
+```bash
+npm run ios
+# or scan QR code in Expo Go app on iPhone
+```
 
----
+4. **Clear Cache (if needed)**
+```bash
+npx expo start --clear
+```
 
-## 📊 Progress Tracker
-
-**MVP Completion: 25%**
-
-| Feature | Status |
-|---------|--------|
-| Sign Up Screen | ✅ Complete |
-| Face ID/PIN Auth | ✅ Complete |
-| Home Dashboard | 🚧 Next |
-| Add Asset | 🚧 Next |
-| Add Liability | 🚧 Next |
-| Charts/Graphs | ⏳ Week 3 |
-| Stock Tracking (Twelve Data) | ⏳ Week 3 |
-| Bank Connection (TrueLayer) | ⏳ Week 3 |
-| Subscription Paywall (RevenueCat) | ⏳ Week 3 |
-| Settings Screen | ⏳ Week 4 |
-| TestFlight Beta | ⏳ Week 4 |
+### Environment Setup (Future)
+Create `.env` file for API keys (not needed for current MVP):
+```env
+EXPO_PUBLIC_GOOGLE_CLIENT_ID=your_google_client_id
+EXPO_PUBLIC_TRUELAYER_CLIENT_ID=your_truelayer_client_id
+EXPO_PUBLIC_TWELVE_DATA_API_KEY=your_twelve_data_key
+EXPO_PUBLIC_REVENUECAT_API_KEY=your_revenuecat_key
+```
 
 ---
 
-## 🎯 MVP Success Criteria
+## 🎨 Design System
 
-From REGENT_CURSOR_SPEC.md, MVP is complete when:
+### Colors (`constants/Colors.ts`)
 
-1. ✅ User can sign up (Google/Apple)
-2. ✅ User can authenticate with Face ID (PIN fallback)
-3. ⏳ User can add/edit/delete assets manually
-4. ⏳ User can add/edit/delete liabilities manually
-5. ⏳ User can connect bank account via TrueLayer
-6. ⏳ User can add stock portfolio (ticker + quantity)
-7. ⏳ App fetches live stock prices via Twelve Data
-8. ⏳ Net worth calculates correctly in real-time
-9. ⏳ Charts display asset/liability breakdowns
-10. ⏳ Currency selection works (GBP/USD/EUR)
-11. ⏳ Subscription paywall implemented (RevenueCat)
-12. ⏳ Data persists between sessions
-13. ⏳ App feels premium and polished
+```typescript
+export const Colors = {
+  // Backgrounds
+  background: '#FAFAFA',      // Off-white, primary screen background
+  card: '#FFFFFF',            // Pure white for cards
+  
+  // Text
+  primary: '#2B3035',         // Dark gray, primary text
+  secondary: '#6E7378',       // Medium gray, secondary text
+  muted: '#8C9196',           // Light gray, tertiary text
+  
+  // Accent
+  accent: '#4A90E2',          // Blue for CTAs, links
+  
+  // Semantic
+  success: '#7ED321',         // Green (positive indicators)
+  destructive: '#D0021B',     // Red (delete, negative)
+  warning: '#F5A623',         // Orange (warnings)
+  
+  // Borders
+  border: '#E1E3E5',          // Subtle borders
+  
+  // Category Colors (Assets)
+  categoryCash: '#4A90E2',         // Blue
+  categoryProperty: '#7ED321',     // Green
+  categoryInvestments: '#9013FE',  // Purple
+  categoryOther: '#9B9B9B',        // Gray
+  
+  // Category Colors (Liabilities)
+  categoryMortgage: '#2C3E50',     // Dark blue
+  categoryLoan: '#F5A623',         // Orange
+  categoryCreditCard: '#D0021B',   // Red
+};
+```
 
-**Target Launch:** Q1 2026
+### Typography (`constants/Typography.ts`)
+
+```typescript
+export const Typography = {
+  // Headings
+  h1: { fontSize: 32, fontWeight: '700', lineHeight: 38 },
+  h2: { fontSize: 28, fontWeight: '700', lineHeight: 34 },
+  h3: { fontSize: 24, fontWeight: '600', lineHeight: 30 },
+  h4: { fontSize: 20, fontWeight: '600', lineHeight: 26 },
+  
+  // Body
+  body: { fontSize: 16, fontWeight: '400', lineHeight: 24 },
+  bodySmall: { fontSize: 14, fontWeight: '400', lineHeight: 20 },
+  
+  // UI Elements
+  button: { fontSize: 16, fontWeight: '600', lineHeight: 22 },
+  caption: { fontSize: 12, fontWeight: '400', lineHeight: 16 },
+  
+  // Display (for large numbers)
+  displayLarge: { fontSize: 56, fontWeight: '700', lineHeight: 62 },
+  displayMedium: { fontSize: 32, fontWeight: '600', lineHeight: 38 },
+};
+```
+
+### Spacing (`constants/Spacing.ts`)
+
+Base unit: 4pt
+
+```typescript
+export const Spacing = {
+  xs: 4,    // Tight spacing
+  sm: 8,    // Small spacing
+  md: 12,   // Medium spacing
+  lg: 16,   // Large spacing
+  xl: 24,   // Extra large
+  '2xl': 32,  // 2x extra large
+  '3xl': 48,  // 3x extra large
+};
+```
+
+### Layout (`constants/Layout.ts`)
+
+```typescript
+export const BorderRadius = {
+  sm: 8,    // Small elements (badges, pills)
+  md: 12,   // Buttons, inputs
+  lg: 16,   // Cards
+  full: 9999, // Circles
+};
+
+export const Shadow = {
+  card: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  // ... more shadow types
+};
+```
 
 ---
 
-## 🤝 Support
+## 📱 Screen Architecture
 
-- Check this README for guidance
-- Review `web-prototype/src/REGENT_CURSOR_SPEC.md` for detailed specs
-- Expo documentation: https://docs.expo.dev
-- React Native documentation: https://reactnative.dev
+### Current Screens
+
+#### 1. Sign Up Screen (`app/index.tsx`)
+**Route:** `/`  
+**Purpose:** First impression, authentication entry point
+
+**Features:**
+- Edge-to-edge cityscape background (NYC skyline)
+- Translucent status bar (cityscape extends behind)
+- Regent logo and tagline
+- Three sign-in options:
+  - Continue with Apple (primary CTA, black)
+  - Continue with Google (secondary, white with Google logo)
+  - Continue with Email (tertiary)
+- "Already have an account? Sign in" link
+- Terms of Service & Privacy Policy links
+
+**Design Notes:**
+- Uses `useSafeAreaInsets` for manual safe area control (not `SafeAreaView`)
+- Hero section height: 320pt (extends behind status bar)
+- StatusBar: `translucent`, `backgroundColor="transparent"`
+- Gradient overlay on cityscape for text legibility
+
+**Navigation:**
+```typescript
+// All sign-in buttons navigate to Auth screen
+router.push('/auth');
+```
+
+#### 2. Auth Screen (`app/auth.tsx`)
+**Route:** `/auth`  
+**Purpose:** Secure authentication via Face ID or PIN
+
+**Features:**
+- **Face ID Mode:**
+  - Auto-triggers on screen load (useEffect)
+  - Shows Face ID icon (concentric circles)
+  - "Use Face ID to access" title
+  - "Authenticate" button (triggers Face ID manually)
+  - "Use PIN instead" link (switches to PIN mode)
+  
+- **PIN Mode:**
+  - "Enter PIN" title
+  - 4 dots (filled as user types)
+  - Numeric keypad (1-9, 0, backspace)
+  - "Use Face ID instead" link (switches back)
+
+**Face ID Implementation:**
+```typescript
+const handleFaceID = async () => {
+  const hasHardware = await LocalAuthentication.hasHardwareAsync();
+  const isEnrolled = await LocalAuthentication.isEnrolledAsync();
+  
+  if (!hasHardware || !isEnrolled) {
+    setShowPIN(true);
+    return;
+  }
+  
+  const result = await LocalAuthentication.authenticateAsync({
+    promptMessage: 'Authenticate to access Regent',
+    cancelLabel: 'Use PIN instead',
+    disableDeviceFallback: true,
+  });
+  
+  if (result.success) {
+    router.replace('/home');
+  } else {
+    setShowPIN(true);
+  }
+};
+```
+
+**Known Limitation:**
+- In Expo Go, Face ID shows device passcode prompt (Expo Go limitation)
+- Authentication validates successfully, just uses passcode UI
+- Will show proper Face ID UI in standalone builds
+
+**Navigation:**
+```typescript
+// On success (Face ID or PIN)
+router.replace('/home');
+```
+
+#### 3. Home Screen (`app/home.tsx`)
+**Route:** `/home`  
+**Purpose:** Main dashboard (net worth, assets, liabilities)
+
+**Current State:** Placeholder only
+```typescript
+// Shows: "Welcome to Regent" + "Home Screen - Coming Soon"
+```
+
+**Planned Implementation (Week 2):**
+- Net Worth Card (large, prominent display)
+- Assets Card (list + chart)
+- Liabilities Card (list + chart)
+- Bottom action bar (Add Asset / Add Liability)
+- Empty states with prompts
+- Pull-to-refresh
 
 ---
 
-## 🔐 Security Notes
+## 💾 Data Architecture
 
-- **PIN Storage:** Will use bcrypt hashing + SecureStore (iOS Keychain)
-- **Bank Data:** TrueLayer OAuth (read-only, account balances only)
-- **No Backend:** All data stored locally (MVP)
-- **FCA Compliance:** App is "informational only" - no investment management
+### TypeScript Interfaces (`types/index.ts`)
+
+#### Asset
+```typescript
+export interface Asset {
+  id: string;                    // UUID
+  name: string;                  // User-defined name
+  value: number;                 // In primary currency
+  type: AssetType;               // 'bank' | 'portfolio' | 'property' | 'other'
+  currency: Currency;            // 'GBP' | 'USD' | 'EUR'
+  createdAt: string;             // ISO timestamp
+  updatedAt: string;             // ISO timestamp
+  metadata?: {
+    // Bank accounts (TrueLayer)
+    accountId?: string;
+    bankName?: string;
+    lastSynced?: string;
+    
+    // Stocks/ETFs (Twelve Data)
+    ticker?: string;
+    quantity?: number;
+    lastPrice?: number;
+    holdings?: StockHolding[];
+    
+    // Properties
+    address?: string;
+    
+    // Generic
+    notes?: string;
+  };
+}
+```
+
+#### Liability
+```typescript
+export interface Liability {
+  id: string;
+  name: string;
+  value: number;                 // Amount owed (always positive)
+  type: LiabilityType;           // 'mortgage' | 'creditcard' | 'loan' | 'other'
+  currency: Currency;
+  createdAt: string;
+  updatedAt: string;
+  metadata?: {
+    interestRate?: string;
+    monthlyPayment?: string;
+    notes?: string;
+  };
+}
+```
+
+#### User
+```typescript
+export interface User {
+  id: string;                    // From Google OAuth
+  email: string;
+  name: string;
+  profilePhotoUrl?: string;
+  primaryCurrency: Currency;     // Default: 'GBP'
+  createdAt: string;
+  lastLoginAt: string;
+  hasFaceIDEnabled: boolean;
+  hasCompletedOnboarding: boolean;
+}
+```
+
+### Data Storage Strategy
+
+#### AsyncStorage (Unencrypted)
+- User profile: `@regent_user`
+- Assets array: `@regent_assets`
+- Liabilities array: `@regent_liabilities`
+- App preferences: `@regent_preferences`
+
+#### SecureStore (Encrypted)
+- PIN hash: `@regent_auth`
+- TrueLayer tokens: `@regent_truelayer_tokens`
+- Google OAuth tokens: `@regent_google_token`
+
+#### Net Worth Calculation
+```typescript
+// Derived data (not stored)
+const netWorth = assets.reduce((sum, asset) => sum + asset.value, 0)
+                - liabilities.reduce((sum, liability) => sum + liability.value, 0);
+```
 
 ---
 
-**Status:** ✅ Ready to build Week 2 features!
+## 🔌 API Integrations (Planned)
 
-Run `npm start` to begin development.
+### 1. Google OAuth
+**Purpose:** User authentication  
+**Library:** `@react-native-google-signin/google-signin`  
+**Status:** UI ready, SDK not integrated yet
+
+**Setup Required:**
+- Google Cloud Console project
+- OAuth 2.0 credentials (iOS client ID)
+- Bundle ID: `com.regent.app`
+
+### 2. Face ID (Expo Local Authentication)
+**Purpose:** Biometric authentication  
+**Library:** `expo-local-authentication`  
+**Status:** ✅ Implemented
+
+**Configuration:**
+```json
+// app.json
+{
+  "ios": {
+    "infoPlist": {
+      "NSFaceIDUsageDescription": "Regent uses Face ID to securely access your financial data."
+    }
+  },
+  "plugins": [
+    ["expo-local-authentication", {
+      "faceIDPermission": "Regent uses Face ID to securely access your financial data."
+    }]
+  ]
+}
+```
+
+### 3. TrueLayer (Banking)
+**Purpose:** Read-only bank account balances  
+**Status:** Not started  
+**Permissions:** `accounts` scope only (NOT `investments`)
+
+**Flow:**
+1. User selects bank (Barclays, HSBC, etc.)
+2. TrueLayer OAuth opens in WebView
+3. User logs into bank
+4. App receives account balances
+5. Auto-creates Assets with metadata
+
+### 4. Twelve Data (Stock Prices)
+**Purpose:** Live stock/ETF prices  
+**Status:** Not started  
+**Free Tier:** 800 requests/day
+
+**Endpoints:**
+- `/price?symbol=AAPL` - Current price
+- `/quote?symbol=AAPL` - Detailed quote
+
+### 5. RevenueCat (Subscriptions)
+**Purpose:** Subscription management  
+**Status:** Not started  
+**Pricing:** £49.99/year
+
+**Free Tier Limits:**
+- 3 assets max
+- 2 liabilities max
+- No bank connections
+- No stock tracking
+
+---
+
+## 🚨 Known Issues & Limitations
+
+### 1. Face ID in Expo Go
+**Issue:** Device passcode prompt instead of Face ID UI  
+**Root Cause:** Expo Go can't use custom `NSFaceIDUsageDescription`  
+**Impact:** Authentication works, just uses passcode fallback  
+**Solution:** Build standalone app (EAS Build) for proper Face ID
+
+**Code Reference:** `app/auth.tsx`, lines 20-56
+
+### 2. React 19 Serialization Issues
+**Issue:** Complex props in native components cause type errors  
+**Root Cause:** React 19 stricter JSI serialization  
+**Workarounds Applied:**
+- Removed `edges` prop from SafeAreaView
+- Removed `animation` and `contentStyle` from Stack
+- Switched to `<Slot />` routing
+
+**Affected Files:**
+- `app/_layout.tsx` (now uses `<Slot />` instead of `<Stack>`)
+- `app/index.tsx` (uses `useSafeAreaInsets` instead of `SafeAreaView` `edges`)
+- `app/auth.tsx` (removed `edges` prop)
+
+### 3. Babel Config Detection
+**Issue:** Metro sometimes detects babel.config.js changes on startup  
+**Solution:** Run with `--clear` flag:
+```bash
+npx expo start --clear
+```
+
+---
+
+## 🧪 Testing
+
+### Manual Testing Checklist
+
+**Authentication Flow:**
+- [ ] Sign Up screen displays correctly (cityscape edge-to-edge)
+- [ ] Tap sign-in button navigates to Auth screen
+- [ ] Face ID auto-triggers on Auth screen load
+- [ ] Can switch to PIN entry
+- [ ] 4-digit PIN entry works (any PIN accepted for now)
+- [ ] Successful auth navigates to Home screen
+
+**Visual Design:**
+- [ ] No gray bar at top of Sign Up screen
+- [ ] Cityscape extends behind status bar
+- [ ] All text is legible (gradient overlay working)
+- [ ] Buttons have correct colors and styles
+- [ ] Spacing matches design system
+
+**Navigation:**
+- [ ] Can navigate Sign Up → Auth → Home
+- [ ] Back navigation works appropriately
+- [ ] No navigation errors in console
+
+### Device-Specific Testing
+
+**iPhone Physical Device:**
+- Face ID authentication (in standalone build)
+- Deep link handling (TrueLayer redirect)
+- SafeArea insets (notch, home indicator)
+- Performance (60fps animations)
+
+**iOS Simulator:**
+- Basic UI testing
+- Navigation flow
+- Layout on different screen sizes
+- Note: Face ID not fully supported
+
+---
+
+## 🐛 Debugging
+
+### Console Logs
+
+**Face ID Debugging:**
+```typescript
+console.log('Biometric Support:', { hasHardware, isEnrolled, supportedTypes });
+console.log('Auth result:', result);
+```
+
+**Navigation Debugging:**
+```typescript
+console.log('Navigating to:', route);
+console.log('Sign in with:', method);
+```
+
+### Common Issues
+
+**1. White screen on launch**
+- Check Metro bundler for errors
+- Clear cache: `npx expo start --clear`
+- Reinstall dependencies: `rm -rf node_modules && npm install`
+
+**2. "Cannot find module"**
+- Restart Metro bundler
+- Check import paths (case-sensitive)
+- Verify file exists
+
+**3. "Unable to resolve module expo-router/entry"**
+- Check `main` field in package.json: `"expo-router/entry"`
+- Run `npx expo install`
+
+**4. Face ID not triggering**
+- Expected in Expo Go (uses passcode)
+- Check console logs for biometric support detection
+- Test on physical device with Face ID enrolled
+
+---
+
+## 📦 Build & Deployment
+
+### Development Build (Expo Go)
+```bash
+# Currently using Expo Go for testing
+npm start
+# Scan QR code with Expo Go app
+```
+
+### Production Build (EAS Build)
+```bash
+# Install EAS CLI
+npm install -g eas-cli
+
+# Login to Expo
+eas login
+
+# Configure project
+eas build:configure
+
+# Build for iOS
+eas build --profile production --platform ios
+
+# Submit to TestFlight
+eas submit --platform ios
+```
+
+### TestFlight Distribution
+1. Build with EAS: `eas build --profile production --platform ios`
+2. Submit to App Store Connect: `eas submit`
+3. Add beta testers in App Store Connect
+4. Testers receive TestFlight invite
+
+---
+
+## 🎯 Development Priorities
+
+### Week 2 (Next Up)
+1. Home Screen UI (Net Worth, Assets, Liabilities cards)
+2. Add Asset modal (manual entry)
+3. Add Liability modal (manual entry)
+4. AsyncStorage implementation
+5. Edit/Delete flows
+
+### Week 3
+1. Horizontal bar charts (Assets/Liabilities breakdown)
+2. Currency selection
+3. Currency conversion (basic)
+4. Empty states polish
+5. Loading states
+
+### Week 4
+1. Stock tracking (Twelve Data integration)
+2. TrueLayer integration (bank connections)
+3. RevenueCat (subscriptions)
+4. Settings screen
+5. Testing & bug fixes
+
+### Week 5
+1. TestFlight build
+2. Beta testing
+3. Feedback implementation
+4. Final polish
+5. App Store submission
+
+---
+
+## 📚 Additional Resources
+
+### Product Documentation
+- **Product Spec:** `REGENT_CURSOR_SPEC.md` (3000+ lines, comprehensive)
+- **User Flows:** Section 3 of spec (10 detailed flows)
+- **Design System:** Section 6 of spec (colors, typography, components)
+- **Integrations:** Section 7 of spec (Google, Face ID, TrueLayer, etc.)
+
+### Code References
+- **Expo Router:** https://docs.expo.dev/router/introduction/
+- **Expo Local Authentication:** https://docs.expo.dev/versions/latest/sdk/local-authentication/
+- **React Native Docs:** https://reactnative.dev/docs/getting-started
+- **TypeScript:** https://www.typescriptlang.org/docs/
+
+### Design Inspiration
+- **Cityscapes:** Unsplash (search "NYC skyline dusk")
+- **UI Patterns:** Apple HIG, iOS native apps
+- **Color Palette:** Muted, professional (avoid bright colors)
+
+---
+
+## 🤝 Contributing
+
+### For AI Developers
+
+**Before Starting:**
+1. Read `AI_CONTEXT.md` (5 min quick orientation)
+2. Skim `REGENT_CURSOR_SPEC.md` sections 1-4 (product context)
+3. Review this README (technical details)
+
+**When Building:**
+- Follow TypeScript interfaces strictly
+- Use design system constants (no hardcoded values)
+- Test on physical iPhone when possible
+- Handle empty states and errors elegantly
+- Save to AsyncStorage after every data change
+
+**When Stuck:**
+- Check `REGENT_CURSOR_SPEC.md` for design intent
+- Review existing screens for patterns
+- Console log liberally for debugging
+- Ask user for clarification if product requirements unclear
+
+---
+
+## 📄 License
+
+**Private Project** - Not open source
+
+---
+
+**Built with ❤️ for discerning professionals who value financial clarity.**
+
+For questions or handoff, see `AI_CONTEXT.md` for quick orientation.
