@@ -9,12 +9,149 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### To Build (Week 2 Priorities)
-- Home Screen implementation (Net Worth, Assets, Liabilities cards)
-- Add Asset modal (manual entry)
-- Add Liability modal (manual entry)
-- AsyncStorage data persistence
-- Edit/Delete flows
+### To Build (Week 3 Priorities)
+- Edit flows (Edit Asset/Liability modals)
+- Settings Screen (currency switcher, logout)
+- Detail Screens (full asset/liability lists)
+- Stock/ETF tracking (Twelve Data API)
+- Bank connections (TrueLayer OAuth)
+- Subscriptions (RevenueCat)
+
+---
+
+## [0.2.0] - 2026-01-06 (Evening)
+
+### Added - Week 2: Core Features Complete ✅
+
+**Home Screen Implementation**
+- `NetWorthCard.tsx` - Large net worth display with "Updated just now" timestamp
+- `AssetsCard.tsx` - Asset breakdown with horizontal bar chart and list
+- `LiabilitiesCard.tsx` - Liability breakdown with horizontal bar chart and list
+- Personalized header with user name and "Overview" title
+- Settings icon (Lucide `Settings`) in header
+- Pixel-perfect alignment with web prototype (exact proportions, typography, spacing)
+
+**Two-Step Modal System**
+- `AssetTypePickerModal.tsx` - First step: select asset type (Bank, Portfolio, Property, Other)
+- `LiabilityTypePickerModal.tsx` - First step: select liability type (Mortgage, Credit Card, Loan, Other)
+- Lucide icons throughout (`Building2`, `TrendingUp`, `Home`, `Plus`, `CreditCard`, `MoreHorizontal`)
+- Smooth modal transitions with `animationType="slide"` and `presentationStyle="pageSheet"`
+
+**Individual Asset Modals**
+- `AddBankModal.tsx` - Bank account entry (TrueLayer placeholder)
+- `AddPropertyModal.tsx` - Property asset entry (name, value, info box)
+- `AddOtherAssetModal.tsx` - Other asset entry (collectibles, vehicles, crypto, etc.)
+- All modals match web prototype: Title Case labels (15px, 500 weight), 56px input height, inline currency symbols
+
+**Individual Liability Modals**
+- `AddMortgageModal.tsx` - Mortgage entry with header "Add" button, property address, lender, interest rate, monthly payment
+- `AddLoanModal.tsx` - Loan entry with header "Add" button, loan type dropdown (Personal, Car, Student), all fields
+- `AddOtherLiabilityModal.tsx` - Other liability entry with info box
+- Dropdown implementation with `ChevronDown` icon for loan type selection
+
+**Data Layer**
+- `contexts/DataContext.tsx` - Global state management with React Context API
+- `utils/storage.ts` - AsyncStorage helpers (`saveAssets`, `loadAssets`, `saveLiabilities`, `loadLiabilities`)
+- `utils/generateId.ts` - UUID generation for assets/liabilities
+- Auto-persistence: All data saves to AsyncStorage on every create/delete action
+- Exposes `totalAssets`, `totalLiabilities`, `primaryCurrency` for UI consumption
+
+**Charts & Visualizations**
+- Horizontal bar charts for asset/liability breakdown
+- Category color coding (Cash: blue, Property: green, Investments: purple, etc.)
+- Real-time chart updates on data changes
+- Smooth animations
+
+**Delete Functionality**
+- Long-press on asset/liability items to delete
+- Confirmation alerts before deletion
+- Net worth recalculates immediately
+- Data persists to AsyncStorage
+
+**Dependencies**
+- Installed `lucide-react-native` (0.562.0) for professional icons
+- Fixed React version mismatch: locked `react` to `^19.1.0` in package.json
+- Reinstalled all dependencies to resolve version conflicts
+
+### Fixed
+
+**React Version Mismatch**
+- Error: "Incompatible React versions" (react: 19.2.3 vs react-native-renderer: 19.1.0)
+- Solution: Explicitly set `react: "^19.1.0"` in package.json
+- Deleted node_modules and package-lock.json, reinstalled with `npm install`
+- Restarted dev server with `npx expo start --ios --clear`
+
+**Port Conflict**
+- Error: Port 8081 already in use
+- Solution: Killed process using `lsof -ti:8081 | xargs kill -9`
+- Restarted server successfully
+
+**Design Inconsistencies (Complete Overhaul)**
+- **Initial Issues:** Net Worth typography too small, missing header personalization, wrong card styles, emoji usage, spacing mismatches
+- **Precision Audit:** Fixed subtle inconsistencies:
+  - Header userName letterSpacing: 0.5 → 0.42 (0.03em)
+  - Net Worth label letterSpacing: 0.8 → 0.75 (0.05em)
+  - Net Worth amount lineHeight: 62 → 61.6 (1.1 × 56)
+  - Assets/Liabilities total lineHeight: 31 → 31.2 (1.3 × 24)
+  - List item gap: 8px → 12px (Spacing.sm for space-y-3)
+  - Net Worth card bottom margin: 16px → 24px (mb-6)
+- **Modal System Issues:** Fixed architecture mismatch (submit button now inside form), typography (Title Case labels), input styling (56px height, inline currency), added info boxes
+
+### Changed
+
+**Home Screen Architecture**
+- Replaced placeholder with fully functional dashboard
+- Integrated DataContext for reactive state management
+- Added pull-to-refresh support (placeholder for future API refresh)
+- Implemented empty states with "Add your first asset" prompts
+
+**Modal Flow**
+- Changed from single-step to two-step process (type picker → specific form)
+- Matches web prototype exactly
+- Better UX: clear separation of concerns, easier to extend
+
+**Typography Scale**
+- Net Worth amount increased to 56pt (from 32pt) to match web prototype
+- Labels changed from ALL CAPS to Title Case
+- Adjusted line heights and letter spacing for pixel-perfect alignment
+
+**Icon System**
+- Replaced all emoji placeholders with Lucide React Native icons
+- Consistent 24pt icon size throughout
+- Professional, modern appearance
+
+### Technical Details
+
+**File Structure**
+```
+components/
+├── AssetTypePickerModal.tsx       (Two-step flow, Lucide icons)
+├── LiabilityTypePickerModal.tsx   (Two-step flow, Lucide icons)
+├── AddBankModal.tsx               (Bank account form)
+├── AddPropertyModal.tsx           (Property asset form)
+├── AddOtherAssetModal.tsx         (Other asset form)
+├── AddMortgageModal.tsx           (Mortgage liability form with header button)
+├── AddLoanModal.tsx               (Loan liability form with dropdown)
+├── AddOtherLiabilityModal.tsx     (Other liability form)
+├── NetWorthCard.tsx               (Net worth display)
+├── AssetsCard.tsx                 (Asset breakdown card)
+└── LiabilitiesCard.tsx            (Liability breakdown card)
+
+contexts/
+└── DataContext.tsx                (Global state + AsyncStorage)
+
+utils/
+├── storage.ts                     (AsyncStorage helpers)
+└── generateId.ts                  (UUID generation)
+```
+
+**Package Versions (Updated)**
+```json
+{
+  "react": "^19.1.0",
+  "lucide-react-native": "^0.562.0"
+}
+```
 
 ---
 

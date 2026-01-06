@@ -1,8 +1,8 @@
 # AI CONTEXT - Quick Handoff Guide
 
-**Last Updated:** January 6, 2026  
-**Current Version:** 0.1.0 (MVP Phase - Week 1 Complete)  
-**Session Summary:** Fresh start after Face ID implementation
+**Last Updated:** January 6, 2026 (Evening)  
+**Current Version:** 0.2.0 (MVP Phase - Week 2 Complete)  
+**Session Summary:** Complete modal system rebuild + HomeScreen pixel-perfect redesign
 
 ---
 
@@ -19,15 +19,15 @@ Premium iOS net worth tracking app for mass affluent professionals (£100k-£1m 
 - **This File:** Quick context for immediate work
 
 **Current State:**
-- ✅ **WORKING:** Sign Up screen, Face ID/PIN auth, Home screen (placeholder), Design system, Navigation
+- ✅ **WORKING:** Sign Up screen, Face ID/PIN auth, Complete Home Screen with Net Worth/Assets/Liabilities cards, Two-step modals for Assets & Liabilities, All individual modals (8 total), DataContext with AsyncStorage persistence, Charts, Delete functionality, Design system, Navigation
 - ❌ **NOT WORKING:** Face ID triggers device passcode in Expo Go (limitation - will work in production build)
-- 🚧 **IN PROGRESS:** None (ready for next features)
+- 🚧 **IN PROGRESS:** Week 3 features (Edit flows, Settings, Detail screens)
 
 ---
 
 ## 📍 Where We Are - Project Status
 
-### ✅ What's Been Built (Week 1 Complete)
+### ✅ What's Been Built (Week 1-2 Complete)
 
 **1. Authentication Flow**
 - Google OAuth sign-up (UI only, not connected yet)
@@ -45,63 +45,107 @@ Premium iOS net worth tracking app for mass affluent professionals (£100k-£1m 
 **3. Core Screens**
 - `app/index.tsx` - Sign Up screen (cityscape background, edge-to-edge)
 - `app/auth.tsx` - Face ID/PIN authentication
-- `app/home.tsx` - Placeholder home screen
+- `app/home.tsx` - **COMPLETE Home Screen** with Net Worth, Assets, Liabilities cards
 - `app/_layout.tsx` - Root layout (using `<Slot />` for routing)
 
-**4. Data Models**
+**4. Components (11 NEW)**
+- `NetWorthCard.tsx` - Net worth display with "Updated just now"
+- `AssetsCard.tsx` - Asset breakdown with chart + list
+- `LiabilitiesCard.tsx` - Liability breakdown with chart + list
+- `AssetTypePickerModal.tsx` - Two-step flow, Lucide icons
+- `LiabilityTypePickerModal.tsx` - Two-step flow, Lucide icons
+- `AddBankModal.tsx` - Bank account entry
+- `AddPropertyModal.tsx` - Property asset entry
+- `AddOtherAssetModal.tsx` - Other asset entry
+- `AddMortgageModal.tsx` - Mortgage entry (header button, all fields)
+- `AddLoanModal.tsx` - Loan entry (dropdown, all fields)
+- `AddOtherLiabilityModal.tsx` - Other liability entry
+
+**5. Data Layer**
 - TypeScript types defined (`/types/index.ts`)
 - Asset, Liability, User, SubscriptionState interfaces
 - Currency, AssetType, LiabilityType enums
+- **DataContext** with React Context API (global state)
+- **AsyncStorage persistence** (auto-save on every action)
+- CRUD operations: Create, Read, Delete (Update coming in Week 3)
 
-**5. Tech Stack**
+**6. Tech Stack**
 - Expo SDK 54
-- React 19.1.0
+- React 19.1.0 (locked)
 - React Native 0.81.5
 - TypeScript 5.9
 - Expo Router (file-based routing)
+- Lucide React Native 0.562.0 (icons)
 
 ---
 
-## 🔥 Recent Changes (Last Session - Jan 6, 2026)
+## 🔥 Recent Changes (Last Session - Jan 6, 2026 Evening)
 
-### What We Just Fixed
+### What We Just Built (Week 2 Complete ✅)
 
-**Problem 1: Face ID Not Triggering**
-- **Issue:** Face ID was asking for device passcode instead of showing Face ID UI
-- **Root Cause:** Expo Go limitation - can't use custom `NSFaceIDUsageDescription` from `app.json`
+**Major Feature: Complete Home Screen**
+- **Net Worth Card** with large 56pt display, "Updated just now" timestamp
+- **Assets Card** with horizontal bar chart, category breakdown, and list of all assets
+- **Liabilities Card** with horizontal bar chart, category breakdown, and list of all liabilities
+- Personalized header with user name and "Overview" title
+- Settings icon (Lucide `Settings`) in header
+- Pull-to-refresh support (placeholder for future API integration)
+- Pixel-perfect alignment with web prototype (exact proportions, typography, spacing)
+
+**Major Feature: Two-Step Modal System**
+- **Step 1:** Type Picker modal (select Bank, Portfolio, Property, Other for assets)
+- **Step 2:** Specific form modal (tailored fields for each type)
+- All modals use Lucide icons (replaced emoji placeholders)
+- Smooth transitions with `animationType="slide"` and `presentationStyle="pageSheet"`
+- Architecture matches web prototype exactly
+
+**Individual Modals (8 Total):**
+- `AddBankModal.tsx` - Bank account entry (TrueLayer placeholder)
+- `AddPropertyModal.tsx` - Property entry (name, value, info box)
+- `AddOtherAssetModal.tsx` - Other asset entry (collectibles, vehicles, crypto)
+- `AddMortgageModal.tsx` - Mortgage entry (header "Add" button, property address, lender, rates, payments)
+- `AddLoanModal.tsx` - Loan entry (header "Add" button, dropdown for type, lender, rates)
+- `AddOtherLiabilityModal.tsx` - Other liability entry (info box)
+- All modals: Title Case labels (15px, 500 weight), 56px input height, inline currency symbols
+
+**Data Layer Complete:**
+- `DataContext.tsx` - Global state with React Context API
+- `AsyncStorage` persistence - auto-saves on every create/delete action
+- Exposes `totalAssets`, `totalLiabilities`, `primaryCurrency` for UI
+- Delete functionality with confirmation alerts
+- Net worth recalculates in real-time
+
+**Charts & Visualizations:**
+- Horizontal bar charts for asset/liability breakdown
+- Category color coding (Cash: blue, Property: green, Investments: purple, etc.)
+- Real-time updates on data changes
+- Smooth animations
+
+### Technical Issues Resolved
+
+**React Version Mismatch**
+- **Issue:** "Incompatible React versions" error after installing `lucide-react-native`
+- **Root Cause:** React 19.2.3 vs react-native-renderer 19.1.0 mismatch
 - **Solution:** 
-  - Added `expo-local-authentication` plugin to `app.json`
-  - Set `disableDeviceFallback: true` to force biometric-only
-  - Added auto-trigger Face ID on Auth screen load (`useEffect`)
-  - Added console logging for debugging
-- **Current State:** Authentication WORKS (validates successfully), but uses device passcode in Expo Go. Will use Face ID properly in standalone build.
+  - Explicitly locked `react: "^19.1.0"` in package.json
+  - Deleted node_modules and package-lock.json
+  - Reinstalled with `npm install`
+  - Restarted dev server with `npx expo start --ios --clear`
+- **Current State:** ✅ FIXED - No more version errors
 
-**Problem 2: Gray Bar at Top of Sign Up Screen**
-- **Issue:** Status bar area showed gray background instead of edge-to-edge cityscape
-- **Root Cause:** `SafeAreaView` was adding padding at top
-- **Solution:**
-  - Replaced `SafeAreaView` with regular `View`
-  - Used `useSafeAreaInsets` hook for manual safe area control
-  - Set `StatusBar` to `translucent` with `backgroundColor="transparent"`
-  - Increased hero section height (280 → 320) to extend behind status bar
-  - Added bottom padding for home indicator
-- **Current State:** ✅ FIXED - Cityscape extends edge-to-edge beautifully
+**Design Inconsistencies**
+- **Issue:** HomeScreen didn't match web prototype (typography, spacing, icons)
+- **Solution:** Complete redesign with pixel-perfect alignment
+  - Fixed all typography (sizes, weights, line heights, letter spacing)
+  - Replaced emoji with Lucide icons throughout
+  - Adjusted all spacing to match web prototype exactly
+  - Rebuilt modal architecture (submit button inside form, not footer)
+- **Current State:** ✅ FIXED - Matches web prototype exactly
 
-### Technical Decisions Made
-
-**1. Navigation Architecture**
-- Using `<Slot />` instead of `<Stack>` in `_layout.tsx`
-- Why: React 19 + Expo SDK 54 + New Architecture had serialization issues with complex `Stack` props
-- Simplified to basic routing - will enhance later
-
-**2. New Architecture Enabled**
-- `newArchEnabled: true` in `app.json`
-- Why: Expo Go always enables it, so we match to avoid runtime mismatches
-
-**3. Dependencies Added**
-- `expo-asset` - Required by Expo Router
-- `expo-font` - Font loading support
-- `react-native-worklets` - Required by react-native-reanimated v4
+**Port Conflict**
+- **Issue:** Port 8081 already in use after restart
+- **Solution:** `lsof -ti:8081 | xargs kill -9`
+- **Current State:** ✅ FIXED - Server running smoothly
 
 ---
 
@@ -138,39 +182,47 @@ npx expo start --clear
 
 ## 🎯 Immediate Next Steps (Priority Order)
 
-### P0 - Core MVP Features (Build These Next)
+### P0 - Complete Core MVP (Week 3 - Build These Next)
 
-**1. Home Screen Implementation** (Week 2 Priority)
-- Net Worth Card (large display: £0 initially)
-- Assets Card (list view, no chart yet)
-- Liabilities Card (list view, no chart yet)
-- Empty states with "Add your first asset" prompts
-- Bottom action bar (Add Asset / Add Liability buttons)
+**1. Edit Modal System** (START HERE - Priority 1)
+- Create `EditAssetModal.tsx` & `EditLiabilityModal.tsx`
+- Pre-populate forms with existing data from DataContext
+- Wire to `updateAsset` / `updateLiability` functions
+- Add edit action to list items (tap item or pencil icon)
+- Add "Delete" button in edit modal (red, bottom)
+- Test: edit → save → see update on HomeScreen → verify AsyncStorage
 
-**2. Add Asset Modal** (Week 2)
-- Manual entry form (name, category, value)
-- Categories: Cash, Property, Investments, Other
-- Currency input (large, centered)
-- Validation (required fields, positive values)
-- Save to AsyncStorage
-- Update home screen immediately
+**2. Settings Screen** (Priority 2)
+- Create `/app/settings.tsx` screen
+- User profile display (name, email from DataContext)
+- Currency switcher (GBP/USD/EUR with conversion logic)
+- Face ID toggle (enable/disable)
+- Logout button (clears AsyncStorage, returns to Sign Up)
+- Version info (display current version number)
+- Wire settings icon in HomeScreen header to navigate here
 
-**3. Add Liability Modal** (Week 2)
-- Similar to Add Asset
-- Categories: Mortgage, Loan, Credit Card, Other
-- Manual entry only (no bank connections yet)
+**3. Detail Screens** (Priority 3)
+- Create `/app/assets-detail.tsx` - Full asset list view
+- Create `/app/liabilities-detail.tsx` - Full liability list view
+- Group items by category (Cash, Property, etc.)
+- Swipe-to-delete functionality (react-native-gesture-handler)
+- Wire chevron icons in HomeScreen cards to navigate here
+- Show total at top of screen
+- Add "Add Asset/Liability" button in header
 
-**4. Data Persistence** (Week 2)
-- AsyncStorage implementation
-- Auto-save on every action
-- Load data on app launch
-- Handle app lifecycle (background/foreground)
+**4. Stock/ETF Tracking** (Week 3-4)
+- Sign up for Twelve Data API (free tier: 800 requests/day)
+- Add stock/ETF toggle in Add Asset flow
+- Ticker validation & live price fetching
+- Auto-refresh every 15 min (or on pull-to-refresh)
+- Currency conversion for stocks
 
-**5. Edit/Delete Flows** (Week 2)
-- Tap asset/liability to edit
-- Swipe left to delete
-- Confirmation dialogs
-- Update net worth on change
+**5. Subscriptions** (Week 4)
+- RevenueCat SDK setup
+- Paywall modal (trigger at 4th asset for free tier)
+- Free tier enforcement (3 assets, 2 liabilities max)
+- Premium entitlement check
+- Restore purchases flow
 
 ---
 
@@ -182,7 +234,24 @@ regent/
 │   ├── _layout.tsx              # Root layout (Slot-based routing)
 │   ├── index.tsx                # Sign Up screen ✅ DONE
 │   ├── auth.tsx                 # Face ID/PIN auth ✅ DONE
-│   └── home.tsx                 # Home dashboard 🚧 Placeholder
+│   └── home.tsx                 # Home dashboard ✅ COMPLETE
+├── components/                   # React Native components ✅ NEW (Week 2)
+│   ├── NetWorthCard.tsx         # Net worth display
+│   ├── AssetsCard.tsx           # Asset breakdown card
+│   ├── LiabilitiesCard.tsx      # Liability breakdown card
+│   ├── AssetTypePickerModal.tsx     # Two-step flow (step 1)
+│   ├── LiabilityTypePickerModal.tsx # Two-step flow (step 1)
+│   ├── AddBankModal.tsx         # Bank account entry
+│   ├── AddPropertyModal.tsx     # Property entry
+│   ├── AddOtherAssetModal.tsx   # Other asset entry
+│   ├── AddMortgageModal.tsx     # Mortgage entry
+│   ├── AddLoanModal.tsx         # Loan entry
+│   └── AddOtherLiabilityModal.tsx # Other liability entry
+├── contexts/                     # React Context ✅ NEW (Week 2)
+│   └── DataContext.tsx          # Global state + AsyncStorage
+├── utils/                        # Helper functions ✅ NEW (Week 2)
+│   ├── storage.ts               # AsyncStorage helpers
+│   └── generateId.ts            # UUID generation
 ├── constants/                    # Design system ✅ COMPLETE
 │   ├── Colors.ts                # Color palette
 │   ├── Spacing.ts               # Spacing scale (4pt base)
@@ -348,25 +417,31 @@ const assets = data ? JSON.parse(data) : [];
 
 ### For Next AI Developer
 
-**What Works:**
+**What Works Perfectly:**
 - Design system is solid and complete
 - Navigation flow is stable
 - Auth UI is polished
 - TypeScript types are comprehensive
+- ✅ **Home Screen is COMPLETE** (Net Worth, Assets, Liabilities cards)
+- ✅ **Two-step modal system is COMPLETE** (8 modals total)
+- ✅ **Data persistence is COMPLETE** (AsyncStorage auto-saves)
+- ✅ **CRUD operations:** Create ✅, Read ✅, Delete ✅, Update ❌ (coming Week 3)
 
-**What Needs Attention:**
-- Home screen is empty (placeholder text only)
-- No data persistence yet (AsyncStorage not implemented)
-- No Add Asset/Liability modals yet
-- Google OAuth UI exists but not connected to real auth
+**What Needs Attention (Week 3 Priorities):**
+- Edit flows (can't edit assets/liabilities yet, only delete)
+- Settings screen (no way to change currency or logout)
+- Detail screens (no full list view yet)
+- Stock tracking (no Twelve Data API integration)
+- Bank connections (no TrueLayer OAuth)
+- Subscriptions (no RevenueCat paywall)
 
 **Best Starting Point:**
 1. Read this file completely (you just did! ✅)
-2. Skim `REGENT_CURSOR_SPEC.md` sections 1-4 (get product context)
-3. Read `README.md` for technical details
-4. Start building Home Screen (follow spec section 4, screen 3)
+2. Review `CHANGELOG.md` to see what was built in Week 2
+3. Look at `HomeScreen` and `DataContext` to understand current architecture
+4. Start building Edit Modal System (Priority 1 for Week 3)
 
-**Time Estimate:** Week 2 features = 10-15 hours of development
+**Time Estimate:** Week 3 features = 8-12 hours of development (Edit + Settings + Details)
 
 ---
 

@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.1.0 (MVP Phase)  
+**Version:** 0.2.0 (MVP Phase - Week 2 Complete)  
 **Platform:** iOS (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)
 
@@ -30,7 +30,7 @@ Regent is a **premium iOS net worth tracking app** that combines:
 
 ## 🏗️ Current Implementation Status
 
-### ✅ COMPLETE (Week 1)
+### ✅ COMPLETE (Week 1-2)
 
 **Authentication & Onboarding**
 - Sign Up screen with cityscape background (edge-to-edge design)
@@ -38,6 +38,45 @@ Regent is a **premium iOS net worth tracking app** that combines:
 - Face ID authentication with auto-trigger
 - PIN entry fallback (4-digit numeric keypad)
 - Navigation flow: Sign Up → Auth → Home
+
+**Home Screen Dashboard**
+- NetWorthCard with large 56pt display, "Updated just now" timestamp
+- AssetsCard with horizontal bar chart, category breakdown, and list
+- LiabilitiesCard with horizontal bar chart, category breakdown, and list
+- Personalized header with user name and "Overview" title
+- Settings icon (Lucide `Settings`) in header
+- Pull-to-refresh support (ready for API integration)
+- Empty states with "Add your first asset" prompts
+- Pixel-perfect alignment with web prototype
+
+**Two-Step Modal System**
+- AssetTypePickerModal (Bank, Portfolio, Property, Other)
+- LiabilityTypePickerModal (Mortgage, Credit Card, Loan, Other)
+- All using Lucide React Native icons
+- Smooth slide-up animations
+
+**Individual Modals (8 Total)**
+- AddBankModal - Bank account entry (TrueLayer placeholder)
+- AddPropertyModal - Property asset entry
+- AddOtherAssetModal - Other asset entry (collectibles, vehicles, crypto)
+- AddMortgageModal - Mortgage entry (header button, all fields)
+- AddLoanModal - Loan entry (dropdown for type, all fields)
+- AddOtherLiabilityModal - Other liability entry
+- All modals: Title Case labels, 56px inputs, inline currency symbols
+
+**Data Layer & Persistence**
+- DataContext with React Context API (global state management)
+- AsyncStorage implementation (auto-save on every action)
+- CRUD operations: Create ✅, Read ✅, Delete ✅ (Update coming Week 3)
+- UUID generation for all entities
+- Real-time net worth calculation
+- Data loads on app launch, persists between sessions
+
+**Charts & Visualizations**
+- Horizontal bar charts for asset/liability breakdown
+- Category color coding (Cash: blue, Property: green, etc.)
+- Real-time updates on data changes
+- Smooth animations
 
 **Design System**
 - Complete color palette (premium, muted)
@@ -57,27 +96,21 @@ Regent is a **premium iOS net worth tracking app** that combines:
 - TypeScript strict mode
 - Modular folder structure
 - Comprehensive documentation
+- Lucide React Native icons
 
-### 🚧 IN PROGRESS
+### 🚧 IN PROGRESS (Week 3)
 
-None currently - ready for Week 2 features
+- Edit Modal System (updateAsset/updateLiability)
+- Settings Screen (currency switcher, logout)
+- Detail Screens (full asset/liability lists)
 
 ### ❌ NOT STARTED (Planned)
 
-**Week 2 Priorities**
-- Home Screen (Net Worth Card, Assets Card, Liabilities Card)
-- Add Asset modal (manual entry)
-- Add Liability modal (manual entry)
-- AsyncStorage persistence
-- Edit/Delete flows
-
-**Future Phases**
-- Charts (horizontal bar, asset/liability breakdown)
-- Stock tracking (Twelve Data API integration)
+**Week 3-4 Priorities**
+- Stock/ETF tracking (Twelve Data API integration)
 - Bank connections (TrueLayer OAuth)
-- Subscriptions (RevenueCat)
-- Settings screen
-- Currency conversion
+- Subscriptions (RevenueCat paywall)
+- Currency conversion with live exchange rates
 
 ---
 
@@ -109,6 +142,7 @@ None currently - ready for Week 2 features
 - **react-native-safe-area-context:** 5.6.0 (safe area handling)
 - **react-native-svg:** 15.15.0 (icons, charts)
 - **react-native-worklets:** 0.7.1 (Reanimated 4 dependency)
+- **lucide-react-native:** 0.562.0 (professional icons)
 
 ### Planned Integrations
 - **TrueLayer:** Bank account connections (OAuth)
@@ -126,7 +160,27 @@ regent/
 │   ├── _layout.tsx                  # Root layout (Slot routing)
 │   ├── index.tsx                    # Sign Up screen (/)
 │   ├── auth.tsx                     # Auth screen (/auth)
-│   └── home.tsx                     # Home dashboard (/home) [placeholder]
+│   └── home.tsx                     # Home dashboard (/home) ✅ COMPLETE
+│
+├── components/                       # React Native components ✅ NEW (Week 2)
+│   ├── NetWorthCard.tsx             # Net worth display card
+│   ├── AssetsCard.tsx               # Asset breakdown card with chart
+│   ├── LiabilitiesCard.tsx          # Liability breakdown card with chart
+│   ├── AssetTypePickerModal.tsx     # Two-step flow (step 1) - select asset type
+│   ├── LiabilityTypePickerModal.tsx # Two-step flow (step 1) - select liability type
+│   ├── AddBankModal.tsx             # Bank account entry modal
+│   ├── AddPropertyModal.tsx         # Property asset entry modal
+│   ├── AddOtherAssetModal.tsx       # Other asset entry modal
+│   ├── AddMortgageModal.tsx         # Mortgage liability entry modal
+│   ├── AddLoanModal.tsx             # Loan liability entry modal
+│   └── AddOtherLiabilityModal.tsx   # Other liability entry modal
+│
+├── contexts/                         # React Context ✅ NEW (Week 2)
+│   └── DataContext.tsx              # Global state + AsyncStorage persistence
+│
+├── utils/                            # Helper functions ✅ NEW (Week 2)
+│   ├── storage.ts                   # AsyncStorage helpers (save/load assets/liabilities)
+│   └── generateId.ts                # UUID generation for entities
 │
 ├── constants/                        # Design system (COMPLETE)
 │   ├── Colors.ts                    # Color palette
@@ -395,18 +449,57 @@ router.replace('/home');
 **Route:** `/home`  
 **Purpose:** Main dashboard (net worth, assets, liabilities)
 
-**Current State:** Placeholder only
+**Current State:** ✅ COMPLETE (Week 2)
+
+**Features:**
+- **Header:**
+  - User name display (personalized, e.g., "Dmytro")
+  - "Overview" title
+  - "Updated just now" timestamp
+  - Settings icon (Lucide `Settings`, navigates to Settings screen)
+  
+- **Net Worth Card:**
+  - Large 56pt display of total net worth (£0 initially)
+  - "NET WORTH" label (uppercase, 12px, muted, letter-spacing 0.75)
+  - Real-time calculation (totalAssets - totalLiabilities)
+  - Bottom margin: 24px (matches web prototype mb-6)
+
+- **Assets Card:**
+  - "Assets" title with "+ Add Asset" button (Lucide `Plus` icon)
+  - Total assets amount display (24px, bold)
+  - Horizontal bar chart (category breakdown)
+  - List of all assets (name, value, category icon)
+  - Chevron icon (navigates to Assets Detail screen)
+  - Empty state: "No assets yet" with prompt
+
+- **Liabilities Card:**
+  - "Liabilities" title with "+ Add Liability" button
+  - Total liabilities amount display (24px, bold)
+  - Horizontal bar chart (category breakdown)
+  - List of all liabilities (name, value, category icon)
+  - Chevron icon (navigates to Liabilities Detail screen)
+  - Empty state: "No liabilities yet" with prompt
+
+**Navigation:**
 ```typescript
-// Shows: "Welcome to Regent" + "Home Screen - Coming Soon"
+// Tap "+ Add Asset" → Shows AssetTypePickerModal
+// Tap "+ Add Liability" → Shows LiabilityTypePickerModal
+// Tap Settings icon → Navigate to /settings (coming Week 3)
+// Tap Chevron on Assets → Navigate to /assets-detail (coming Week 3)
+// Tap Chevron on Liabilities → Navigate to /liabilities-detail (coming Week 3)
 ```
 
-**Planned Implementation (Week 2):**
-- Net Worth Card (large, prominent display)
-- Assets Card (list + chart)
-- Liabilities Card (list + chart)
-- Bottom action bar (Add Asset / Add Liability)
-- Empty states with prompts
-- Pull-to-refresh
+**Data Flow:**
+```typescript
+// Uses DataContext for global state
+const { assets, liabilities, totalAssets, totalLiabilities, primaryCurrency } = useData();
+
+// Net worth calculated in real-time
+const netWorth = totalAssets - totalLiabilities;
+
+// Charts update automatically when data changes
+// AsyncStorage saves on every create/delete action
+```
 
 ---
 
