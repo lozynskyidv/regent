@@ -41,9 +41,15 @@ export default function PaywallScreen() {
         return;
       }
 
-      // Purchase the first package (annual subscription with 14-day trial)
-      const annualPackage = packages[0];
+      // Purchase the annual package (should be the premium product)
+      // Find the annual package explicitly
+      const annualPackage = packages.find(pkg => pkg.packageType === 'ANNUAL') || packages[0];
       console.log('💳 Starting purchase for:', annualPackage.identifier);
+      console.log('📦 Package details:', {
+        identifier: annualPackage.identifier,
+        productIdentifier: annualPackage.product.identifier,
+        price: annualPackage.product.priceString,
+      });
       
       await purchasePackage(annualPackage);
       
