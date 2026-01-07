@@ -501,6 +501,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
     // Set auth processing lock to block other auth operations
     setIsAuthProcessing(true);
     
+    // CRITICAL: Clear auth state IMMEDIATELY to prevent AuthGuard flash
+    console.log('🔄 Clearing auth state immediately...');
+    setSupabaseUser(null);
+    setIsAuthenticated(false);
+    setAccessToken(null);
+    console.log('✅ Auth state cleared - user now appears unauthenticated');
+    
     try {
       const supabase = getSupabaseClient();
       
@@ -554,19 +561,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       console.log('⏳ Auth cooldown: Waiting 1000ms for AsyncStorage to settle...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // STEP 5: Clear local React state (triggers AuthGuard redirect)
-      console.log('🔐 DataContext: Clearing local auth state (will trigger redirect)...');
-      setSupabaseUser(null);
-      setIsAuthenticated(false);
-      setAccessToken(null); // Clear stored token
-      
       console.log('✅ Signed out successfully - Fresh client ready for next sign-in');
     } catch (err) {
       console.error('❌ Sign out error:', err);
-      // Even if there's an error, clear local state to unblock UI
-      setSupabaseUser(null);
-      setIsAuthenticated(false);
-      setAccessToken(null); // Clear stored token even on error
+      // Auth state already cleared at the start, just throw the error
       throw err;
     } finally {
       // Always release the lock, even if there's an error
@@ -665,6 +663,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
         throw fetchError;
       }
 
+      // CRITICAL: Clear React state FIRST to prevent AuthGuard flash
+      // This immediately marks user as unauthenticated before async operations
+      log('🔄 Clearing React state immediately...');
+      setAssets([]);
+      setLiabilities([]);
+      setUserState(null);
+      setSupabaseUser(null);
+      setIsAuthenticated(false);
+      setAccessToken(null);
+      setHasStartedTrial(false);
+      log('✅ React state cleared - user now appears unauthenticated');
+
       // CRITICAL: Sign out from Supabase to clear the session
       // This prevents the user from being in a "zombie state" (authenticated but account deleted)
       log('🔓 Signing out from Supabase to clear session...');
@@ -726,17 +736,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       
       log('✅ Local data cleared and verified');
-
-      // Clear React state
-      log('🔄 Clearing React state...');
-      setAssets([]);
-      setLiabilities([]);
-      setUserState(null);
-      setSupabaseUser(null);
-      setIsAuthenticated(false);
-      setAccessToken(null); // Clear stored token
-      setHasStartedTrial(false);
-      log('✅ React state cleared');
 
       log('✅ Account deletion completed successfully (GDPR compliant)');
       

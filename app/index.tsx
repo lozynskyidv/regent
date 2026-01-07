@@ -8,6 +8,8 @@ import Svg, { Path } from 'react-native-svg';
 import { Colors, Typography, Spacing, Layout, BorderRadius } from '../constants';
 import { getSupabaseClient } from '../utils/supabase';
 import { useData } from '../contexts/DataContext';
+import SignUpEmailModal from '../components/SignUpEmailModal';
+import SignInEmailModal from '../components/SignInEmailModal';
 
 // Required for Expo web browser
 WebBrowser.maybeCompleteAuthSession();
@@ -18,6 +20,8 @@ export default function SignUpScreen() {
   const { isAuthProcessing } = useData(); // Global auth lock
   const [isLoadingGoogle, setIsLoadingGoogle] = useState(false);
   const [isLoadingApple, setIsLoadingApple] = useState(false);
+  const [isSignUpEmailVisible, setIsSignUpEmailVisible] = useState(false);
+  const [isSignInEmailVisible, setIsSignInEmailVisible] = useState(false);
 
   // Get the proper redirect URI for this platform (must be inside component to work correctly)
   // In dev: exp://localhost:8081/--/auth/callback
@@ -212,13 +216,8 @@ export default function SignUpScreen() {
     }
   };
 
-  const handleEmailSignIn = () => {
-    // TODO: Implement email/password sign-in flow
-    Alert.alert(
-      'Coming Soon',
-      'Email sign-in will be available in a future update.',
-      [{ text: 'OK' }]
-    );
+  const handleEmailSignUp = () => {
+    setIsSignUpEmailVisible(true);
   };
 
   return (
@@ -288,10 +287,10 @@ export default function SignUpScreen() {
               </View>
             </TouchableOpacity>
 
-            {/* Email Sign In */}
+            {/* Email Sign Up */}
             <TouchableOpacity
               style={[styles.button, styles.buttonSecondary]}
-              onPress={handleEmailSignIn}
+              onPress={handleEmailSignUp}
               activeOpacity={0.8}
               disabled={isLoadingGoogle || isLoadingApple || isAuthProcessing}
             >
@@ -305,7 +304,7 @@ export default function SignUpScreen() {
           {/* Already have account link */}
           <TouchableOpacity
             style={styles.linkContainer}
-            onPress={handleGoogleSignIn}
+            onPress={() => setIsSignInEmailVisible(true)}
             activeOpacity={0.6}
             disabled={isLoadingGoogle || isLoadingApple || isAuthProcessing}
           >
@@ -325,6 +324,18 @@ export default function SignUpScreen() {
           </Text>
         </View>
       </View>
+
+      {/* Email Modals */}
+      <SignUpEmailModal
+        visible={isSignUpEmailVisible}
+        onClose={() => setIsSignUpEmailVisible(false)}
+        onSwitchToSignIn={() => setIsSignInEmailVisible(true)}
+      />
+      <SignInEmailModal
+        visible={isSignInEmailVisible}
+        onClose={() => setIsSignInEmailVisible(false)}
+        onSwitchToSignUp={() => setIsSignUpEmailVisible(true)}
+      />
     </View>
   );
 }

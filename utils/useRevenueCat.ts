@@ -25,12 +25,15 @@ interface UseRevenueCatReturn {
   trialEndDate: Date | null;
   purchasePackage: (pkg: PurchasesPackage) => Promise<CustomerInfo>;
   restorePurchases: () => Promise<CustomerInfo>;
+  logOut: () => Promise<void>;
+  logIn: (userId: string) => Promise<void>;
 }
 
 export function useRevenueCat(): UseRevenueCatReturn {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [packages, setPackages] = useState<PurchasesPackage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isIdentifying, setIsIdentifying] = useState(false);
 
   useEffect(() => {
     initializePurchases();
@@ -125,6 +128,83 @@ export function useRevenueCat(): UseRevenueCatReturn {
     }
   };
 
+  const logOut = async (): Promise<void> => {
+    try {
+      console.log('🔓 Logging out from RevenueCat...');
+      
+      await Purchases.logOut();
+      
+      // Reset local state
+      setCustomerInfo(null);
+      setPackages([]);
+      
+      console.log('✅ RevenueCat logged out - customer info cleared');
+      
+      // Reinitialize to prepare for next user
+      console.log('🔄 Reinitializing RevenueCat for next user...');
+      await initializePurchases();
+      console.log('✅ RevenueCat reinitialized');
+    } catch (error) {
+      console.error('❌ RevenueCat logout error:', error);
+      // Don't throw - we still want to continue with sign out even if this fails
+    }
+  };
+
+  const logIn = async (userId: string): Promise<void> => {
+    try {
+      console.log('🔐 Checking if RevenueCat user identification needed...');
+      
+      // FAST PATH: Check immediately if user is already identified
+      // This happens BEFORE any waiting or async calls
+      if (customerInfo?.originalAppUserId === userId) {
+        console.log('✅ User already identified to RevenueCat - skipping logIn (fast path)');
+        return; // Exit immediately - no loading state needed!
+      }
+      
+      // SLOW PATH: Need to identify user
+      setIsIdentifying(true);
+      
+      // Wait for initialization to complete to avoid race condition
+      if (isLoading) {
+        console.log('⏳ Waiting for RevenueCat initialization to complete...');
+        // Wait up to 2 seconds for initialization
+        let attempts = 0;
+        while (isLoading && attempts < 20) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          attempts++;
+        }
+        if (isLoading) {
+          console.warn('⚠️ RevenueCat still initializing after 2s, proceeding anyway');
+        }
+      }
+      
+      // Double-check after waiting (in case initialization completed)
+      if (customerInfo?.originalAppUserId === userId) {
+        console.log('✅ User already identified to RevenueCat - skipping logIn (after wait)');
+        return;
+      }
+      
+      console.log('📋 Current RevenueCat user ID:', customerInfo?.originalAppUserId);
+      console.log('📋 Target user ID:', userId);
+      console.log('🔐 User ID mismatch - logging in to RevenueCat...');
+      
+      // Identify the user to RevenueCat
+      const { customerInfo: info } = await Purchases.logIn(userId);
+      setCustomerInfo(info);
+      
+      console.log('✅ RevenueCat user identified');
+      console.log('📊 Customer info restored:', {
+        isPremium: info.entitlements.active['premium'] !== undefined,
+        activeSubscriptions: info.activeSubscriptions,
+      });
+    } catch (error) {
+      console.error('❌ RevenueCat login error:', error);
+      // Don't throw - we still want to continue even if this fails
+    } finally {
+      setIsIdentifying(false);
+    }
+  };
+
   // Check if user has premium entitlement
   // FALLBACK: Also check for any active subscriptions if entitlement not configured yet
   const hasPremiumEntitlement = customerInfo?.entitlements.active['premium'] !== undefined;
@@ -153,11 +233,13 @@ export function useRevenueCat(): UseRevenueCatReturn {
   return {
     customerInfo,
     packages,
-    isLoading,
+    isLoading, // Don't include isIdentifying - let identification happen in background
     isPremium,
     isInTrial,
     trialEndDate,
     purchasePackage,
     restorePurchases,
+    logOut,
+    logIn,
   };
 }

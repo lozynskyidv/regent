@@ -61,28 +61,96 @@ npx expo start --clear
 
 ## 🎯 Recent Additions
 
-### **RevenueCat Integration** ✅ NEW
+### **RevenueCat Integration** ✅ COMPLETE
 - Full subscription management with RevenueCat SDK
 - Apple In-App Purchase integration (14-day trial, £149/year)
 - Purchase flow with error handling (cancellations, failures)
 - Restore purchases functionality
 - Entitlement checking (premium access control)
 - Sandbox testing complete (verified successful purchases)
-- Custom hook (`useRevenueCat`) for subscription state
-- RevenueCatContext provides subscription state to entire app
+- Smart user identification (only identifies when user changes)
+- Cross-device subscription support
+
+### **Email/Password Authentication** ✅ NEW
+- Full email/password sign-up and sign-in flow
+- Email validation and password strength checking (8+ chars)
+- Show/hide password toggle
+- Comprehensive error handling (duplicate email, wrong password, etc.)
+- Modal-based UI matching existing design system
+- Switch between sign-up and sign-in seamlessly
 
 ### **Paywall & Trial Management**
 - 14-day free trial flow (sign up → paywall → purchase)
 - RevenueCat manages subscription state (no local storage)
 - AuthGuard routing based on premium status
-- Clean UX with loading states (no screen flashes)
+- Background user identification (doesn't block UI)
 
 ### **GDPR-Compliant Account Deletion**
 - Complete data erasure (cloud + local)
 - Supabase Edge Function with admin privileges
-- Deletes: auth user, user profile, backups, local data, PIN
+- Deletes: auth user, user profile, backups, local data, PIN, RevenueCat user ID
 - Token state management for reliable deletion
 - Comprehensive error handling with timeouts
+
+---
+
+## ⚠️ Known Issues (For Next Developer)
+
+### **Issue 1: Paywall Flash on App Reload** 🔴 ACTIVE
+**Symptom:** Reopening app shows paywall briefly before PIN entry
+
+**Expected:** Direct to PIN entry (like Google OAuth does perfectly)
+
+**Investigation:**
+- RevenueCat initialization takes 100-500ms to load cached customer info
+- During this time, `isPremium = false` → AuthGuard shows paywall
+- When customer info loads, `isPremium = true` → Routes to PIN
+
+**Files to Check:**
+- `utils/useRevenueCat.ts` (lines 40-80) - Initialization
+- `app/_layout.tsx` (lines 30-60) - AuthGuard routing logic
+- RevenueCat SDK docs - Check for synchronous cached customer info
+
+**Potential Solutions:**
+1. Check if RevenueCat has `getCachedCustomerInfo()` synchronous method
+2. Add minimum wait time in AuthGuard before routing
+3. Set initial `customerInfo` from SDK cache before async load
+
+---
+
+### **Issue 2: PIN Screen Flickering After Purchase** 🟡 ACTIVE
+**Symptom:** After purchase, PIN screen flickers/refreshes requiring double PIN entry
+
+**Expected:** Single smooth PIN entry
+
+**Investigation:**
+- After purchase, `isPremium` changes `false → true`
+- May cause AuthGuard or PIN screen to remount
+- Subscription state update triggers re-render
+
+**Files to Check:**
+- `app/_layout.tsx` (lines 60-80) - Post-paywall routing
+- `app/auth.tsx` - Check if component remounts on state change
+- `app/paywall.tsx` - Navigation timing after purchase
+
+**Potential Solutions:**
+1. Add `useRef` in auth.tsx to prevent duplicate PIN checks
+2. Add delay before navigation after purchase
+3. Check useEffect dependencies causing remount
+
+---
+
+### **Issue 3: Face ID Screen Flickering** 🟡 MINOR
+**Symptom:** Face ID enable screen flickers on new account creation
+
+**Likely Related To:** Issue 2 (state changes causing remount)
+
+---
+
+### **Issue 4: Brief Paywall on Account Deletion** 🟢 MINOR
+**Symptom:** 2-second paywall flash when deleting account
+
+**Severity:** Low (rare operation, user expects delay anyway)
 
 ---
 

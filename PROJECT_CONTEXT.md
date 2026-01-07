@@ -395,6 +395,200 @@ if (isAuthenticated && !isPremium && !isLoadingSubscription) {
 
 ---
 
+## 📧 EMAIL/PASSWORD AUTHENTICATION
+
+**Last Updated:** January 7, 2026  
+**Status:** ✅ FULLY FUNCTIONAL (Expo Go Testing Complete)
+
+### Implementation
+
+**Components:**
+- `components/SignUpEmailModal.tsx` - Email sign-up with name/email/password validation
+- `components/SignInEmailModal.tsx` - Email sign-in with error handling
+- `app/index.tsx` - "Continue with Email" button + modal integration
+
+**Features:**
+- ✅ Email/password sign-up with validation (8+ char password, email format)
+- ✅ Email/password sign-in
+- ✅ Show/hide password toggle
+- ✅ Comprehensive error handling (duplicate email, wrong password, unverified email)
+- ✅ Switch between sign-up and sign-in modals
+- ✅ Loading states during submission
+- ✅ Consistent design with OAuth buttons
+
+**Email Verification:**
+- **Development:** Disabled in Supabase dashboard for Expo Go testing
+- **Production:** Must re-enable before App Store launch
+- **Note:** Deep linking for email verification only works in standalone builds
+
+**Files:**
+- `components/SignUpEmailModal.tsx` (310 lines)
+- `components/SignInEmailModal.tsx` (260 lines)
+- Total: ~580 lines
+
+---
+
+## 🐛 KNOWN ISSUES & INVESTIGATION NOTES
+
+**Last Updated:** January 7, 2026  
+**Status:** ⚠️ PARTIALLY RESOLVED - Some issues remain
+
+### Issue 1: Paywall Flash on App Reload (ACTIVE)
+
+**Symptom:** When reopening app with existing authenticated user, paywall shows briefly before PIN entry
+
+**Expected Behavior:** Should go directly to PIN entry (no paywall)
+
+**What We Tried:**
+1. **User Identification Optimization** - Added smart check to only call `logIn()` if user ID changed
+   ```typescript
+   // Fast path: Check immediately if already identified
+   if (customerInfo?.originalAppUserId === userId) {
+     return; // Skip identification
+   }
+   ```
+   **Result:** Reduced delay but paywall still flashes
+
+2. **Background Identification** - Removed `isIdentifying` from loading state
+   ```typescript
+   // Don't block UI during identification
+   return { isLoading, isPremium, ... }; // Not: isLoading || isIdentifying
+   ```
+   **Result:** Eliminated black screen but paywall still appears
+
+3. **Removed Sign-Out Logout** - Don't call `logOutRevenueCat()` on sign out, only on account deletion
+   ```typescript
+   // Sign out: Keep RevenueCat user ID cached
+   // Delete account: Clear RevenueCat user ID
+   ```
+   **Result:** Should work but paywall still shows
+
+**Current Hypothesis:**
+- RevenueCat initialization completes with `isPremium = false` initially
+- Takes ~100-500ms to load customer info from cache
+- During that time, AuthGuard sees `isPremium = false` and routes to paywall
+- When customer info loads, `isPremium = true`, AuthGuard re-routes
+
+**Where to Look Next:**
+1. `utils/useRevenueCat.ts` - Line 40-80 (initialization)
+   - Check if we can make `getCustomerInfo()` synchronous from cache
+   - Or set initial `customerInfo` from cached SDK data
+   
+2. `app/_layout.tsx` - Line 30-60 (AuthGuard logic)
+   - Consider adding minimum wait time before routing decisions
+   - Or check if RevenueCat has loaded before making routing decision
+   
+3. RevenueCat SDK documentation
+   - Check if there's a `getCachedCustomerInfo()` synchronous method
+   - Or a way to get cached entitlements without async call
+
+---
+
+### Issue 2: PIN Entry Screen Flickering After Purchase (ACTIVE)
+
+**Symptom:** After purchasing on paywall, PIN entry screen appears but flickers/refreshes, requiring PIN entry twice
+
+**Expected Behavior:** Single PIN entry screen, enter PIN once, proceed to home
+
+**What We Tried:**
+1. **Remove isIdentifying from loading** - Didn't fix flickering
+2. **Optimize logIn checks** - Still flickering
+
+**Current Hypothesis:**
+- After purchase, `isPremium` changes from `false` to `true`
+- This triggers AuthGuard re-evaluation
+- AuthGuard may be routing to `/auth` twice
+- Or `/auth` screen is remounting due to state changes
+
+**Where to Look Next:**
+1. `app/_layout.tsx` - Line 60-80 (AuthGuard routing after paywall)
+   - Add logging to see if routing happens multiple times
+   - Check dependencies in useEffect
+   
+2. `app/auth.tsx` - Component may be remounting
+   - Check if `isPremium` is in dependencies causing remount
+   - Add `useRef` to prevent multiple PIN checks
+   
+3. `app/paywall.tsx` - After successful purchase
+   - Check if navigation happens before state settles
+   - Add delay before router.replace('/auth')
+
+---
+
+### Issue 3: Paywall Flash on Account Deletion (MINOR)
+
+**Symptom:** When deleting account, paywall shows for 2 seconds before sign-up screen
+
+**Expected Behavior:** Should go directly to sign-up screen
+
+**What We Tried:**
+1. **Clear Auth State Immediately** - Set `isAuthenticated = false` before async operations
+   ```typescript
+   // At start of deleteAccount()
+   setIsAuthenticated(false);
+   setSupabaseUser(null);
+   ```
+   **Result:** Improved but paywall may still flash briefly
+
+**Current Hypothesis:**
+- RevenueCat state (`isPremium`) clears after auth state
+- Brief window where `isAuthenticated = false` but `isPremium = true`
+- AuthGuard logic may show paywall during this window
+
+**Where to Look Next:**
+1. `app/settings.tsx` - Delete account flow
+   - Call `logOutRevenueCat()` synchronously at start, not awaited
+   - Clear both auth and subscription state before any async operations
+
+**Severity:** Low (happens only on account deletion, rare operation)
+
+---
+
+### Issue 4: Face ID Onboarding Flickering (MINOR)
+
+**Symptom:** When creating new account, Face ID enable screen flickers
+
+**Expected Behavior:** Smooth Face ID prompt screen
+
+**Current Hypothesis:**
+- Similar to Issue 2, state changes causing remount
+- Likely related to `isPremium` updating after purchase
+
+**Where to Look Next:**
+- Same as Issue 2 (app/auth.tsx component)
+
+**Severity:** Low (happens only on first sign-up)
+
+---
+
+### ✅ What's Working Perfectly
+
+**Google OAuth Sign In (Existing Account):**
+- ✅ No paywall shown
+- ✅ Direct to PIN entry
+- ✅ Home screen loads correctly
+- **This is the gold standard behavior**
+
+**Email Authentication:**
+- ✅ Sign up works
+- ✅ Sign in works (after email verification disabled)
+- ✅ Error handling works correctly
+- ✅ Modal switching works
+
+**Purchase Flow (New Account):**
+- ✅ Paywall shows correctly
+- ✅ Purchase completes
+- ✅ PIN setup works (after flickering settles)
+- ✅ Home screen loads
+
+**RevenueCat Core Functionality:**
+- ✅ Purchase processing works
+- ✅ Subscription entitlements work
+- ✅ Restore purchases works
+- ✅ Cross-device support works (after identification)
+
+---
+
 ## 🗑️ GDPR-COMPLIANT ACCOUNT DELETION
 
 **Last Updated:** January 7, 2026  

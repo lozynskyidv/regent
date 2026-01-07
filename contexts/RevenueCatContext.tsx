@@ -16,6 +16,8 @@ interface RevenueCatContextType {
   trialEndDate: Date | null;
   purchasePackage: (pkg: PurchasesPackage) => Promise<CustomerInfo>;
   restorePurchases: () => Promise<CustomerInfo>;
+  logOut: () => Promise<void>;
+  logIn: (userId: string) => Promise<void>;
 }
 
 const RevenueCatContext = createContext<RevenueCatContextType | undefined>(undefined);

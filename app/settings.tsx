@@ -11,6 +11,7 @@ import { ChevronLeft, Upload, Download, Cloud } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { useData } from '../contexts/DataContext';
+import { useRevenueCatContext } from '../contexts/RevenueCatContext';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -21,6 +22,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets(); // Get safe area insets immediately
   const { primaryCurrency, setCurrency, signOut, deleteAccount, backupData, restoreData, supabaseUser, isAuthProcessing } = useData();
+  const { logOut: logOutRevenueCat } = useRevenueCatContext();
   const [faceIDEnabled, setFaceIDEnabled] = useState(true); // Mock state for now
   const [pendingCurrency, setPendingCurrency] = useState<'GBP' | 'USD' | 'EUR' | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -143,6 +145,12 @@ export default function SettingsScreen() {
           onPress: async () => {
             try {
               console.log('👤 Settings: Starting sign out...');
+              
+              // NOTE: We do NOT logout from RevenueCat on sign out
+              // RevenueCat subscription is tied to the device (Apple ID), not the user account
+              // This allows the subscription to persist when signing back in
+              
+              // Sign out from Supabase
               await signOut();
               console.log('👤 Settings: Sign out completed');
               // Navigation handled automatically by AuthGuard
@@ -199,6 +207,12 @@ export default function SettingsScreen() {
                   onPress: async () => {
                     console.log('🗑️ Settings: Final confirmation - calling deleteAccount()');
                     try {
+                      // CRITICAL: Log out from RevenueCat FIRST to clear subscription state
+                      console.log('🔓 Settings: Logging out from RevenueCat...');
+                      await logOutRevenueCat();
+                      console.log('✅ Settings: RevenueCat logged out');
+                      
+                      // Then delete account
                       await deleteAccount();
                       console.log('✅ Settings: deleteAccount() completed successfully');
                       // Navigation handled automatically by AuthGuard

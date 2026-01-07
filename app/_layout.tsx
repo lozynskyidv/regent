@@ -16,10 +16,20 @@ import { RevenueCatProvider, useRevenueCatContext } from '../contexts/RevenueCat
  * 4. Authenticated + premium + has PIN → Home (/home)
  */
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useData();
-  const { isPremium, isLoading: isLoadingSubscription } = useRevenueCatContext();
+  const { isAuthenticated, isLoading, supabaseUser } = useData();
+  const { isPremium, isLoading: isLoadingSubscription, logIn: logInRevenueCat } = useRevenueCatContext();
   const segments = useSegments();
   const router = useRouter();
+
+  // Identify user to RevenueCat when they sign in
+  useEffect(() => {
+    if (isAuthenticated && supabaseUser?.id) {
+      console.log('🔐 User authenticated, identifying to RevenueCat...');
+      logInRevenueCat(supabaseUser.id).catch(err => {
+        console.error('❌ Failed to identify user to RevenueCat:', err);
+      });
+    }
+  }, [isAuthenticated, supabaseUser?.id]);
 
   useEffect(() => {
     // Wait for data to load before making routing decisions
