@@ -1,7 +1,7 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 7, 2026  
-**Version:** 0.4.0 (P0 MVP Complete ✅ + Paywall + GDPR Deletion)  
+**Version:** 0.5.0 (P0 MVP Complete ✅ + RevenueCat Integration ✅)  
 **Platform:** iOS only (React Native Expo)
 
 ---
@@ -14,7 +14,8 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 **Current State (What's ACTUALLY Built):**  
 ✅ **P0 MVP COMPLETE:**
 - **Sign Up screen** (Google OAuth - fully functional with Supabase)
-- **Paywall** (14-day free trial, shown after sign-up)
+- **Paywall** (14-day free trial with RevenueCat, £149/year subscription)
+- **RevenueCat Integration** (subscription management, purchase flow, restore purchases)
 - **Auth screen** (Face ID/PIN onboarding, fully functional)
 - **Home Screen** (Net Worth + Assets + Liabilities cards with live data)
 - **Edit Modals** (EditAssetModal, EditLiabilityModal - pre-populated forms, delete buttons)
@@ -26,17 +27,18 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Settings Screen** (currency selection, sign out, GDPR-compliant delete account)
 - **Cloud Backups** (encrypted with PIN, stored in Supabase)
 
-❌ **P1 PRIORITIES:** RevenueCat SDK (payment processing), Stock tracking, Bank connections, Performance chart, TestFlight
+❌ **P1 PRIORITIES:** Apple OAuth (App Store requirement), Email/Password auth, Stock tracking, Bank connections, Performance chart, TestFlight
 
 **Tech Stack:**  
 - React Native (Expo SDK 54), React 19.1.0, TypeScript 5.9  
 - **Backend:** Supabase (auth, database, Edge Functions)  
+- **Payments:** RevenueCat (react-native-purchases 8.2.5) - subscription management  
 - **Storage:** AsyncStorage (data) + SecureStore (PIN/tokens)  
 - **Auth:** Supabase Auth (Google OAuth, session management)  
 - **Cloud:** Supabase Edge Functions (account deletion, backups)  
 - Icons: Lucide React Native 0.562.0  
 - Gestures: react-native-gesture-handler 2.30.0 (swipe-to-edit/delete)  
-- State: React Context API (DataContext, ModalContext)  
+- State: React Context API (DataContext, ModalContext, RevenueCatContext)  
 - Navigation: Expo Router (file-based, **ALWAYS use `<Slot />` not `<Stack>`**)
 
 ---
@@ -64,12 +66,16 @@ components/           # Modals & Cards
 └── SwipeableAssetItem, SwipeableLiabilityItem (gesture handlers)
 
 contexts/
-├── DataContext.tsx   # Global state (assets, liabilities, user)
-└── ModalContext.tsx  # Centralized modal management
+├── DataContext.tsx        # Global state (assets, liabilities, user)
+├── ModalContext.tsx       # Centralized modal management
+└── RevenueCatContext.tsx  # Subscription state (premium status, purchases)
 
 utils/
 ├── storage.ts        # AsyncStorage helpers
-└── generateId.ts     # UUID for entities
+├── generateId.ts     # UUID for entities
+├── supabase.ts       # Supabase client configuration
+├── encryption.ts     # PIN hashing/verification
+└── useRevenueCat.ts  # RevenueCat SDK integration hook
 
 constants/            # Design system
 ├── Colors.ts, Typography.ts, Spacing.ts, Layout.ts
@@ -114,27 +120,31 @@ types/
 }
 ```
 
-**SubscriptionState** (AsyncStorage `regent_subscription`)
-```typescript
-{
-  hasStartedTrial: boolean // true after "Start Trial" button tapped
-  trialStartDate?: string  // ISO timestamp when user started trial
-}
-```
+**Subscription State (RevenueCat)**
+- Managed by RevenueCat SDK (no local storage needed)
+- `isPremium`: Boolean (checks entitlements.active['premium'] or activeSubscriptions)
+- `isInTrial`: Boolean (checks if in trial period)
+- `trialEndDate`: Date | null (when trial expires)
+- `packages`: Available subscription packages from RevenueCat
 
-**Paywall Flow (Implemented):**
+**Paywall Flow (Fully Implemented with RevenueCat):**
 1. User signs up with Google → Authenticated ✅
-2. AuthGuard detects `isAuthenticated && !hasStartedTrial` → Routes to `/paywall`
+2. AuthGuard detects `isAuthenticated && !isPremium` → Routes to `/paywall`
 3. Paywall screen shows features + "Start 14-Day Free Trial" button
-4. User taps button → `startTrial()` sets `hasStartedTrial = true`, saves to AsyncStorage
-5. AuthGuard detects trial started → Routes to `/auth` (PIN setup)
-6. User creates PIN → Routes to `/home` (full app access) ✅
+4. User taps button → RevenueCat `purchasePackage()` initiates Apple IAP
+5. Apple handles payment (sandbox: free, production: £149/year after trial)
+6. RevenueCat grants `premium` entitlement → `isPremium = true`
+7. AuthGuard detects premium status → Routes to `/auth` (PIN setup)
+8. User creates PIN → Routes to `/home` (full app access) ✅
 
-**Future (P1 - RevenueCat Integration):**
-- Add actual payment processing with RevenueCat
-- Track trial expiry and auto-charge £149/year
-- Add "Restore Purchases" functionality
-- Handle subscription management
+**RevenueCat Features Implemented:**
+- ✅ SDK initialization with platform-specific API keys
+- ✅ Purchase flow with error handling (user cancellation, failures)
+- ✅ Restore purchases functionality
+- ✅ Entitlement checking (premium access)
+- ✅ Trial period tracking
+- ✅ Subscription status monitoring
+- ⚠️ Using test API keys (replace with production keys before launch)
 
 **Net Worth:** `totalAssets - totalLiabilities` (calculated, not stored)
 
@@ -195,19 +205,21 @@ types/
 
 **Fully Functional:**
 - ✅ Google OAuth (Supabase auth, token management)
-- ✅ Paywall (14-day free trial flow)
+- ✅ Paywall (14-day free trial with RevenueCat, £149/year)
+- ✅ RevenueCat Integration (purchase flow, restore purchases, entitlements)
 - ✅ Face ID/PIN Auth (onboarding, authentication)
 - ✅ Home Screen (live data, charts, CRUD)
 - ✅ Add/Edit/Delete Modals (all working)
 - ✅ Detail Screens (swipe gestures, edit/delete)
-- ✅ Settings (currency switcher, sign out, GDPR-compliant delete account)
+- ✅ Settings (currency switcher, sign out, GDPR-compliant delete account, restore purchases)
 - ✅ AsyncStorage persistence (all data saves/loads)
 - ✅ Encrypted Cloud Backups (Supabase, PIN-derived key)
 - ✅ Global Modal Context (production-ready)
 - ✅ Charts (real-time category breakdown)
 
 **Not Built Yet (P1 - Next Priorities):**
-- ❌ **RevenueCat SDK** - Paywall uses local trial tracking only, no payment processing yet
+- ❌ **Apple OAuth** - Code implemented, needs Supabase configuration (App Store requirement)
+- ❌ **Email/Password Auth** - Alternative to social login
 - ❌ Stock tracking (Twelve Data API integration)
 - ❌ Bank connections (TrueLayer OAuth flow)
 - ❌ Performance chart (net worth over time, line chart)
@@ -311,47 +323,75 @@ if (pinHash) {
 
 ---
 
-## 💳 PAYWALL & TRIAL MANAGEMENT
+## 💳 REVENUECAT INTEGRATION
 
 **Last Updated:** January 7, 2026  
-**Status:** ✅ FULLY FUNCTIONAL (Local Trial Only)
+**Status:** ✅ FULLY FUNCTIONAL (Sandbox Testing Complete)
 
 ### Implementation
 
-**Flow:** Sign Up → Paywall → Start Trial → Auth → Home
+**Flow:** Sign Up → Paywall → Purchase → Auth → Home
 
 **Architecture:**
-- Trial state stored in AsyncStorage (`regent_subscription`)
-- AuthGuard checks trial status and routes accordingly
-- Paywall appears when authenticated but no trial started
-- Trial duration tracked client-side (14 days from start date)
+- RevenueCat SDK manages subscription state (no local storage needed)
+- AuthGuard checks `isPremium` from RevenueCat entitlements
+- Paywall appears when authenticated but not premium
+- Apple In-App Purchase handles payment processing
+- 14-day free trial, then £149/year (or $149/€149 based on region)
 
 **Files:**
-- `app/paywall.tsx` - Paywall screen with "Start 14-Day Free Trial" button
-- `types/index.ts` - SubscriptionState interface
-- `utils/storage.ts` - saveSubscription(), loadSubscription()
-- `contexts/DataContext.tsx` - Trial state management, startTrial() action
-- `app/_layout.tsx` - AuthGuard with paywall routing logic
+- `utils/useRevenueCat.ts` - Custom hook wrapping RevenueCat SDK
+- `contexts/RevenueCatContext.tsx` - Provides subscription state to app
+- `app/paywall.tsx` - Paywall screen with purchase flow
+- `app/_layout.tsx` - AuthGuard with premium status routing
+- `app/settings.tsx` - Restore purchases button
 
 **Key Implementation Details:**
 ```typescript
-// Trial state structure
-interface SubscriptionState {
-  hasStartedTrial: boolean;
-  trialStartDate?: string;
+// RevenueCat Context provides:
+{
+  isPremium: boolean,              // Has active premium entitlement
+  isInTrial: boolean,              // Currently in trial period
+  trialEndDate: Date | null,       // When trial expires
+  packages: PurchasesPackage[],    // Available subscriptions
+  purchasePackage: (pkg) => void,  // Initiate purchase
+  restorePurchases: () => void,    // Restore previous purchases
+  isLoadingSubscription: boolean   // Loading state
 }
 
 // AuthGuard routing logic
-if (isAuthenticated && !hasStartedTrial) {
+if (isAuthenticated && !isPremium && !isLoadingSubscription) {
   router.replace('/paywall'); // Show paywall
 }
 ```
 
 **Features:**
-- ✅ Prevents access to app until trial started
-- ✅ Clean UX with no screen flashes (isLoading state)
-- ✅ Trial state persists across app restarts
-- ⚠️ **Note:** No payment processing yet (RevenueCat integration pending)
+- ✅ Apple In-App Purchase integration
+- ✅ 14-day free trial (automatic)
+- ✅ £149/year subscription (sandbox tested with $149)
+- ✅ Restore purchases functionality
+- ✅ Entitlement checking (premium access)
+- ✅ Error handling (user cancellation, purchase failures)
+- ✅ Loading states (prevents UI flashing)
+- ✅ Sandbox testing complete (successful purchases verified)
+
+**Configuration:**
+- **Product ID:** `premium` (configured in RevenueCat dashboard)
+- **Offering:** Default offering with ANNUAL package
+- **Entitlement:** `premium` (grants app access)
+- **API Keys:** Test keys in use (replace with production before launch)
+
+**Known Behaviors:**
+- First sandbox purchase may fail (Apple quirk, subsequent purchases work)
+- Expo Go shows initialization error (expected, works in standalone builds)
+- Face ID missing description warning (already configured in app.json)
+
+**Production Checklist:**
+- [ ] Replace test API keys with production keys
+- [ ] Configure App Store Connect product
+- [ ] Test with real Apple ID (not sandbox)
+- [ ] Verify entitlements in RevenueCat dashboard
+- [ ] Enable Apple OAuth in Supabase (App Store requirement)
 
 ---
 
@@ -443,30 +483,39 @@ supabase functions deploy delete-account
 
 ## 📋 NEXT PRIORITIES (P1 Features - In Priority Order)
 
-### **1. RevenueCat SDK Integration** 🔴 **TOP PRIORITY**
+### **1. Apple OAuth** 🔴 **CRITICAL - APP STORE REQUIREMENT**
 
-**Current State:** Paywall exists (`app/paywall.tsx`), trial tracking is local-only (AsyncStorage)  
-**Goal:** Connect to payment processing for real subscriptions
+**Current State:** Code fully implemented in `app/index.tsx`, needs Supabase configuration  
+**Goal:** Enable Apple sign-in (App Store requires it if Google OAuth exists)
 
-**What to Build:**
-- Install `react-native-purchases` (RevenueCat SDK)
-- Create RevenueCat project + configure iOS product:
-  - Product ID: `regent_annual_149`
-  - Price: £149/year (GBP), $149/year (USD), €149/year (EUR)
-  - 14-day free trial period
-- Update `app/paywall.tsx`:
-  - Replace `startTrial()` with RevenueCat purchase call
-  - Handle purchase success/failure/restore
-- Update `DataContext.tsx`:
-  - Replace local trial state with RevenueCat subscription status
-  - Add `restorePurchases()` function
-- Add "Restore Purchases" button to Settings screen
+**What to Do:**
+- Go to Supabase Dashboard → Authentication → Providers
+- Enable Apple provider
+- Add Service ID and key from Apple Developer account
+- Test sign-in flow (should work identically to Google OAuth)
 
-**Starting Point:** See `app/paywall.tsx` (existing UI), modify button handler
+**Effort:** 5-10 minutes (configuration only, no code needed)  
+**Blocker:** App Store will reject without this
 
 ---
 
-### **2. Stock Tracking** (Twelve Data API)
+### **2. Email/Password Authentication**
+
+**Current State:** Button shows "Coming Soon"  
+**Goal:** Alternative auth method for privacy-conscious users (~15-20% prefer email)
+
+**What to Build:**
+- Create `SignUpEmailModal.tsx` and `SignInEmailModal.tsx`
+- Use Supabase `supabase.auth.signUp({ email, password })`
+- Add email verification flow
+- Update `app/index.tsx` to show email modals
+
+**Effort:** 4-6 hours  
+**Starting Point:** Copy Google OAuth pattern from `app/index.tsx`
+
+---
+
+### **3. Stock Tracking** (Twelve Data API)
 
 **Current State:** Users can only add "Other" assets manually  
 **Goal:** Let users track stock portfolios with live prices
@@ -571,6 +620,13 @@ supabase functions deploy delete-account
   - Iterate on bugs/UX issues
 
 **Starting Point:** Run `eas build:configure`, follow prompts
+
+**Pre-Launch Checklist:**
+- [ ] Enable Apple OAuth in Supabase (App Store requirement)
+- [ ] Replace RevenueCat test keys with production keys
+- [ ] Configure App Store Connect product (£149/year)
+- [ ] Test Face ID in standalone build
+- [ ] Verify all entitlements in RevenueCat dashboard
 
 ---
 

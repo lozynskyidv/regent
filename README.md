@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.4.0 (P0 MVP Complete ✅ + Paywall + GDPR Deletion)  
+**Version:** 0.5.0 (P0 MVP Complete ✅ + RevenueCat Integration ✅)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)
 
@@ -35,8 +35,9 @@ npx expo start --clear
 - **Language:** TypeScript 5.9
 - **React:** 19.1.0 (locked for compatibility)
 - **Backend:** Supabase (auth, database, Edge Functions)
+- **Payments:** RevenueCat (react-native-purchases 8.2.5)
 - **Navigation:** Expo Router (file-based, `<Slot />` only)
-- **State:** React Context API
+- **State:** React Context API (DataContext, ModalContext, RevenueCatContext)
 - **Storage:** AsyncStorage (data) + SecureStore (sensitive) + Supabase (cloud backups)
 - **Icons:** Lucide React Native 0.562.0
 - **Gestures:** react-native-gesture-handler 2.30.0
@@ -46,12 +47,13 @@ npx expo start --clear
 ## 📱 Current Features (P0 MVP Complete)
 
 ✅ **Authentication:** Google OAuth, Face ID/PIN, Supabase Auth  
-✅ **Paywall:** 14-day free trial, shown after sign-up  
+✅ **Paywall:** 14-day free trial with RevenueCat, £149/year subscription  
+✅ **Payments:** RevenueCat integration (purchase flow, restore purchases, entitlements)  
 ✅ **Home Screen:** Net Worth, Assets, Liabilities cards  
 ✅ **CRUD:** Add/Edit/Delete assets & liabilities  
 ✅ **Detail Screens:** Full lists with swipe gestures  
 ✅ **Modals:** 2-step flow (type picker → specific form)  
-✅ **Settings:** Currency switcher, Sign Out, GDPR-compliant Delete Account  
+✅ **Settings:** Currency switcher, Sign Out, GDPR-compliant Delete Account, Restore Purchases  
 ✅ **Charts:** Horizontal bar charts (category breakdown)  
 ✅ **Data:** AsyncStorage persistence (auto-save), encrypted cloud backups
 
@@ -59,11 +61,21 @@ npx expo start --clear
 
 ## 🎯 Recent Additions
 
+### **RevenueCat Integration** ✅ NEW
+- Full subscription management with RevenueCat SDK
+- Apple In-App Purchase integration (14-day trial, £149/year)
+- Purchase flow with error handling (cancellations, failures)
+- Restore purchases functionality
+- Entitlement checking (premium access control)
+- Sandbox testing complete (verified successful purchases)
+- Custom hook (`useRevenueCat`) for subscription state
+- RevenueCatContext provides subscription state to entire app
+
 ### **Paywall & Trial Management**
-- 14-day free trial flow (sign up → paywall → start trial)
-- Trial state persistence in AsyncStorage
-- AuthGuard routing based on trial status
-- Clean UX with no screen flashes
+- 14-day free trial flow (sign up → paywall → purchase)
+- RevenueCat manages subscription state (no local storage)
+- AuthGuard routing based on premium status
+- Clean UX with loading states (no screen flashes)
 
 ### **GDPR-Compliant Account Deletion**
 - Complete data erasure (cloud + local)
@@ -72,29 +84,36 @@ npx expo start --clear
 - Token state management for reliable deletion
 - Comprehensive error handling with timeouts
 
-### **OAuth Improvements**
-- Token state management (stored in React state)
-- Non-blocking profile sync (background operation)
-- Comprehensive timeout handling (prevents infinite loading)
-- Detailed diagnostic logging with timestamps
-
 ---
 
 ## 🔜 Next Up (P1 Features - Priority Order)
 
-### 1. RevenueCat SDK Integration
-**Goal:** Connect existing paywall to payment processing  
-**What to build:**
-- Install `react-native-purchases` SDK
-- Configure RevenueCat project with iOS product ($149/year, 14-day trial)
-- Update `app/paywall.tsx` to call RevenueCat instead of local trial tracking
-- Add "Restore Purchases" functionality
+### 1. Apple OAuth 🔴 CRITICAL
+**Goal:** Enable Apple sign-in (App Store requirement)  
+**What to do:**
+- Enable Apple provider in Supabase Dashboard
+- Add Service ID and key from Apple Developer
+- Test sign-in flow (code already implemented)
 
-**Current state:** Paywall UI exists, trial tracking is local-only
+**Current state:** Code complete, needs Supabase configuration  
+**Effort:** 5-10 minutes  
+**Blocker:** App Store will reject without this
 
 ---
 
-### 2. Stock Tracking (Twelve Data API)
+### 2. Email/Password Authentication
+**Goal:** Alternative auth for privacy-conscious users  
+**What to build:**
+- Create email sign-up/sign-in modals
+- Use Supabase email auth
+- Add email verification flow
+
+**Current state:** Button shows "Coming Soon"  
+**Effort:** 4-6 hours
+
+---
+
+### 3. Stock Tracking (Twelve Data API)
 **Goal:** Let users manually add stock holdings with live prices  
 **What to build:**
 - Create `AddStockModal.tsx` (ticker input, quantity, manual price)
@@ -136,6 +155,13 @@ npx expo start --clear
 - Submit to App Store Connect
 - Create TestFlight internal group
 - Gather feedback and iterate
+
+**Pre-Launch Checklist:**
+- [ ] Enable Apple OAuth in Supabase (App Store requirement)
+- [ ] Replace RevenueCat test keys with production keys
+- [ ] Configure App Store Connect product (£149/year)
+- [ ] Test Face ID in standalone build
+- [ ] Verify all entitlements in RevenueCat dashboard
 
 ---
 
