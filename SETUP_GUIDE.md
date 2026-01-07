@@ -4,21 +4,24 @@ This guide will walk you through setting up authentication and backup functional
 
 ## 📋 What's Been Built
 
-✅ **Completed (Week 1):**
+✅ **Completed:**
 - ✅ Supabase client utility (`utils/supabase.ts`)
 - ✅ Encryption utilities (`utils/encryption.ts`)
 - ✅ OAuth integration in sign-up screen (`app/index.tsx`)
 - ✅ DataContext with Supabase auth + backup/restore (`contexts/DataContext.tsx`)
-- ✅ Auth guards in layout (`app/_layout.tsx`)
+- ✅ Auth guards with paywall routing in layout (`app/_layout.tsx`)
 - ✅ PIN/Face ID validation with first-time setup (`app/auth.tsx`)
 - ✅ Settings screen with backup/restore/signout/delete (`app/settings.tsx`)
+- ✅ Paywall screen with 14-day free trial (`app/paywall.tsx`)
+- ✅ GDPR-compliant account deletion (Supabase Edge Function)
+- ✅ Token state management for reliable auth operations
 
-⏳ **Remaining (Week 2):**
+⏳ **Remaining:**
 - ⏳ Supabase database setup (see below)
-- ⏳ OAuth provider configuration
-- ⏳ Environment variables
-- ⏳ RevenueCat integration
-- ⏳ Paywall screen
+- ⏳ OAuth provider configuration (see below)
+- ⏳ Environment variables (see below)
+- ⏳ Edge Function deployment (see below)
+- ⏳ RevenueCat SDK integration (payment processing)
 
 ---
 
@@ -267,9 +270,61 @@ For OAuth redirects to work, you need to configure deep linking:
 
 ---
 
-## ✅ Step 7: Test Authentication
+## 🚀 Step 7: Deploy Edge Function (Delete Account)
 
-### 7.1 Start the App
+For GDPR-compliant account deletion, you need to deploy the Supabase Edge Function:
+
+### 7.1 Install Supabase CLI
+
+**macOS (Homebrew):**
+```bash
+brew install supabase/tap/supabase
+```
+
+**Windows/Linux:** See [Supabase CLI docs](https://supabase.com/docs/guides/cli/getting-started)
+
+### 7.2 Login to Supabase
+
+```bash
+supabase login
+```
+
+This will open a browser for authentication.
+
+### 7.3 Link Your Project
+
+```bash
+cd /Users/dmytrolozynskyi/Documents/Regent\ App/regent
+supabase link --project-ref YOUR_PROJECT_ID
+```
+
+Replace `YOUR_PROJECT_ID` with your Supabase project ID (from the URL: `https://[project-id].supabase.co`)
+
+### 7.4 Deploy the Edge Function
+
+```bash
+supabase functions deploy delete-account
+```
+
+You should see:
+```
+Deploying function delete-account...
+Function delete-account deployed successfully!
+```
+
+### 7.5 Verify Deployment
+
+1. Go to Supabase dashboard → **Edge Functions**
+2. You should see `delete-account` listed
+3. Click on it to see logs and deployment status
+
+**Note:** The Edge Function uses your service_role key automatically (no manual configuration needed).
+
+---
+
+## ✅ Step 8: Test Authentication & Features
+
+### 8.1 Start the App
 
 ```bash
 npm start
@@ -279,18 +334,20 @@ npx expo start
 
 Press `i` for iOS simulator
 
-### 7.2 Test Sign-Up Flow
+### 8.2 Test Sign-Up & Paywall Flow
 
 1. App opens to sign-up screen
 2. Tap "Continue with Google"
 3. OAuth browser opens
 4. Sign in with Google
 5. Redirected back to app
-6. Auth screen appears - create 4-digit PIN
-7. Confirm PIN
-8. Navigated to Home screen
+6. **Paywall screen appears** - shows 14-day free trial
+7. Tap "Start 14-Day Free Trial"
+8. Auth screen appears - create 4-digit PIN
+9. Confirm PIN
+10. Navigated to Home screen
 
-### 7.3 Test PIN/Face ID
+### 8.3 Test PIN/Face ID
 
 1. Close app (swipe up on simulator)
 2. Reopen app
@@ -298,7 +355,7 @@ Press `i` for iOS simulator
 4. Enter your 4-digit PIN
 5. Navigate to Home
 
-### 7.4 Test Backup/Restore
+### 8.4 Test Backup/Restore
 
 1. Add some test assets in the Home screen
 2. Go to Settings
@@ -314,22 +371,33 @@ Press `i` for iOS simulator
    - Enter PIN
    - Assets should reappear
 
-### 7.5 Test Sign Out
+### 8.5 Test Sign Out
 
 1. Settings → Sign Out
 2. Confirm
 3. Redirected to sign-up screen
-4. Data remains on device (sign in again to access)
+4. Trial state persists (sign in again with same Google account)
 
-### 7.6 Test Delete Account
+### 8.6 Test Delete Account (GDPR Compliance)
 
-⚠️ **Warning:** This is permanent!
+⚠️ **Warning:** This is permanent and irreversible!
 
 1. Settings → Delete Account
-2. Double confirmation
-3. Account deleted from Supabase
-4. All local data wiped
-5. Redirected to sign-up screen
+2. First confirmation dialog
+3. Second confirmation dialog (double-check)
+4. Account deletion begins (~750ms):
+   - Calls Edge Function to delete cloud data
+   - Clears all local data (AsyncStorage)
+   - Deletes PIN from SecureStore
+   - Clears trial state
+5. Shows success alert
+6. Redirected to sign-up screen (fresh start)
+
+**Verification:**
+- Check Supabase dashboard → Authentication → Users (user should be deleted)
+- Check Table Editor → users table (no record)
+- Check Table Editor → backups table (no backup)
+- Sign in with Google again → Should show paywall (new user)
 
 ---
 
@@ -359,22 +427,42 @@ Press `i` for iOS simulator
 - Refresh Table Editor page
 - Check PostgreSQL logs in Supabase dashboard
 
+### Delete Account Not Working
+
+- Verify Edge Function is deployed: `supabase functions list`
+- Check Edge Function logs in Supabase dashboard
+- Ensure user is authenticated (access token exists)
+- Check network connectivity for Edge Function call
+
 ---
 
-## 📱 Next Steps (Week 2)
+## 📱 Next Steps (P1 Features)
 
-Once authentication works, proceed to:
+Once setup is complete, proceed to:
 
-1. **RevenueCat Integration**
+1. **RevenueCat SDK Integration**
    - Create RevenueCat account
    - Configure iOS product ($149/year, 14-day trial)
-   - Install SDK
-   - Build paywall screen
+   - Install `react-native-purchases` SDK
+   - Connect paywall to actual payment processing
+   - Currently: Paywall works with local trial tracking only
 
-2. **Testing & Polish**
-   - TestFlight beta build
-   - User testing
-   - Bug fixes
+2. **Stock Tracking (Twelve Data API)**
+   - API key configuration
+   - Ticker input and validation
+   - Live price fetching
+   - Portfolio value calculation
+
+3. **Bank Connections (TrueLayer OAuth)**
+   - UK bank integration
+   - Read-only balance access
+   - Auto-refresh mechanism
+
+4. **Testing & Distribution**
+   - EAS Build for TestFlight
+   - Beta testing with users
+   - Bug fixes and polish
+   - App Store submission
 
 ---
 
