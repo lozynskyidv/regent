@@ -126,7 +126,10 @@ export function useRevenueCat(): UseRevenueCatReturn {
   };
 
   // Check if user has premium entitlement
-  const isPremium = customerInfo?.entitlements.active['premium'] !== undefined;
+  // FALLBACK: Also check for any active subscriptions if entitlement not configured yet
+  const hasPremiumEntitlement = customerInfo?.entitlements.active['premium'] !== undefined;
+  const hasActiveSubscription = customerInfo?.activeSubscriptions && customerInfo.activeSubscriptions.length > 0;
+  const isPremium = hasPremiumEntitlement || hasActiveSubscription;
   
   // Check if user is in trial period
   const isInTrial = customerInfo?.entitlements.active['premium']?.periodType === 'trial';
@@ -135,6 +138,17 @@ export function useRevenueCat(): UseRevenueCatReturn {
   const trialEndDate = customerInfo?.entitlements.active['premium']?.expirationDate 
     ? new Date(customerInfo.entitlements.active['premium'].expirationDate)
     : null;
+  
+  // Log subscription status for debugging
+  if (customerInfo) {
+    console.log('🔐 Subscription status:', {
+      hasPremiumEntitlement,
+      hasActiveSubscription,
+      isPremium,
+      activeSubscriptions: customerInfo.activeSubscriptions,
+      entitlements: Object.keys(customerInfo.entitlements.active),
+    });
+  }
 
   return {
     customerInfo,
