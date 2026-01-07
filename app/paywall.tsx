@@ -48,12 +48,26 @@ export default function PaywallScreen() {
     console.log('🔄 Restore purchases tapped (placeholder)');
   };
 
+  // Calculate trial end date (14 days from now)
+  const getTrialEndDate = () => {
+    const date = new Date();
+    date.setDate(date.getDate() + 14);
+    return date.toLocaleDateString('en-GB', { 
+      day: 'numeric', 
+      month: 'long', 
+      year: 'numeric' 
+    });
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
       <StatusBar barStyle="dark-content" />
       
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { flexGrow: 1, justifyContent: 'center' }
+        ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Header */}
@@ -64,13 +78,27 @@ export default function PaywallScreen() {
           </Text>
         </View>
 
+        {/* Trial Offer Card - Contains Price + Trial Info */}
+        <View style={styles.trialCard}>
+          <View style={styles.priceRow}>
+            <Text style={styles.priceAmount}>£149</Text>
+            <Text style={styles.pricePeriod}>/year</Text>
+          </View>
+          <Text style={styles.trialText}>
+            Includes free 14-day trial — cancel anytime
+          </Text>
+          <Text style={styles.trialSubtext}>
+            You won't be charged until {getTrialEndDate()}
+          </Text>
+        </View>
+
         {/* Benefits */}
         <View style={styles.benefitsContainer}>
           {BENEFITS.map((benefit, index) => (
             <View key={index} style={styles.benefitRow}>
               <View style={styles.checkIconContainer}>
                 <Check
-                  size={16}
+                  size={12}
                   color={Colors.foreground}
                   strokeWidth={2.5}
                 />
@@ -80,17 +108,7 @@ export default function PaywallScreen() {
           ))}
         </View>
 
-        {/* Pricing Card */}
-        <View style={styles.pricingCard}>
-          <Text style={styles.pricingLabel}>Annual Subscription</Text>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceAmount}>£149</Text>
-            <Text style={styles.pricePeriod}>/year</Text>
-          </View>
-          <Text style={styles.pricingSubtext}>
-            Includes free 14-day trial • Cancel anytime
-          </Text>
-        </View>
+        {/* Pricing Card - REMOVED, now part of trial card */}
 
         {/* Start Trial Button */}
         <TouchableOpacity
@@ -105,7 +123,7 @@ export default function PaywallScreen() {
           {isStartingTrial ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
-            <Text style={styles.startButtonText}>Start 14-Day Free Trial</Text>
+            <Text style={styles.startButtonText}>Start Free Trial</Text>
           )}
         </TouchableOpacity>
 
@@ -122,10 +140,11 @@ export default function PaywallScreen() {
         {/* Legal Fine Print */}
         <View style={styles.legalContainer}>
           <Text style={styles.legalText}>
-            Payment will be charged to your Apple ID account at confirmation of purchase. 
-            Subscription automatically renews unless cancelled at least 24 hours before the 
-            end of the current period. Your account will be charged for renewal within 24 hours 
-            prior to the end of the current period.
+            Payment will be charged to your Apple ID account at the confirmation of purchase. 
+            Subscription automatically renews unless it is cancelled at least 24 hours before 
+            the end of the current period. Your account will be charged for renewal within 
+            24 hours prior to the end of the current period. You can manage and cancel your 
+            subscriptions by going to your account settings on the App Store after purchase.
           </Text>
         </View>
       </ScrollView>
@@ -136,9 +155,7 @@ export default function PaywallScreen() {
 const BENEFITS = [
   'Real-time portfolio tracking with live market data',
   'Secure bank account sync via TrueLayer',
-  'Complete financial clarity across all assets',
   'Privacy-first architecture with no data sharing',
-  'Designed for mass affluent professionals',
 ];
 
 const styles = StyleSheet.create({
@@ -147,15 +164,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
   },
   scrollContent: {
-    paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing['3xl'],
+    paddingHorizontal: 24, // px-6 (not xl which is 32px)
+    paddingTop: Spacing['2xl'],
     paddingBottom: Spacing['2xl'],
   },
 
   // Header
   header: {
     alignItems: 'center',
-    marginBottom: Spacing['2xl'],
+    marginBottom: 24, // mb-6
   },
   logo: {
     fontSize: 40,
@@ -173,82 +190,82 @@ const styles = StyleSheet.create({
     lineHeight: 27,
   },
 
-  // Benefits
-  benefitsContainer: {
-    marginBottom: Spacing['2xl'],
-    gap: Spacing.md,
-  },
-  benefitRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.sm,
-  },
-  checkIconContainer: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: 'rgba(100, 116, 139, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 2,
-  },
-  benefitText: {
-    flex: 1,
-    fontSize: 15,
-    color: Colors.foreground,
-    lineHeight: 22.5,
-    letterSpacing: -0.15,
-  },
-
-  // Pricing Card
-  pricingCard: {
+  // Trial Offer Card (contains price + trial info)
+  trialCard: {
     backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
+    borderRadius: 12, // rounded-xl
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: Spacing.xl,
+    padding: 20, // p-5
     alignItems: 'center',
-    marginBottom: Spacing.xl,
-  },
-  pricingLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.mutedForeground,
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-    marginBottom: Spacing.xs,
+    marginBottom: 20, // mb-5
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: Spacing.xs,
+    marginBottom: 12, // mb-3
   },
   priceAmount: {
-    fontSize: 48,
+    fontSize: 48, // 3rem
     fontWeight: '300',
     color: Colors.foreground,
-    letterSpacing: -0.96,
+    letterSpacing: -0.96, // -0.02em
   },
   pricePeriod: {
-    fontSize: 18,
+    fontSize: 18, // 1.125rem
     color: Colors.mutedForeground,
     fontWeight: '400',
     marginLeft: 4,
   },
-  pricingSubtext: {
-    fontSize: 14,
-    color: Colors.mutedForeground,
+  trialText: {
+    fontSize: 15, // 0.9375rem
+    fontWeight: '400',
+    color: Colors.foreground,
     textAlign: 'center',
+    lineHeight: 22.5, // 1.5
+    marginBottom: 10, // mb-2.5
+  },
+  trialSubtext: {
+    fontSize: 13, // 0.8125rem
+    color: Colors.mutedForeground,
+    opacity: 0.8,
+    textAlign: 'center',
+  },
+
+  // Benefits
+  benefitsContainer: {
+    marginBottom: 20, // mb-5
+    gap: 10, // space-y-2.5
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10, // gap-2.5
+  },
+  checkIconContainer: {
+    padding: 2, // p-0.5
+    borderRadius: 9999, // rounded-full
+    backgroundColor: 'rgba(100, 116, 139, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 4, // mt-1
+  },
+  benefitText: {
+    flex: 1,
+    fontSize: 13, // 0.8125rem
+    color: Colors.foreground,
+    lineHeight: 18.2, // 1.4
+    letterSpacing: -0.13,
   },
 
   // Start Trial Button
   startButton: {
     height: 56,
     backgroundColor: Colors.primary,
-    borderRadius: BorderRadius.lg,
+    borderRadius: 12, // rounded-xl
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: 16, // mb-4
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
@@ -259,10 +276,10 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   startButtonText: {
-    fontSize: 17,
+    fontSize: 16, // 1rem
     fontWeight: '500',
     color: Colors.white,
-    letterSpacing: -0.17,
+    letterSpacing: -0.16, // -0.01em
   },
 
   // Restore Button
@@ -270,7 +287,7 @@ const styles = StyleSheet.create({
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: 20, // mb-5
   },
   restoreButtonText: {
     fontSize: 15,
@@ -283,9 +300,9 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.lg,
   },
   legalText: {
-    fontSize: 11,
+    fontSize: 11, // 0.6875rem
     color: Colors.mutedForeground,
-    lineHeight: 16.5,
+    lineHeight: 17.6, // 1.6
     textAlign: 'center',
     opacity: 0.8,
   },
