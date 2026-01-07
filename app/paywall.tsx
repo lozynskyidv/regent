@@ -13,39 +13,101 @@ import {
   ScrollView,
   StatusBar,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Check } from 'lucide-react-native';
 import { Colors, Typography, Spacing, BorderRadius } from '../constants';
-import { useData } from '../contexts/DataContext';
+import { useRevenueCatContext } from '../contexts/RevenueCatContext';
 
 export default function PaywallScreen() {
   const router = useRouter();
-  const { startTrial } = useData();
+  const { packages, purchasePackage, restorePurchases, isLoading: isLoadingPurchases } = useRevenueCatContext();
   const [isStartingTrial, setIsStartingTrial] = useState(false);
+  const [isRestoring, setIsRestoring] = useState(false);
 
   const handleStartTrial = async () => {
     try {
       setIsStartingTrial(true);
       
-      // Save trial started flag to AsyncStorage
-      await startTrial();
+      // Check if packages are loaded
+      if (packages.length === 0) {
+        Alert.alert(
+          'Not Available',
+          'Subscription packages are not available yet. Please try again in a moment.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Purchase the first package (annual subscription with 14-day trial)
+      const annualPackage = packages[0];
+      console.log('💳 Starting purchase for:', annualPackage.identifier);
+      
+      await purchasePackage(annualPackage);
+      
+      console.log('✅ Trial started successfully!');
       
       // Small delay for UX (feels more intentional)
       await new Promise(resolve => setTimeout(resolve, 500));
       
       // Navigate to auth (PIN setup)
       router.replace('/auth');
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Error starting trial:', error);
+      
+      // Don't show alert if user cancelled
+      if (error.message === 'USER_CANCELLED') {
+        console.log('User cancelled purchase');
+      } else {
+        Alert.alert(
+          'Purchase Failed',
+          'Could not start your free trial. Please try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } finally {
       setIsStartingTrial(false);
     }
   };
 
-  const handleRestorePurchases = () => {
-    // TODO: Implement RevenueCat restore purchases
-    console.log('🔄 Restore purchases tapped (placeholder)');
+  const handleRestorePurchases = async () => {
+    try {
+      setIsRestoring(true);
+      console.log('🔄 Restoring purchases...');
+      
+      const customerInfo = await restorePurchases();
+      
+      // Check if user has active subscription
+      if (customerInfo.entitlements.active['premium']) {
+        Alert.alert(
+          'Success',
+          'Your subscription has been restored!',
+          [
+            {
+              text: 'Continue',
+              onPress: () => router.replace('/auth'),
+            },
+          ]
+        );
+      } else {
+        Alert.alert(
+          'No Subscription Found',
+          'We couldn\'t find any active subscriptions for this account.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('❌ Error restoring purchases:', error);
+      Alert.alert(
+        'Restore Failed',
+        'Could not restore your purchases. Please try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsRestoring(false);
+    }
   };
 
   // Calculate trial end date (14 days from now)
@@ -114,13 +176,13 @@ export default function PaywallScreen() {
         <TouchableOpacity
           style={[
             styles.startButton,
-            isStartingTrial && styles.startButtonDisabled,
+            (isStartingTrial || isLoadingPurchases) && styles.startButtonDisabled,
           ]}
           onPress={handleStartTrial}
-          disabled={isStartingTrial}
+          disabled={isStartingTrial || isLoadingPurchases}
           activeOpacity={0.8}
         >
-          {isStartingTrial ? (
+          {isStartingTrial || isLoadingPurchases ? (
             <ActivityIndicator color={Colors.white} />
           ) : (
             <Text style={styles.startButtonText}>Start Free Trial</Text>
@@ -131,10 +193,14 @@ export default function PaywallScreen() {
         <TouchableOpacity
           style={styles.restoreButton}
           onPress={handleRestorePurchases}
-          disabled={isStartingTrial}
+          disabled={isStartingTrial || isRestoring || isLoadingPurchases}
           activeOpacity={0.6}
         >
-          <Text style={styles.restoreButtonText}>Restore Purchases</Text>
+          {isRestoring ? (
+            <ActivityIndicator color={Colors.mutedForeground} />
+          ) : (
+            <Text style={styles.restoreButtonText}>Restore Purchases</Text>
+          )}
         </TouchableOpacity>
 
         {/* Legal Fine Print */}
