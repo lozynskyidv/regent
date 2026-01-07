@@ -6,30 +6,84 @@ import { ModalProvider } from '../contexts/ModalContext';
 
 /**
  * Auth guard component
- * Redirects user based on authentication state
+ * Redirects user based on authentication and subscription state
+ * 
+ * Flow:
+ * 1. Not authenticated → Sign-up screen (/)
+ * 2. Authenticated + hasn't started trial → Paywall (/paywall)
+ * 3. Authenticated + started trial + no PIN → Auth screen (/auth)
+ * 4. Authenticated + started trial + has PIN → Home (/home)
  */
 function AuthGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useData();
+  const { isAuthenticated, hasStartedTrial, isLoading } = useData();
   const segments = useSegments();
   const router = useRouter();
 
   useEffect(() => {
+    // Wait for data to load before making routing decisions
+    // This prevents flash of sign-up screen when user is already authenticated
+    if (isLoading) {
+      console.log('⏳ AuthGuard waiting for data to load...');
+      return;
+    }
+
     const currentPath = segments.join('/') || 'index';
     
     // Public routes (no auth required)
     const publicRoutes = ['index', 'auth/callback'];
     const isPublicRoute = publicRoutes.some(route => currentPath.includes(route));
 
+    // Protected routes that require both auth AND trial started
+    const protectedRoutes = ['home', 'settings', 'assets-detail', 'liabilities-detail'];
+    const isProtectedRoute = protectedRoutes.some(route => currentPath.includes(route));
+
+    console.log('🛡️ AuthGuard check:', { 
+      currentPath, 
+      isAuthenticated, 
+      hasStartedTrial,
+      isPublicRoute,
+      isProtectedRoute,
+      isLoading 
+    });
+
+    // STEP 1: Not authenticated → redirect to sign-up
     if (!isAuthenticated && !isPublicRoute) {
-      // User not authenticated, redirect to sign-up
       console.log('🔒 Not authenticated, redirecting to sign-up');
       router.replace('/');
-    } else if (isAuthenticated && currentPath === 'index') {
-      // User authenticated but on sign-up page, redirect to auth (PIN/Face ID)
-      console.log('🔓 Authenticated, redirecting to PIN/Face ID');
-      router.replace('/auth');
+      return;
     }
-  }, [isAuthenticated, segments]);
+
+    // STEP 2: Authenticated but on sign-up page → check subscription status
+    if (isAuthenticated && currentPath === 'index') {
+      if (!hasStartedTrial) {
+        console.log('💳 Authenticated but no trial, redirecting to paywall');
+        router.replace('/paywall');
+      } else {
+        console.log('🔓 Authenticated with trial, redirecting to auth');
+        router.replace('/auth');
+      }
+      return;
+    }
+
+    // STEP 3: Authenticated but hasn't started trial → redirect to paywall
+    if (isAuthenticated && !hasStartedTrial && currentPath !== 'paywall' && !isPublicRoute) {
+      console.log('💳 No trial started, redirecting to paywall');
+      router.replace('/paywall');
+      return;
+    }
+
+    // STEP 4: On paywall but already started trial → redirect to auth
+    if (isAuthenticated && hasStartedTrial && currentPath === 'paywall') {
+      console.log('✅ Trial already started, redirecting to auth');
+      router.replace('/auth');
+      return;
+    }
+  }, [isAuthenticated, hasStartedTrial, segments, isLoading]);
+
+  // Show blank screen while loading to prevent flash
+  if (isLoading) {
+    return null;
+  }
 
   return <>{children}</>;
 }

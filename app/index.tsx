@@ -84,11 +84,24 @@ export default function SignUpScreen() {
           
           if (access_token && refresh_token) {
             console.log('🔑 Setting session with tokens');
+            console.log('📊 Token lengths:', { access: access_token.length, refresh: refresh_token.length });
+            console.log('⏱️ Calling supabase.auth.setSession...');
+            
+            const setSessionStart = Date.now();
             await supabase.auth.setSession({
               access_token,
               refresh_token,
             });
-            console.log('✅ Session set successfully!');
+            const setSessionDuration = Date.now() - setSessionStart;
+            
+            console.log('✅ setSession returned successfully!');
+            console.log('⏱️ setSession took:', setSessionDuration, 'ms');
+            console.log('🎯 Waiting for auth state to settle...');
+            
+            // Small delay to let auth listener complete
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            console.log('✅ Session set successfully! Auth flow complete.');
           } else {
             console.error('❌ No tokens found in redirect URL');
             console.error('URL params:', Array.from(url.searchParams.entries()));
@@ -160,11 +173,25 @@ export default function SignUpScreen() {
           }
           
           if (access_token && refresh_token) {
+            console.log('🔑 Setting session with tokens');
+            console.log('📊 Token lengths:', { access: access_token.length, refresh: refresh_token.length });
+            console.log('⏱️ Calling supabase.auth.setSession...');
+            
+            const setSessionStart = Date.now();
             await supabase.auth.setSession({
               access_token,
               refresh_token,
             });
-            console.log('✅ Session set successfully!');
+            const setSessionDuration = Date.now() - setSessionStart;
+            
+            console.log('✅ setSession returned successfully!');
+            console.log('⏱️ setSession took:', setSessionDuration, 'ms');
+            console.log('🎯 Waiting for auth state to settle...');
+            
+            // Small delay to let auth listener complete
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            console.log('✅ Session set successfully! Auth flow complete.');
           } else {
             throw new Error('No authentication tokens received');
           }

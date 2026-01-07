@@ -12,6 +12,7 @@ const STORAGE_KEYS = {
   LIABILITIES: 'regent_liabilities',
   USER: 'regent_user',
   PREFERENCES: 'regent_preferences',
+  SUBSCRIPTION: 'regent_subscription',
 } as const;
 
 // ============================================
@@ -231,6 +232,48 @@ export async function loadPreferences(): Promise<Preferences> {
 // UTILITIES
 // ============================================
 
+// ============================================
+// SUBSCRIPTION
+// ============================================
+
+export interface SubscriptionState {
+  hasStartedTrial: boolean;
+  trialStartDate?: string;
+}
+
+export async function saveSubscription(subscription: SubscriptionState): Promise<void> {
+  try {
+    const jsonValue = JSON.stringify(subscription);
+    await AsyncStorage.setItem(STORAGE_KEYS.SUBSCRIPTION, jsonValue);
+    console.log('✅ Subscription saved');
+  } catch (error) {
+    console.error('❌ Error saving subscription:', error);
+    throw error;
+  }
+}
+
+export async function loadSubscription(): Promise<SubscriptionState> {
+  try {
+    const jsonValue = await AsyncStorage.getItem(STORAGE_KEYS.SUBSCRIPTION);
+    if (jsonValue === null) {
+      // Default: user hasn't started trial yet
+      const defaultState: SubscriptionState = { hasStartedTrial: false };
+      console.log('📭 No subscription found, using defaults');
+      return defaultState;
+    }
+    const subscription = JSON.parse(jsonValue) as SubscriptionState;
+    console.log('✅ Subscription loaded:', subscription);
+    return subscription;
+  } catch (error) {
+    console.error('❌ Error loading subscription:', error);
+    return { hasStartedTrial: false };
+  }
+}
+
+// ============================================
+// UTILITIES
+// ============================================
+
 /**
  * Clear all app data (use for logout or reset)
  */
@@ -241,6 +284,7 @@ export async function clearAllData(): Promise<void> {
       STORAGE_KEYS.LIABILITIES,
       STORAGE_KEYS.USER,
       STORAGE_KEYS.PREFERENCES,
+      STORAGE_KEYS.SUBSCRIPTION,
     ]);
     console.log('✅ All data cleared');
   } catch (error) {

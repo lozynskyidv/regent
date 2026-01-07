@@ -28,7 +28,6 @@ npm start  # or: npm run ios
 npx expo start --clear
 ```
 
----
 
 ## 🛠️ Tech Stack
 
@@ -45,14 +44,38 @@ npx expo start --clear
 
 ## 📱 Current Features (P0 MVP Complete)
 
-✅ **Authentication:** Google OAuth UI, Face ID/PIN  
+✅ **Authentication:** Google OAuth, Face ID/PIN, Supabase Auth  
+✅ **Paywall:** 14-day free trial, shown after sign-up  
 ✅ **Home Screen:** Net Worth, Assets, Liabilities cards  
 ✅ **CRUD:** Add/Edit/Delete assets & liabilities  
 ✅ **Detail Screens:** Full lists with swipe gestures  
 ✅ **Modals:** 2-step flow (type picker → specific form)  
-✅ **Settings:** Currency switcher, Sign Out, Delete Account  
+✅ **Settings:** Currency switcher, Sign Out, GDPR-compliant Delete Account  
 ✅ **Charts:** Horizontal bar charts (category breakdown)  
-✅ **Data:** AsyncStorage persistence (auto-save)
+✅ **Data:** AsyncStorage persistence (auto-save), encrypted cloud backups
+
+---
+
+## 🎯 Recent Additions
+
+### **Paywall & Trial Management**
+- 14-day free trial flow (sign up → paywall → start trial)
+- Trial state persistence in AsyncStorage
+- AuthGuard routing based on trial status
+- Clean UX with no screen flashes
+
+### **GDPR-Compliant Account Deletion**
+- Complete data erasure (cloud + local)
+- Supabase Edge Function with admin privileges
+- Deletes: auth user, user profile, backups, local data, PIN
+- Token state management for reliable deletion
+- Comprehensive error handling with timeouts
+
+### **OAuth Improvements**
+- Token state management (stored in React state)
+- Non-blocking profile sync (background operation)
+- Comprehensive timeout handling (prevents infinite loading)
+- Detailed diagnostic logging with timestamps
 
 ---
 
@@ -60,7 +83,7 @@ npx expo start --clear
 
 ❌ Stock tracking (Twelve Data API)  
 ❌ Bank connections (TrueLayer OAuth)  
-❌ Subscriptions (RevenueCat)  
+❌ Subscriptions (RevenueCat integration)  
 ❌ Performance chart (net worth over time)  
 ❌ TestFlight beta
 

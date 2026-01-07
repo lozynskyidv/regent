@@ -19,6 +19,9 @@ import {
   savePreferences,
   Preferences,
   clearAllData,
+  loadSubscription,
+  saveSubscription,
+  SubscriptionState as StorageSubscriptionState,
 } from '../utils/storage';
 import { generateId } from '../utils/generateId';
 import { getSupabaseClient, reinitializeSupabaseClient, setOnClientReinitialized } from '../utils/supabase';
@@ -42,6 +45,9 @@ interface DataContextType {
   isAuthenticated: boolean;
   isAuthProcessing: boolean; // Global lock to prevent concurrent auth operations
   
+  // Subscription
+  hasStartedTrial: boolean;
+  
   // Computed
   netWorth: number;
   totalAssets: number;
@@ -62,6 +68,9 @@ interface DataContextType {
   
   // Actions - Preferences
   setCurrency: (currency: Currency) => Promise<void>;
+  
+  // Actions - Subscription
+  startTrial: () => Promise<void>;
   
   // Actions - Auth & Backup
   signOut: () => Promise<void>;
@@ -97,6 +106,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [supabaseUser, setSupabaseUser] = useState<SupabaseAuthUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isAuthProcessing, setIsAuthProcessing] = useState(false); // Global auth lock
+  const [accessToken, setAccessToken] = useState<string | null>(null); // Store access token for reliable deletion
+  
+  // Subscription state
+  const [hasStartedTrial, setHasStartedTrial] = useState(false);
 
   // Check Supabase auth session on mount and register auth listener
   useEffect(() => {
@@ -118,6 +131,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       supabase.auth.getSession().then(({ data: { session } }) => {
         setSupabaseUser(session?.user ?? null);
         setIsAuthenticated(!!session);
+        setAccessToken(session?.access_token ?? null); // Store token
         console.log('🔐 Auth session:', session ? 'Active' : 'None');
       });
 
@@ -128,11 +142,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
           console.log('🔐 Auth event:', event);
           setSupabaseUser(session?.user ?? null);
           setIsAuthenticated(!!session);
+          setAccessToken(session?.access_token ?? null); // Store token on every auth change
           
           if (event === 'SIGNED_IN' && session) {
             console.log('✅ OAuth success - syncing profile');
-            // Sync user profile to Supabase
-            await syncUserProfile(session.user);
+            console.log('🔑 Access token stored (length:', session.access_token?.length, ')');
+            
+            // CRITICAL FIX: Don't await profile sync - let it run in background
+            // This prevents auth flow from being blocked if profile sync hangs
+            syncUserProfile(session.user).catch(err => {
+              console.error('❌ Background profile sync failed:', err?.message || err);
+              // Error is logged but doesn't block auth flow
+            });
+            
             // Navigation handled by AuthGuard (prevents duplicate navigation race condition)
           }
         }
@@ -170,19 +192,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       console.log('📦 Loading data from AsyncStorage...');
       
-      const [loadedAssets, loadedLiabilities, loadedUser, preferences] = await Promise.all([
+      const [loadedAssets, loadedLiabilities, loadedUser, preferences, subscription] = await Promise.all([
         loadAssets(),
         loadLiabilities(),
         loadUser(),
         loadPreferences(),
+        loadSubscription(),
       ]);
       
       setAssets(loadedAssets);
       setLiabilities(loadedLiabilities);
       setUserState(loadedUser);
       setPrimaryCurrency(preferences.primaryCurrency);
+      setHasStartedTrial(subscription.hasStartedTrial);
       
       console.log('✅ Data loaded successfully');
+      console.log('📊 Subscription state:', subscription);
     } catch (err) {
       console.error('❌ Error loading data:', err);
       setError('Failed to load data');
@@ -345,6 +370,32 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   // ============================================
+  // SUBSCRIPTION ACTIONS
+  // ============================================
+
+  /**
+   * Start trial
+   * Called when user taps "Start 14-Day Free Trial" on paywall
+   * Sets hasStartedTrial = true to unlock app access
+   */
+  const startTrial = async () => {
+    try {
+      const subscription: StorageSubscriptionState = {
+        hasStartedTrial: true,
+        trialStartDate: new Date().toISOString(),
+      };
+      
+      await saveSubscription(subscription);
+      setHasStartedTrial(true);
+      
+      console.log('✅ Trial started successfully');
+    } catch (err) {
+      console.error('❌ Error starting trial:', err);
+      throw err;
+    }
+  };
+
+  // ============================================
   // AUTH ACTIONS
   // ============================================
 
@@ -354,13 +405,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
    */
   const syncUserProfile = async (authUser: SupabaseAuthUser) => {
     try {
+      console.log('🔄 Syncing user profile to database...');
       const supabase = getSupabaseClient();
       
-      const { data: existingUser, error: fetchError } = await supabase
+      // Add 5-second timeout to prevent infinite hanging
+      const fetchPromise = supabase
         .from('users')
         .select('*')
         .eq('id', authUser.id)
         .single();
+      
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('User profile fetch timeout after 5 seconds')), 5000)
+      );
+      
+      const { data: existingUser, error: fetchError } = await Promise.race([
+        fetchPromise,
+        timeoutPromise
+      ]) as any;
 
       if (fetchError && fetchError.code !== 'PGRST116') {
         // Error other than "not found"
@@ -368,8 +430,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
 
       if (!existingUser) {
-        // Create new user record
-        const { error: insertError } = await supabase
+        console.log('📝 Creating new user profile in database...');
+        
+        // Create new user record with timeout
+        const insertPromise = supabase
           .from('users')
           .insert({
             id: authUser.id,
@@ -379,22 +443,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
             primary_currency: 'GBP',
             last_login_at: new Date().toISOString(),
           });
+        
+        const insertTimeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('User profile insert timeout after 5 seconds')), 5000)
+        );
+        
+        const { error: insertError } = await Promise.race([
+          insertPromise,
+          insertTimeoutPromise
+        ]) as any;
 
         if (insertError) throw insertError;
         console.log('✅ User profile created in Supabase');
       } else {
-        // Update last login
-        const { error: updateError } = await supabase
+        console.log('🔄 Updating existing user profile...');
+        
+        // Update last login with timeout
+        const updatePromise = supabase
           .from('users')
           .update({ last_login_at: new Date().toISOString() })
           .eq('id', authUser.id);
+        
+        const updateTimeoutPromise = new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('User profile update timeout after 5 seconds')), 5000)
+        );
+        
+        const { error: updateError } = await Promise.race([
+          updatePromise,
+          updateTimeoutPromise
+        ]) as any;
 
         if (updateError) throw updateError;
         console.log('✅ User profile updated in Supabase');
       }
-    } catch (err) {
-      console.error('❌ Error syncing user profile:', err);
-      // Non-critical error, don't throw
+    } catch (err: any) {
+      console.error('❌ Error syncing user profile:', err?.message || err);
+      // CRITICAL: Non-critical error, don't throw
+      // User can still use the app even if profile sync fails
+      // This prevents auth flow from being blocked
     }
   };
 
@@ -472,6 +558,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       console.log('🔐 DataContext: Clearing local auth state (will trigger redirect)...');
       setSupabaseUser(null);
       setIsAuthenticated(false);
+      setAccessToken(null); // Clear stored token
       
       console.log('✅ Signed out successfully - Fresh client ready for next sign-in');
     } catch (err) {
@@ -479,6 +566,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // Even if there's an error, clear local state to unblock UI
       setSupabaseUser(null);
       setIsAuthenticated(false);
+      setAccessToken(null); // Clear stored token even on error
       throw err;
     } finally {
       // Always release the lock, even if there's an error
@@ -492,47 +580,202 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   /**
-   * Delete account
-   * Removes user from Supabase and wipes ALL local data
+   * Delete account (GDPR-compliant)
+   * Calls Supabase Edge Function to delete ALL user data:
+   * - Supabase Auth user (email, name, metadata) - GDPR Article 17
+   * - User profile (users table)
+   * - Encrypted backups (backups table)
+   * - Local data (AsyncStorage + SecureStore)
+   * 
+   * This is a complete, irreversible deletion per GDPR requirements.
    */
   const deleteAccount = async () => {
+    const startTime = Date.now();
+    const log = (msg: string) => console.log(`[${Date.now() - startTime}ms] ${msg}`);
+    
+    setIsAuthProcessing(true);
+    
     try {
+      log('🗑️ DELETE ACCOUNT: Started');
+      
       if (!supabaseUser) {
         throw new Error('No user to delete');
       }
 
+      log(`👤 User: ${supabaseUser.email}`);
+      log(`🆔 User ID: ${supabaseUser.id}`);
+
+      // Use stored access token (no getSession call needed!)
+      log('🔑 Using stored access token...');
+      if (!accessToken) {
+        log('❌ No access token in state');
+        throw new Error('No active session. Please sign in again.');
+      }
+      log(`✅ Token ready (length: ${accessToken.length})`);
+      
+      log('🗑️ Initiating GDPR-compliant account deletion...');
+      
       const supabase = getSupabaseClient();
 
-      // Delete backups from Supabase
-      await supabase
-        .from('backups')
-        .delete()
-        .eq('user_id', supabaseUser.id);
+      // Call Edge Function (handles all cloud deletion with admin privileges)
+      const functionUrl = `${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/delete-account`;
+      log(`🌐 Calling Edge Function: ${functionUrl}`);
 
-      // Delete user from Supabase
-      await supabase
-        .from('users')
-        .delete()
-        .eq('id', supabaseUser.id);
+      // Create AbortController for timeout (prevents infinite hanging)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        log('⏱️ Request timeout after 30 seconds');
+        controller.abort();
+      }, 30000); // 30 second timeout
 
-      // Clear all local data
+      try {
+        log('📡 Sending DELETE request to Edge Function...');
+        const response = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json',
+          },
+          signal: controller.signal, // Enable timeout cancellation
+        });
+
+        clearTimeout(timeoutId);
+        log(`📥 Response received: status=${response.status} ok=${response.ok}`);
+
+        const result = await response.json();
+        log(`📦 Response body: ${JSON.stringify(result)}`);
+
+        if (!response.ok) {
+          log(`❌ Edge Function error: ${JSON.stringify(result)}`);
+          throw new Error(result.error || 'Failed to delete account from cloud');
+        }
+
+        log('✅ Cloud data deleted successfully');
+        log(`📝 Deleted at: ${result.deleted_at}`);
+
+      } catch (fetchError: any) {
+        clearTimeout(timeoutId);
+        log(`❌ Fetch error: ${fetchError.name} - ${fetchError.message}`);
+        
+        if (fetchError.name === 'AbortError') {
+          throw new Error('Request timed out. Please check your internet connection and try again.');
+        }
+        
+        // Re-throw other fetch errors
+        throw fetchError;
+      }
+
+      // CRITICAL: Sign out from Supabase to clear the session
+      // This prevents the user from being in a "zombie state" (authenticated but account deleted)
+      log('🔓 Signing out from Supabase to clear session...');
+      
+      // Add timeout to signOut (it can hang too!)
+      const signOutPromise = supabase.auth.signOut();
+      const signOutTimeout = new Promise((resolve) => 
+        setTimeout(() => {
+          log('⚠️ signOut timed out after 3 seconds, continuing anyway...');
+          resolve(null);
+        }, 3000)
+      );
+      
+      await Promise.race([signOutPromise, signOutTimeout]);
+      log('✅ Supabase session cleared (or timed out)');
+
+      // Clear all local data (after cloud deletion succeeds)
+      log('🧹 Clearing local data...');
       await clearAllData();
-      await SecureStore.deleteItemAsync('regent_pin_hash');
+      log('✅ AsyncStorage data cleared');
+      
+      // Delete PIN from SecureStore with verification
+      log('🔑 Deleting PIN from SecureStore...');
+      try {
+        await SecureStore.deleteItemAsync('regent_pin_hash');
+        
+        // Verify PIN is actually gone
+        const pinCheck = await SecureStore.getItemAsync('regent_pin_hash');
+        if (pinCheck) {
+          log('⚠️ PIN still exists after deletion, retrying...');
+          await SecureStore.deleteItemAsync('regent_pin_hash');
+          const secondCheck = await SecureStore.getItemAsync('regent_pin_hash');
+          if (secondCheck) {
+            log('❌ PIN deletion failed after retry');
+          } else {
+            log('✅ PIN deleted after retry');
+          }
+        } else {
+          log('✅ PIN verified deleted');
+        }
+      } catch (pinError) {
+        log('❌ Error deleting PIN:', pinError);
+      }
+      
+      // Verify trial state is cleared from AsyncStorage
+      log('🔍 Verifying trial state cleared...');
+      try {
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        const trialCheck = await AsyncStorage.getItem('regent_subscription');
+        if (trialCheck) {
+          log('⚠️ Trial state still exists, force deleting...');
+          await AsyncStorage.removeItem('regent_subscription');
+          log('✅ Trial state force deleted');
+        } else {
+          log('✅ Trial state verified cleared');
+        }
+      } catch (trialError) {
+        log('❌ Error verifying trial state:', trialError);
+      }
+      
+      log('✅ Local data cleared and verified');
 
-      // Sign out
-      await supabase.auth.signOut();
-
-      // Clear state
+      // Clear React state
+      log('🔄 Clearing React state...');
       setAssets([]);
       setLiabilities([]);
       setUserState(null);
       setSupabaseUser(null);
       setIsAuthenticated(false);
+      setAccessToken(null); // Clear stored token
+      setHasStartedTrial(false);
+      log('✅ React state cleared');
 
-      console.log('✅ Account deleted successfully');
-    } catch (err) {
-      console.error('❌ Error deleting account:', err);
+      log('✅ Account deletion completed successfully (GDPR compliant)');
+      
+      // Show success message
+      log('🎉 Showing success alert to user');
+      Alert.alert(
+        'Account Deleted',
+        'Your account and all personal data have been permanently deleted.',
+        [{ text: 'OK' }]
+      );
+
+      log(`✅ TOTAL TIME: ${Date.now() - startTime}ms`);
+
+    } catch (err: any) {
+      log(`❌ ERROR in deleteAccount: ${err?.name || 'Unknown'} - ${err?.message || 'Unknown'}`);
+      log(`❌ Error stack: ${err?.stack || 'No stack'}`);
+      
+      // Provide helpful error message based on error type
+      const errorMessage = err?.message?.includes('timeout')
+        ? 'The request timed out. Please check your internet connection and try again.'
+        : err?.message?.includes('Network') || err?.message?.includes('network')
+        ? 'Network error. Please check your internet connection.'
+        : err?.message?.includes('session')
+        ? 'Your session has expired. Please sign in again.'
+        : 'Could not delete your account. Please try again or contact support.';
+      
+      log(`🚨 Showing error alert: ${errorMessage}`);
+      Alert.alert(
+        'Deletion Failed',
+        errorMessage,
+        [{ text: 'OK' }]
+      );
+      
       throw err;
+    } finally {
+      // CRITICAL: Always release the lock, even if there's an error
+      setIsAuthProcessing(false);
+      log('🔓 Auth lock released');
+      log(`⏱️ DELETE ACCOUNT: Finished in ${Date.now() - startTime}ms`);
     }
   };
 
@@ -674,6 +917,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     isAuthenticated,
     isAuthProcessing,
     
+    // Subscription
+    hasStartedTrial,
+    
     // Computed
     netWorth,
     totalAssets,
@@ -688,6 +934,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     deleteLiability,
     setUser,
     setCurrency,
+    startTrial,
     signOut,
     deleteAccount,
     backupData,

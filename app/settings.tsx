@@ -166,29 +166,44 @@ export default function SettingsScreen() {
   };
 
   const handleDeleteAccount = () => {
+    console.log('🗑️ Settings: Delete Account button tapped');
+    
     Alert.alert(
       'Delete Account',
       'This will permanently delete your account and ALL data (cloud backups and local). This action cannot be undone.',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Cancel', 
+          style: 'cancel',
+          onPress: () => console.log('❌ Settings: Delete cancelled (first alert)')
+        },
         {
           text: 'Delete Everything',
           style: 'destructive',
           onPress: () => {
+            console.log('⚠️ Settings: First confirmation accepted, showing second alert');
+            
             // Second confirmation
             Alert.alert(
               'Are You Absolutely Sure?',
               'This will erase your account, all backups, assets, liabilities, and settings. This is permanent and irreversible.',
               [
-                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'Cancel', 
+                  style: 'cancel',
+                  onPress: () => console.log('❌ Settings: Delete cancelled (second alert)')
+                },
                 {
                   text: 'Yes, Delete All Data',
                   style: 'destructive',
                   onPress: async () => {
+                    console.log('🗑️ Settings: Final confirmation - calling deleteAccount()');
                     try {
                       await deleteAccount();
+                      console.log('✅ Settings: deleteAccount() completed successfully');
                       // Navigation handled automatically by AuthGuard
                     } catch (error) {
+                      console.error('❌ Settings: deleteAccount() failed:', error);
                       Alert.alert('Error', 'Failed to delete account. Please try again.');
                     }
                   },
@@ -499,7 +514,9 @@ export default function SettingsScreen() {
         <View style={styles.authOverlay}>
           <View style={styles.authOverlayContent}>
             <ActivityIndicator size="large" color={Colors.primary} />
-            <Text style={styles.authOverlayText}>Signing out...</Text>
+            <Text style={styles.authOverlayText}>
+              {isSigningOut ? 'Signing out...' : 'Deleting account...'}
+            </Text>
           </View>
         </View>
       )}

@@ -79,13 +79,15 @@ export interface User {
   hasCompletedOnboarding: boolean;
 }
 
-// Subscription state
+// Subscription state (Minimal MVP - Approach 1)
 export interface SubscriptionState {
-  isActive: boolean;
-  trialStartDate?: string;
-  trialDaysRemaining: number;
-  expiresAt?: string;
-  productId?: string;
+  hasStartedTrial: boolean; // Simple boolean - true after user taps "Start Trial"
+  trialStartDate?: string; // ISO timestamp when trial started (for future use)
+  // Future fields for Approach 2/3:
+  // trialDaysRemaining: number;
+  // expiresAt?: string;
+  // productId?: string;
+  // isActive: boolean;
 }
 
 // Auth state
