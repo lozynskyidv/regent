@@ -26,7 +26,7 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Settings Screen** (currency selection, sign out, GDPR-compliant delete account)
 - **Cloud Backups** (encrypted with PIN, stored in Supabase)
 
-❌ **NOT BUILT (P1):** Stock tracking, Bank connections, Subscriptions (RevenueCat), Performance chart
+❌ **P1 PRIORITIES:** RevenueCat SDK (payment processing), Stock tracking, Bank connections, Performance chart, TestFlight
 
 **Tech Stack:**  
 - React Native (Expo SDK 54), React 19.1.0, TypeScript 5.9  
@@ -441,39 +441,136 @@ supabase functions deploy delete-account
 
 ---
 
-## 📋 NEXT PRIORITIES (P1 Features)
+## 📋 NEXT PRIORITIES (P1 Features - In Priority Order)
 
-**Week 4-5: P1 MVP (Launch-Ready)**
+### **1. RevenueCat SDK Integration** 🔴 **TOP PRIORITY**
 
-1. **Stock Tracking** (Twelve Data API)
-   - Ticker input + validation
-   - Live price fetching (15-min refresh)
-   - Quantity × Price calculation
-   - Currency conversion
+**Current State:** Paywall exists (`app/paywall.tsx`), trial tracking is local-only (AsyncStorage)  
+**Goal:** Connect to payment processing for real subscriptions
 
-2. **Bank Connections** (TrueLayer OAuth)
-   - UK banks (Barclays, HSBC, Lloyds, etc.)
-   - Read-only balance access
-   - Auto-refresh (24-hour cycle)
-   - Refresh token storage (SecureStore)
+**What to Build:**
+- Install `react-native-purchases` (RevenueCat SDK)
+- Create RevenueCat project + configure iOS product:
+  - Product ID: `regent_annual_149`
+  - Price: £149/year (GBP), $149/year (USD), €149/year (EUR)
+  - 14-day free trial period
+- Update `app/paywall.tsx`:
+  - Replace `startTrial()` with RevenueCat purchase call
+  - Handle purchase success/failure/restore
+- Update `DataContext.tsx`:
+  - Replace local trial state with RevenueCat subscription status
+  - Add `restorePurchases()` function
+- Add "Restore Purchases" button to Settings screen
 
-3. **Subscriptions** (RevenueCat)
-   - **Paywall at sign-up** - Appears immediately after user signs up (before using app)
-   - **"Start 14-Day Free Trial" button** - Subscribes via RevenueCat, starts trial
-   - **Full access for 14 days** - All features available during trial (stocks, banks, unlimited assets)
-   - **Auto-charge after trial** - After 14 days, user charged £149/year automatically
-   - **Pricing:** Single tier only - £149/year (GBP), $149/year (USD), €149/year (EUR)
-   - **Restore purchases** functionality for returning users
-   - **Flow:** Sign Up → Paywall → Start Trial → Auth → Home (use app for 14 days) → Auto-charged £149
+**Starting Point:** See `app/paywall.tsx` (existing UI), modify button handler
 
-4. **Performance Chart**
-   - Net worth over time (line chart)
-   - Historical snapshots (monthly)
+---
 
-5. **TestFlight Beta**
-   - Build with EAS
-   - Beta testing
-   - Feedback implementation
+### **2. Stock Tracking** (Twelve Data API)
+
+**Current State:** Users can only add "Other" assets manually  
+**Goal:** Let users track stock portfolios with live prices
+
+**What to Build:**
+- Create `AddStockModal.tsx`:
+  - Ticker input (AAPL, TSLA, etc.)
+  - Quantity input
+  - Manual price override (optional)
+- Integrate Twelve Data API:
+  - Sign up at twelvedata.com
+  - Add API key to `.env`
+  - Create `utils/stockApi.ts` helper
+  - Fetch live prices (15-min delay on free tier)
+- Update `types/index.ts`:
+  - Add `ticker`, `quantity`, `lastPrice` to Asset metadata
+- Add "Portfolio" category to home screen charts
+- Auto-refresh prices on app open
+
+**Starting Point:** Copy `AddBankModal.tsx` pattern, add ticker validation
+
+---
+
+### **3. Bank Connections** (TrueLayer OAuth)
+
+**Current State:** Users manually enter bank balances  
+**Goal:** Read-only UK bank account connections with auto-refresh
+
+**What to Build:**
+- TrueLayer OAuth setup:
+  - Create account at truelayer.com
+  - Register redirect URI
+  - Add client ID/secret to `.env`
+- Create `ConnectBankModal.tsx`:
+  - Bank selection UI (Barclays, HSBC, Lloyds, etc.)
+  - OAuth flow (similar to Google OAuth in `app/index.tsx`)
+  - Handle callback and token storage (SecureStore)
+- Create `utils/truelayerApi.ts`:
+  - Fetch account balances
+  - Refresh access tokens
+  - Handle errors (expired tokens, revoked access)
+- Add auto-refresh mechanism:
+  - Check connections on app open
+  - Refresh every 24 hours
+  - Show "Connected" badge on bank assets
+
+**Starting Point:** See `app/index.tsx` Google OAuth flow, adapt for TrueLayer
+
+---
+
+### **4. Performance Chart**
+
+**Current State:** No historical tracking  
+**Goal:** Net worth over time visualization
+
+**What to Build:**
+- Supabase table for snapshots:
+  ```sql
+  CREATE TABLE snapshots (
+    id UUID PRIMARY KEY,
+    user_id UUID REFERENCES users(id),
+    net_worth NUMERIC,
+    total_assets NUMERIC,
+    total_liabilities NUMERIC,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  );
+  ```
+- Snapshot creation logic:
+  - Calculate net worth on app open
+  - Store snapshot if 24+ hours since last
+  - Don't snapshot if no data change
+- Create `PerformanceChart.tsx`:
+  - Use `react-native-chart-kit` for line chart
+  - Time range selector (1M, 3M, 6M, 1Y, All)
+  - Show % change and absolute change
+- Add to home screen below existing cards
+
+**Starting Point:** Create Supabase table, add snapshot logic to `DataContext.tsx`
+
+---
+
+### **5. TestFlight Beta**
+
+**Current State:** Running in Expo Go only  
+**Goal:** Distribute standalone build to beta testers
+
+**What to Do:**
+- Setup EAS Build:
+  ```bash
+  npm install -g eas-cli
+  eas login
+  eas build:configure
+  eas build --platform ios
+  ```
+- Configure App Store Connect:
+  - Create app listing
+  - Add TestFlight internal testers
+  - Submit build for review
+- Gather feedback:
+  - Add analytics (optional: PostHog, Mixpanel)
+  - Create feedback form
+  - Iterate on bugs/UX issues
+
+**Starting Point:** Run `eas build:configure`, follow prompts
 
 ---
 

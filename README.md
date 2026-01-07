@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.3.0 (P0 MVP Complete ✅)  
+**Version:** 0.4.0 (P0 MVP Complete ✅ + Paywall + GDPR Deletion)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)
 
@@ -34,9 +34,10 @@ npx expo start --clear
 - **Framework:** React Native (Expo SDK 54)
 - **Language:** TypeScript 5.9
 - **React:** 19.1.0 (locked for compatibility)
+- **Backend:** Supabase (auth, database, Edge Functions)
 - **Navigation:** Expo Router (file-based, `<Slot />` only)
 - **State:** React Context API
-- **Storage:** AsyncStorage (data) + SecureStore (sensitive)
+- **Storage:** AsyncStorage (data) + SecureStore (sensitive) + Supabase (cloud backups)
 - **Icons:** Lucide React Native 0.562.0
 - **Gestures:** react-native-gesture-handler 2.30.0
 
@@ -79,13 +80,62 @@ npx expo start --clear
 
 ---
 
-## 🔜 Next Up (P1 Features)
+## 🔜 Next Up (P1 Features - Priority Order)
 
-❌ Stock tracking (Twelve Data API)  
-❌ Bank connections (TrueLayer OAuth)  
-❌ Subscriptions (RevenueCat integration)  
-❌ Performance chart (net worth over time)  
-❌ TestFlight beta
+### 1. RevenueCat SDK Integration
+**Goal:** Connect existing paywall to payment processing  
+**What to build:**
+- Install `react-native-purchases` SDK
+- Configure RevenueCat project with iOS product ($149/year, 14-day trial)
+- Update `app/paywall.tsx` to call RevenueCat instead of local trial tracking
+- Add "Restore Purchases" functionality
+
+**Current state:** Paywall UI exists, trial tracking is local-only
+
+---
+
+### 2. Stock Tracking (Twelve Data API)
+**Goal:** Let users manually add stock holdings with live prices  
+**What to build:**
+- Create `AddStockModal.tsx` (ticker input, quantity, manual price)
+- Integrate Twelve Data API for live price fetching
+- Add portfolio type to asset categories
+- Display portfolio breakdown on home screen
+
+**Current state:** Manual "Other" assets only
+
+---
+
+### 3. Bank Connections (TrueLayer OAuth)
+**Goal:** Read-only UK bank account balance fetching  
+**What to build:**
+- TrueLayer OAuth flow (similar to Google OAuth)
+- Bank selection UI
+- Auto-refresh mechanism (24-hour cycle)
+- Secure token storage in SecureStore
+
+**Current state:** Manual bank entry only
+
+---
+
+### 4. Performance Chart
+**Goal:** Net worth over time visualization  
+**What to build:**
+- Historical snapshots table in Supabase
+- Line chart component (react-native-chart-kit)
+- Time range selector (1M, 3M, 6M, 1Y, All)
+
+**Current state:** No historical tracking
+
+---
+
+### 5. TestFlight Beta
+**Goal:** Distribute to beta testers  
+**What to do:**
+- Build with EAS: `eas build --platform ios`
+- Submit to App Store Connect
+- Create TestFlight internal group
+- Gather feedback and iterate
 
 ---
 
@@ -118,7 +168,7 @@ web-prototype/        # Reference only (NOT for production)
 ## ⚠️ Critical Constraints
 
 **iOS Only:** Test on physical device (Face ID, gestures)  
-**Local Storage Only:** No backend, no cloud sync (MVP)  
+**Backend:** Supabase for auth, cloud backups, and account deletion (local-first design with cloud sync)  
 **React 19 Issues:** Always use `<Slot />`, never `<Stack>` with `screenOptions`  
 **Gestures:** Requires `GestureHandlerRootView` at app root
 
