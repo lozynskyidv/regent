@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.5.0 (P0 MVP Complete ✅ + RevenueCat Integration ✅)  
+**Version:** 0.6.0 (P0 MVP Complete ✅ + RevenueCat ✅ + Email Auth ✅)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)
 
@@ -46,7 +46,7 @@ npx expo start --clear
 
 ## 📱 Current Features (P0 MVP Complete)
 
-✅ **Authentication:** Google OAuth, Face ID/PIN, Supabase Auth  
+✅ **Authentication:** Google OAuth, Email/Password, Face ID/PIN, Supabase Auth  
 ✅ **Paywall:** 14-day free trial with RevenueCat, £149/year subscription  
 ✅ **Payments:** RevenueCat integration (purchase flow, restore purchases, entitlements)  
 ✅ **Home Screen:** Net Worth, Assets, Liabilities cards  
@@ -169,19 +169,7 @@ npx expo start --clear
 
 ---
 
-### 2. Email/Password Authentication
-**Goal:** Alternative auth for privacy-conscious users  
-**What to build:**
-- Create email sign-up/sign-in modals
-- Use Supabase email auth
-- Add email verification flow
-
-**Current state:** Button shows "Coming Soon"  
-**Effort:** 4-6 hours
-
----
-
-### 3. Stock Tracking (Twelve Data API)
+### 2. Stock Tracking (Twelve Data API)
 **Goal:** Let users manually add stock holdings with live prices  
 **What to build:**
 - Create `AddStockModal.tsx` (ticker input, quantity, manual price)
@@ -226,6 +214,7 @@ npx expo start --clear
 
 **Pre-Launch Checklist:**
 - [ ] Enable Apple OAuth in Supabase (App Store requirement)
+- [ ] Re-enable email verification in Supabase (currently disabled for Expo Go testing)
 - [ ] Replace RevenueCat test keys with production keys
 - [ ] Configure App Store Connect product (£149/year)
 - [ ] Test Face ID in standalone build

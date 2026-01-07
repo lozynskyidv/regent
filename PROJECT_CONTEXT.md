@@ -1,7 +1,7 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 7, 2026  
-**Version:** 0.5.0 (P0 MVP Complete ✅ + RevenueCat Integration ✅)  
+**Version:** 0.6.0 (P0 MVP Complete ✅ + RevenueCat ✅ + Email Auth ✅)  
 **Platform:** iOS only (React Native Expo)
 
 ---
@@ -13,7 +13,7 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 
 **Current State (What's ACTUALLY Built):**  
 ✅ **P0 MVP COMPLETE:**
-- **Sign Up screen** (Google OAuth - fully functional with Supabase)
+- **Authentication** (Google OAuth + Email/Password - fully functional with Supabase)
 - **Paywall** (14-day free trial with RevenueCat, £149/year subscription)
 - **RevenueCat Integration** (subscription management, purchase flow, restore purchases)
 - **Auth screen** (Face ID/PIN onboarding, fully functional)
@@ -27,7 +27,7 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Settings Screen** (currency selection, sign out, GDPR-compliant delete account)
 - **Cloud Backups** (encrypted with PIN, stored in Supabase)
 
-❌ **P1 PRIORITIES:** Apple OAuth (App Store requirement), Email/Password auth, Stock tracking, Bank connections, Performance chart, TestFlight
+❌ **P1 PRIORITIES:** Apple OAuth (App Store requirement), Stock tracking, Bank connections, Performance chart, TestFlight
 
 **Tech Stack:**  
 - React Native (Expo SDK 54), React 19.1.0, TypeScript 5.9  
@@ -219,7 +219,6 @@ types/
 
 **Not Built Yet (P1 - Next Priorities):**
 - ❌ **Apple OAuth** - Code implemented, needs Supabase configuration (App Store requirement)
-- ❌ **Email/Password Auth** - Alternative to social login
 - ❌ Stock tracking (Twelve Data API integration)
 - ❌ Bank connections (TrueLayer OAuth flow)
 - ❌ Performance chart (net worth over time, line chart)
@@ -693,23 +692,7 @@ supabase functions deploy delete-account
 
 ---
 
-### **2. Email/Password Authentication**
-
-**Current State:** Button shows "Coming Soon"  
-**Goal:** Alternative auth method for privacy-conscious users (~15-20% prefer email)
-
-**What to Build:**
-- Create `SignUpEmailModal.tsx` and `SignInEmailModal.tsx`
-- Use Supabase `supabase.auth.signUp({ email, password })`
-- Add email verification flow
-- Update `app/index.tsx` to show email modals
-
-**Effort:** 4-6 hours  
-**Starting Point:** Copy Google OAuth pattern from `app/index.tsx`
-
----
-
-### **3. Stock Tracking** (Twelve Data API)
+### **2. Stock Tracking** (Twelve Data API)
 
 **Current State:** Users can only add "Other" assets manually  
 **Goal:** Let users track stock portfolios with live prices
@@ -817,6 +800,7 @@ supabase functions deploy delete-account
 
 **Pre-Launch Checklist:**
 - [ ] Enable Apple OAuth in Supabase (App Store requirement)
+- [ ] Re-enable email verification in Supabase (currently disabled for Expo Go testing)
 - [ ] Replace RevenueCat test keys with production keys
 - [ ] Configure App Store Connect product (£149/year)
 - [ ] Test Face ID in standalone build
