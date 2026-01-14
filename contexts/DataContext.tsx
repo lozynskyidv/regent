@@ -703,7 +703,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
         throw fetchError;
       }
 
-      // CRITICAL: Clear React state FIRST to prevent AuthGuard flash
+      // CRITICAL: Clear invite codes FIRST (before changing auth state)
+      // This ensures AuthGuard redirects to invite screen, not sign-up
+      log('🎟️ Clearing invite codes from AsyncStorage...');
+      try {
+        await AsyncStorage.multiRemove(['@regent_invite_code', '@regent_invite_code_id']);
+        log('✅ Invite codes cleared');
+      } catch (err) {
+        log('⚠️ Error clearing invite codes:', err);
+      }
+
+      // CRITICAL: Clear React state SECOND to trigger AuthGuard re-check
       // This immediately marks user as unauthenticated before async operations
       log('🔄 Clearing React state immediately...');
       setAssets([]);
