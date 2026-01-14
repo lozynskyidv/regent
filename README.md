@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.7.1 (Account Deletion Fixed + Invite Flow Polished)  
+**Version:** 0.7.2 (Empty State Onboarding + User Name Display)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -50,6 +50,7 @@ npx expo start --clear
 ✅ **Invite System:** Exclusive invite-only access (RGNT-XXXXXX codes)  
 ✅ **Viral Growth:** Each user gets 5 invite codes to share  
 ✅ **Authentication:** Google OAuth, Email/Password, Face ID/PIN, Supabase Auth  
+✅ **Empty State Onboarding:** Beautiful hero card for new users with NYC skyline  
 ✅ **Home Screen:** Net Worth, Assets, Liabilities cards + Invite Share Card  
 ✅ **CRUD:** Add/Edit/Delete assets & liabilities  
 ✅ **Detail Screens:** Full lists with swipe gestures  
@@ -61,6 +62,17 @@ npx expo start --clear
 ---
 
 ## 🎯 Recent Changes (January 2026)
+
+### **🎨 Empty State Onboarding** ✅ COMPLETE (v0.7.2 - January 14, 2026)
+- **Added:** Beautiful empty state card for new users (100% match to web prototype)
+- **Added:** Hero image with NYC skyline sunset + gradient overlay
+- **Added:** Dynamic header title: "Welcome, [FirstName]" when empty, "Overview" when has data
+- **Added:** Prominent CTA button: "Add Your First Asset"
+- **Fixed:** User name display now shows actual names (e.g., "J. Rockefeller")
+- **Fixed:** Welcome message uses real first name from Supabase user metadata
+- **Dependency:** Added `expo-linear-gradient` for gradient overlay
+- **Documentation:** Complete guide in `EMPTY_STATE_IMPLEMENTATION.md`
+- **UX Impact:** New users see welcoming onboarding instead of £0 values
 
 ### **🍎 Apple OAuth Preparation** ✅ CODE READY (January 14, 2026)
 - **Fixed:** Apple OAuth code now matches working Google OAuth pattern

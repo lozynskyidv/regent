@@ -1,7 +1,7 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 14, 2026  
-**Version:** 0.7.1 (Account Deletion Fixed + Invite Flow Polished)  
+**Version:** 0.7.2 (Empty State Onboarding + User Name Display)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** Exclusive invite-only (replaced paid subscription)
 
@@ -17,7 +17,9 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Invite System** (RGNT-XXXXXX codes, viral growth mechanic - 5 codes per user)
 - **Authentication** (Google OAuth + Email/Password - fully functional with Supabase)
 - **Auth screen** (Face ID/PIN onboarding, fully functional)
+- **Empty State Onboarding** (Beautiful hero card with NYC skyline for new users)
 - **Home Screen** (Net Worth + Assets + Liabilities + ShareInviteCard)
+- **Dynamic User Display** (Formatted names: "J. Rockefeller", "Welcome, John")
 - **Edit Modals** (EditAssetModal, EditLiabilityModal - pre-populated forms, delete buttons)
 - **Detail Screens** (Assets/Liabilities full lists with swipe-to-edit/delete gestures)
 - **Global Modal Context** (centralized modal state, eliminated 66% code duplication)
@@ -219,7 +221,8 @@ types/
 - ✅ Paywall (14-day free trial with RevenueCat, £149/year)
 - ✅ RevenueCat Integration (purchase flow, restore purchases, entitlements)
 - ✅ Face ID/PIN Auth (onboarding, authentication)
-- ✅ Home Screen (live data, charts, CRUD)
+- ✅ Empty State Onboarding (hero card with NYC skyline, dynamic welcome message)
+- ✅ Home Screen (live data, charts, CRUD, formatted user names)
 - ✅ Add/Edit/Delete Modals (all working)
 - ✅ Detail Screens (swipe gestures, edit/delete)
 - ✅ Settings (currency switcher, sign out, GDPR-compliant delete account, restore purchases)
@@ -596,6 +599,71 @@ if (isAuthenticated && !isPremium && !isLoadingSubscription) {
 - ✅ Subscription entitlements work
 - ✅ Restore purchases works
 - ✅ Cross-device support works (after identification)
+
+---
+
+## 🎨 EMPTY STATE ONBOARDING
+
+**Last Updated:** January 14, 2026  
+**Status:** ✅ PRODUCTION READY
+
+### What It Is
+
+Beautiful onboarding card shown to new users (when `assets.length === 0 && liabilities.length === 0`).
+
+### Design (100% Match to Web Prototype)
+
+**Hero Image Section:**
+- NYC skyline sunset photo (200px height, Unsplash)
+- Dark gradient overlay (rgba(0,0,0,0.2) → rgba(0,0,0,0.4))
+- White text: "Let's build your financial picture"
+- Subtext: "Add your first asset to begin"
+
+**CTA Section:**
+- Large button: "Add Your First Asset" (with Plus icon)
+- Helper text: "Add accounts, investments, property, or cash"
+- Dark background (#1a1a1a), centered layout
+
+**Dynamic Header:**
+- Empty state: "Welcome, [FirstName]" (uses actual user name)
+- Normal state: "Overview"
+- Timestamp: Hidden when empty, shown when has data
+
+### User Name Display
+
+**Top Left Corner:** Formatted as "J. Rockefeller"  
+**Welcome Title:** Shows actual first name "Welcome, John"
+
+**Implementation:**
+```typescript
+// Priority fallback for user name
+getUserFullName():
+  1. supabaseUser.user_metadata.full_name (Google OAuth)
+  2. supabaseUser.user_metadata.name (Email signup)
+  3. user.name (local storage)
+  4. 'User' (fallback)
+
+// Format display name
+formatDisplayName("John Rockefeller") → "J. Rockefeller"
+getUserFirstName() → "John"
+```
+
+### Files
+
+- `app/home.tsx` - Empty state conditional rendering (lines 110-153)
+- `EMPTY_STATE_IMPLEMENTATION.md` - Complete documentation
+
+### Dependencies
+
+- `expo-linear-gradient` - For gradient overlay on hero image
+
+### User Flow
+
+1. New user signs up → Completes PIN setup
+2. Lands on home: "Welcome, John" + Hero card
+3. Taps "Add Your First Asset" → Opens Asset Type Picker
+4. Adds first asset → Transitions to normal state with cards
+5. Never sees empty state again (unless deletes all assets)
 
 ---
 
