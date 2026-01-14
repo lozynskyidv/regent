@@ -147,6 +147,7 @@ export default function SignUpScreen() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'apple',
         options: {
+          redirectTo: redirectUri, // Use Expo's proper redirect URI
           skipBrowserRedirect: true,
         },
       });
@@ -156,9 +157,10 @@ export default function SignUpScreen() {
       // Open the OAuth URL in browser
       if (data?.url) {
         console.log('🌐 Opening browser for OAuth...');
+        console.log('📍 OAuth URL:', data.url);
         const result = await WebBrowser.openAuthSessionAsync(
           data.url,
-          undefined // Let it auto-detect
+          redirectUri // Use the same redirect URI
         );
         
         console.log('📱 Browser result:', result);

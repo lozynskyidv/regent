@@ -62,6 +62,14 @@ npx expo start --clear
 
 ## 🎯 Recent Changes (January 2026)
 
+### **🍎 Apple OAuth Preparation** ✅ CODE READY (January 14, 2026)
+- **Fixed:** Apple OAuth code now matches working Google OAuth pattern
+- **Added:** Missing `redirectTo` parameter in OAuth flow
+- **Added:** Comprehensive debug logging for troubleshooting
+- **Documentation:** Created 5 setup guides (`APPLE_OAUTH_*.md` files)
+- **Status:** ⏳ Waiting for Apple Developer Program enrollment approval
+- **Next:** Configure in Supabase once Apple Developer access granted
+
 ### **🔧 Account Deletion & Invite Flow** ✅ FIXED (v0.7.1)
 - **Fixed:** Account deletion now works (removed restrictive `used_requires_user` constraint)
 - **Fixed:** Proper invite code clearing during account deletion
@@ -125,16 +133,21 @@ npx expo start --clear
 
 ## 🔜 Next Up (P1 Features - Priority Order)
 
-### 1. Apple OAuth 🔴 CRITICAL
+### 1. Apple OAuth 🟡 ON HOLD (Waiting for Apple Developer Enrollment)
 **Goal:** Enable Apple sign-in (App Store requirement)  
 **What to do:**
 - Enable Apple provider in Supabase Dashboard
 - Add Service ID and key from Apple Developer
 - Test sign-in flow (code already implemented)
 
-**Current state:** Code complete, needs Supabase configuration  
-**Effort:** 5-10 minutes  
-**Blocker:** App Store will reject without this
+**Current state:**  
+- ✅ Code complete (fixed `redirectTo` parameter, added logging)
+- ✅ Comprehensive documentation created (5 setup guides)
+- ⏳ **Waiting for Apple Developer Program confirmation** (enrollment documents submitted)
+- 🔴 **BLOCKED:** Cannot configure without Apple Developer access
+
+**Effort:** 5-10 minutes (once enrollment approved)  
+**Documentation:** See `APPLE_OAUTH_README.md` for complete setup guide
 
 ---
 
