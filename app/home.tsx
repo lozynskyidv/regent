@@ -25,6 +25,23 @@ export default function HomeScreen() {
     setLastUpdated(new Date());
   }, [assets, liabilities]);
 
+  // Get user's full name from Supabase user metadata or local user
+  const getUserFullName = (): string => {
+    // Priority: Supabase user metadata (most reliable) → local user → fallback
+    const fullName = 
+      supabaseUser?.user_metadata?.full_name || 
+      supabaseUser?.user_metadata?.name || 
+      user?.name || 
+      'User';
+    return fullName;
+  };
+
+  // Get user's first name only
+  const getUserFirstName = (): string => {
+    const fullName = getUserFullName();
+    return fullName.split(' ')[0];
+  };
+
   // Format display name as "J. Rothschild"
   const formatDisplayName = (fullName: string): string => {
     if (!fullName || !fullName.trim()) return 'User';
@@ -75,9 +92,9 @@ export default function HomeScreen() {
       {/* Header */}
       <View style={styles.headerContainer}>
         <View style={styles.headerTop}>
-          {/* User Name */}
+          {/* User Name - Formatted as "J. Rothschild" */}
           <Text style={styles.userName}>
-            {formatDisplayName(user?.name || 'Test User')}
+            {formatDisplayName(getUserFullName())}
           </Text>
           
           {/* Settings Icon */}
@@ -92,7 +109,7 @@ export default function HomeScreen() {
         
         {/* Dynamic Page Title - "Welcome, [FirstName]" when empty, "Overview" when has data */}
         <Text style={styles.pageTitle}>
-          {isEmpty ? `Welcome, ${(user?.name || 'User').split(' ')[0]}` : 'Overview'}
+          {isEmpty ? `Welcome, ${getUserFirstName()}` : 'Overview'}
         </Text>
         
         {/* Timestamp - Only show when NOT empty */}
