@@ -71,21 +71,28 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // STEP 2: Has invite but not authenticated → allow sign-up
+    // STEP 2: On invite code screen with validated invite → redirect to sign-up
+    if (hasValidatedInvite && !isAuthenticated && currentPath === 'invite-code') {
+      console.log('✅ Invite validated, redirecting to sign-up');
+      router.replace('/');
+      return;
+    }
+
+    // STEP 3: Has invite but not authenticated → allow sign-up
     if (hasValidatedInvite && !isAuthenticated && !isPublicRoute) {
       console.log('🔒 Not authenticated, redirecting to sign-up');
       router.replace('/');
       return;
     }
 
-    // STEP 3: Authenticated but on sign-up page → redirect to auth
+    // STEP 4: Authenticated but on sign-up page → redirect to auth
     if (isAuthenticated && currentPath === 'index') {
       console.log('🔓 Authenticated, redirecting to auth');
       router.replace('/auth');
       return;
     }
 
-    // STEP 4: Not authenticated but trying to access protected route → redirect to sign-up
+    // STEP 5: Not authenticated but trying to access protected route → redirect to sign-up
     if (!isAuthenticated && isProtectedRoute) {
       console.log('🔒 Not authenticated, redirecting to sign-up');
       router.replace('/');
