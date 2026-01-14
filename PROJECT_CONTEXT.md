@@ -27,9 +27,7 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Settings Screen** (currency selection, sign out, GDPR-compliant delete account)
 - **Cloud Backups** (encrypted with PIN, stored in Supabase)
 
-⚠️ **KNOWN ISSUE:** Account deletion failing (see README.md for details and next steps)
-
-❌ **P1 PRIORITIES:** Fix account deletion, Apple OAuth (App Store requirement), Stock tracking, Bank connections, Performance chart, TestFlight
+❌ **P1 PRIORITIES:** Apple OAuth (App Store requirement), Stock tracking, Bank connections, Performance chart, TestFlight
 
 **Tech Stack:**  
 - React Native (Expo SDK 54), React 19.1.0, TypeScript 5.9  

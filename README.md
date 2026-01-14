@@ -104,63 +104,12 @@ npx expo start --clear
 
 ---
 
-## ⚠️ Known Issues (For Next Developer)
+## ⚠️ Known Issues
 
-### **Issue 1: Account Deletion Fails with "Database error deleting user"** 🔴 ACTIVE
-**Symptom:** Delete Account button fails with error: "Failed to delete authentication record: Database error deleting user"
-
-**Root Cause Hypothesis:**
-- Supabase Auth has internal tables (`auth.identities`, `auth.sessions`, `auth.refresh_tokens`) with foreign key constraints to `auth.users`
-- These constraints may be `ON DELETE RESTRICT` and we cannot modify them (managed by Supabase)
-- User has active OAuth session (Google) which creates records in these tables
-- Attempted Fix: Added `signOut()` before `deleteUser()` but issue persists
-
-**What We've Tried:**
-1. ✅ Fixed `public.users` → ON DELETE CASCADE (migration `002`)
-2. ✅ Fixed `public.invite_codes` → ON DELETE SET NULL (migration `001`)  
-3. ✅ Fixed `public.backups` → ON DELETE CASCADE (migration `003`)
-4. ✅ Added `auth.admin.signOut()` before deletion (Edge Function)
-5. ❌ Still failing - likely internal Supabase Auth constraint
-
-**Files to Check:**
-- `supabase/functions/delete-account/index.ts` - Edge Function (Steps 1-5)
-- `contexts/DataContext.tsx` (line 650-720) - Client-side deletion call
-- `supabase/migrations/` - Database constraint migrations
-- Supabase Dashboard → SQL Editor → Run constraint check query (see `check_constraints.sql`)
-
-**Potential Solutions (Next Developer):**
-1. **Soft Delete (Pragmatic):** Change to `deleteUser(id, true)` - GDPR compliant but not hard delete
-2. **Manual Auth Table Cleanup:** Query Supabase support for permissions to manually delete from `auth.identities`, `auth.sessions`, `auth.refresh_tokens` before `deleteUser()`
-3. **Supabase Support Ticket:** This might be a known limitation - check Supabase Discord/forums
-4. **Alternative Flow:** Sign out client-side FIRST, wait 1-2 seconds, THEN call delete (may clear sessions properly)
-5. **Check Supabase Logs:** Dashboard → Functions → delete-account → View detailed error logs
-
-**Test Query (Run in Supabase SQL Editor):**
-```sql
--- Check what's blocking deletion for your user ID
-SELECT * FROM auth.identities WHERE user_id = 'your-user-id';
-SELECT * FROM auth.sessions WHERE user_id = 'your-user-id';
-SELECT * FROM auth.refresh_tokens WHERE user_id = 'your-user-id';
-```
-
-**Documentation:**
-- `INVITE_SYSTEM_IMPLEMENTATION.md` - Full invite system docs
-- `DEPLOYMENT_GUIDE.md` - How to deploy Edge Functions
-- Edge Function logs: https://supabase.com/dashboard/project/jkseowelliyafkoizjzx/functions/delete-account
-
----
-
-### **Issue 3: Face ID Screen Flickering** 🟡 MINOR
+### **Issue 1: Face ID Screen Flickering** 🟡 MINOR
 **Symptom:** Face ID enable screen flickers on new account creation
 
-**Likely Related To:** Issue 2 (state changes causing remount)
-
----
-
-### **Issue 4: Brief Paywall on Account Deletion** 🟢 MINOR
-**Symptom:** 2-second paywall flash when deleting account
-
-**Severity:** Low (rare operation, user expects delay anyway)
+**Severity:** Low (happens only on first sign-up)
 
 ---
 
