@@ -4,12 +4,46 @@ import { FaceIDScreen } from './components/FaceIDScreen';
 import { SubscriptionAuthScreen } from './components/SubscriptionAuthScreen';
 import { HomeScreen } from './components/HomeScreen';
 import { LandingPage } from './components/LandingPage';
+import { InviteCodeScreen } from './components/InviteCodeScreen';
+import { InviteCardComparison } from './components/InviteCardComparison';
 
-type Screen = 'landing' | 'signup' | 'faceid' | 'subscription' | 'home';
+type Screen = 'landing' | 'invite-code' | 'signup' | 'faceid' | 'subscription' | 'home' | 'invite-comparison';
 
 export default function App() {
   const [currentScreen, setCurrentScreen] = useState<Screen>('landing');
   const [showNav, setShowNav] = useState(true);
+  const [inviteError, setInviteError] = useState('');
+  const [isValidatingCode, setIsValidatingCode] = useState(false);
+
+  // Invite code validation (design only - replace with Supabase in production)
+  const handleCodeSubmit = async (code: string) => {
+    setIsValidatingCode(true);
+    setInviteError('');
+
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Mock validation - accept any code starting with "RGNT"
+    if (code.startsWith('RGNT')) {
+      localStorage.setItem('regent_invite_validated', 'true');
+      setCurrentScreen('signup');
+    } else {
+      setInviteError('Invalid invite code. Please check and try again.');
+    }
+
+    setIsValidatingCode(false);
+  };
+
+  // Navigate to request access screen
+  const handleRequestAccess = () => {
+    setCurrentScreen('requestAccess');
+  };
+
+  // Request access success callback
+  const handleRequestSuccess = () => {
+    // In production, this would be called after email is sent
+    console.log('Request access email sent');
+  };
 
   const handleSubscriptionAuthorize = () => {
     // Mark subscription as authorized
@@ -37,6 +71,13 @@ export default function App() {
       {/* iPhone frame wrapper - responsive (for app screens only) */}
       {currentScreen !== 'landing' && (
         <div className="mx-auto max-w-md min-h-screen">
+          {currentScreen === 'invite-code' && (
+            <InviteCodeScreen 
+              onCodeSubmit={handleCodeSubmit} 
+              error={inviteError} 
+              isValidating={isValidatingCode} 
+            />
+          )}
           {currentScreen === 'signup' && (
             <SignUpScreen onContinue={() => setCurrentScreen('faceid')} />
           )}
@@ -50,6 +91,7 @@ export default function App() {
             />
           )}
           {currentScreen === 'home' && <HomeScreen />}
+          {currentScreen === 'invite-comparison' && <InviteCardComparison />}
         </div>
       )}
 
@@ -68,6 +110,14 @@ export default function App() {
               }`}
             >
               Landing
+            </button>
+            <button
+              onClick={() => setCurrentScreen('invite-code')}
+              className={`px-3 py-2 rounded-lg transition-all text-xs ${
+                currentScreen === 'invite-code' ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              Invite Code
             </button>
             <button
               onClick={() => setCurrentScreen('signup')}
@@ -100,6 +150,14 @@ export default function App() {
               }`}
             >
               Home
+            </button>
+            <button
+              onClick={() => setCurrentScreen('invite-comparison')}
+              className={`px-3 py-2 rounded-lg transition-all text-xs ${
+                currentScreen === 'invite-comparison' ? 'bg-white text-black' : 'bg-white/10 text-white hover:bg-white/20'
+              }`}
+            >
+              Invite Comparison
             </button>
           </div>
         )}

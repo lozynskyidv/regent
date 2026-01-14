@@ -6,7 +6,6 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
-    "newArchEnabled": true,
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
@@ -27,7 +26,11 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FAFAFA"
       },
-      "package": "com.regent.app"
+      "package": "com.regent.app",
+      "permissions": [
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -45,6 +48,9 @@
     "extra": {
       "router": {
         "origin": false
+      },
+      "eas": {
+        "projectId": "e2762de0-6530-42a2-903f-2a93705158f0"
       }
     }
   }

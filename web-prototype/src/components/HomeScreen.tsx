@@ -17,6 +17,7 @@ import { PortfolioDetailScreen } from './PortfolioDetailScreen';
 import { ConfirmDialog } from './ConfirmDialog';
 import { PaywallScreen } from './PaywallScreen';
 import { SettingsScreen } from './SettingsScreen';
+import { ShareInviteCard } from './ShareInviteCard';
 
 // Types
 interface Asset {
@@ -204,6 +205,23 @@ export function HomeScreen() {
     return localStorage.getItem('regent_user_name') || 'James Rothschild';
   });
   
+  const [invitesRemaining] = useState(5); // In production, fetch from Supabase
+  
+  // Generate user's invite code based on their name
+  const [userCode] = useState(() => {
+    // In production: Fetch from Supabase or generate on backend
+    // Format: RGNT-[FIRSTNAME]-[4CHARS]
+    const firstName = userName.split(' ')[0].toUpperCase();
+    const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `RGNT-${firstName}-${randomChars}`;
+  });
+  
+  // Invite card visibility state - hide for current session when "Remind me later" is clicked
+  const [inviteCardHidden, setInviteCardHidden] = useState(() => {
+    // Check sessionStorage to see if card was dismissed this session
+    return sessionStorage.getItem('regent_invite_card_hidden') === 'true';
+  });
+  
   // Currency state - auto-detect on first load, then use saved preference
   const [currency, setCurrency] = useState<'GBP' | 'USD' | 'EUR'>(() => {
     const saved = localStorage.getItem('regent_currency');
@@ -232,6 +250,20 @@ export function HomeScreen() {
       localStorage.setItem('regent_first_asset_date', new Date().toISOString());
     }
   }, [assets.length]);
+  
+  // Share invite handler
+  const handleShareInvite = () => {
+    // In production: Open share sheet with invite code/link
+    console.log('Share invite clicked');
+    // For React Native: Use Share API
+    // await Share.share({ message: 'Join me on Regent...', url: '...' });
+  };
+
+  // Remind later handler - hides card for current session, reappears on next app open
+  const handleRemindLater = () => {
+    setInviteCardHidden(true);
+    sessionStorage.setItem('regent_invite_card_hidden', 'true');
+  };
   
   // Calculate days since first asset
   const getDaysSinceFirstAsset = (): number => {
@@ -1193,6 +1225,17 @@ export function HomeScreen() {
                 </div>
               </div>
             </Card>
+
+            {/* Share Invite Card - Positioned under Net Worth */}
+            {/* Only show if: 1) Card not dismissed this session AND 2) User has invites remaining */}
+            {!inviteCardHidden && invitesRemaining > 0 && (
+              <ShareInviteCard 
+                invitesRemaining={invitesRemaining}
+                userCode={userCode}
+                userName={userName}
+                onRemindLater={handleRemindLater}
+              />
+            )}
 
             {/* Performance Card - Chart or Day 1 Placeholder */}
             {(shouldShowPerformance || isDay1) && (

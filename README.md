@@ -1,8 +1,9 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.6.0 (P0 MVP Complete ✅ + RevenueCat ✅ + Email Auth ✅)  
+**Version:** 0.7.0 (Invite-Only System ✅ - RevenueCat Removed)  
 **Platform:** iOS only (React Native + Expo)  
-**Target:** Mass Affluent Professionals (£100k-£1m net worth)
+**Target:** Mass Affluent Professionals (£100k-£1m net worth)  
+**Access:** Exclusive invite-only (replaced paid subscription model)
 
 ---
 
@@ -35,9 +36,9 @@ npx expo start --clear
 - **Language:** TypeScript 5.9
 - **React:** 19.1.0 (locked for compatibility)
 - **Backend:** Supabase (auth, database, Edge Functions)
-- **Payments:** RevenueCat (react-native-purchases 8.2.5)
+- **Access Control:** Invite-only system (custom implementation)
 - **Navigation:** Expo Router (file-based, `<Slot />` only)
-- **State:** React Context API (DataContext, ModalContext, RevenueCatContext)
+- **State:** React Context API (DataContext, ModalContext)
 - **Storage:** AsyncStorage (data) + SecureStore (sensitive) + Supabase (cloud backups)
 - **Icons:** Lucide React Native 0.562.0
 - **Gestures:** react-native-gesture-handler 2.30.0
@@ -46,38 +47,47 @@ npx expo start --clear
 
 ## 📱 Current Features (P0 MVP Complete)
 
+✅ **Invite System:** Exclusive invite-only access (RGNT-XXXXXX codes)  
+✅ **Viral Growth:** Each user gets 5 invite codes to share  
 ✅ **Authentication:** Google OAuth, Email/Password, Face ID/PIN, Supabase Auth  
-✅ **Paywall:** 14-day free trial with RevenueCat, £149/year subscription  
-✅ **Payments:** RevenueCat integration (purchase flow, restore purchases, entitlements)  
-✅ **Home Screen:** Net Worth, Assets, Liabilities cards  
+✅ **Home Screen:** Net Worth, Assets, Liabilities cards + Invite Share Card  
 ✅ **CRUD:** Add/Edit/Delete assets & liabilities  
 ✅ **Detail Screens:** Full lists with swipe gestures  
 ✅ **Modals:** 2-step flow (type picker → specific form)  
-✅ **Settings:** Currency switcher, Sign Out, GDPR-compliant Delete Account, Restore Purchases  
+✅ **Settings:** Currency switcher, Sign Out, GDPR-compliant Delete Account  
 ✅ **Charts:** Horizontal bar charts (category breakdown)  
 ✅ **Data:** AsyncStorage persistence (auto-save), encrypted cloud backups
 
 ---
 
-## 🎯 Recent Additions
+## 🎯 Recent Changes (January 2026)
 
-### **RevenueCat Integration** ✅ COMPLETE
-- Full subscription management with RevenueCat SDK
-- Apple In-App Purchase integration (14-day trial, £149/year)
-- Purchase flow with error handling (cancellations, failures)
-- Restore purchases functionality
-- Entitlement checking (premium access control)
-- Sandbox testing complete (verified successful purchases)
-- Smart user identification (only identifies when user changes)
-- Cross-device subscription support
+### **🎟️ Invite-Only System** ✅ IMPLEMENTED (Replaced Paywall)
+- **Business Model Change:** Removed RevenueCat subscription paywall
+- **New Flow:** Invite Code → Sign Up → Face ID → Home
+- **Invite Codes:** Format `RGNT-XXXXXX` (6 alphanumeric, no confusing chars)
+- **Viral Mechanic:** Each user gets 5 codes to share
+- **Backend:** Supabase Edge Functions (validate, generate, mark-used)
+- **Database:** `invite_codes` table with RLS policies
+- **Founder Codes:** 10 pre-seeded codes (`RGNT-F0UND1` through `RGNT-F0UNDA`)
+- **UI:** New `/invite-code` screen + ShareInviteCard on home
+- **AuthGuard:** Updated routing logic for invite validation
 
-### **Email/Password Authentication** ✅ NEW
-- Full email/password sign-up and sign-in flow
-- Email validation and password strength checking (8+ chars)
-- Show/hide password toggle
-- Comprehensive error handling (duplicate email, wrong password, etc.)
-- Modal-based UI matching existing design system
-- Switch between sign-up and sign-in seamlessly
+### **📋 Implementation Details**
+- **Edge Functions Deployed:**
+  - `validate-invite`: Check if code is valid and unused
+  - `generate-invite-codes`: Create 5 new codes for user on signup
+  - `mark-invite-used`: Mark code as used and decrement referrer count
+- **Database Migration:** `001_create_invite_codes.sql` with constraints
+- **Files Added:**
+  - `app/invite-code.tsx` - Invite entry screen
+  - `components/ShareInviteCard.tsx` - Share UI on home
+  - `supabase/functions/*` - Three Edge Functions
+- **Files Modified:**
+  - `app/_layout.tsx` - AuthGuard routing for invites
+  - `contexts/DataContext.tsx` - Invite code generation on signup
+  - `app/home.tsx` - ShareInviteCard integration
+  - `app/settings.tsx` - Removed RevenueCat references
 
 ### **Paywall & Trial Management**
 - 14-day free trial flow (sign up → paywall → purchase)
@@ -96,47 +106,47 @@ npx expo start --clear
 
 ## ⚠️ Known Issues (For Next Developer)
 
-### **Issue 1: Paywall Flash on App Reload** 🔴 ACTIVE
-**Symptom:** Reopening app shows paywall briefly before PIN entry
+### **Issue 1: Account Deletion Fails with "Database error deleting user"** 🔴 ACTIVE
+**Symptom:** Delete Account button fails with error: "Failed to delete authentication record: Database error deleting user"
 
-**Expected:** Direct to PIN entry (like Google OAuth does perfectly)
+**Root Cause Hypothesis:**
+- Supabase Auth has internal tables (`auth.identities`, `auth.sessions`, `auth.refresh_tokens`) with foreign key constraints to `auth.users`
+- These constraints may be `ON DELETE RESTRICT` and we cannot modify them (managed by Supabase)
+- User has active OAuth session (Google) which creates records in these tables
+- Attempted Fix: Added `signOut()` before `deleteUser()` but issue persists
 
-**Investigation:**
-- RevenueCat initialization takes 100-500ms to load cached customer info
-- During this time, `isPremium = false` → AuthGuard shows paywall
-- When customer info loads, `isPremium = true` → Routes to PIN
-
-**Files to Check:**
-- `utils/useRevenueCat.ts` (lines 40-80) - Initialization
-- `app/_layout.tsx` (lines 30-60) - AuthGuard routing logic
-- RevenueCat SDK docs - Check for synchronous cached customer info
-
-**Potential Solutions:**
-1. Check if RevenueCat has `getCachedCustomerInfo()` synchronous method
-2. Add minimum wait time in AuthGuard before routing
-3. Set initial `customerInfo` from SDK cache before async load
-
----
-
-### **Issue 2: PIN Screen Flickering After Purchase** 🟡 ACTIVE
-**Symptom:** After purchase, PIN screen flickers/refreshes requiring double PIN entry
-
-**Expected:** Single smooth PIN entry
-
-**Investigation:**
-- After purchase, `isPremium` changes `false → true`
-- May cause AuthGuard or PIN screen to remount
-- Subscription state update triggers re-render
+**What We've Tried:**
+1. ✅ Fixed `public.users` → ON DELETE CASCADE (migration `002`)
+2. ✅ Fixed `public.invite_codes` → ON DELETE SET NULL (migration `001`)  
+3. ✅ Fixed `public.backups` → ON DELETE CASCADE (migration `003`)
+4. ✅ Added `auth.admin.signOut()` before deletion (Edge Function)
+5. ❌ Still failing - likely internal Supabase Auth constraint
 
 **Files to Check:**
-- `app/_layout.tsx` (lines 60-80) - Post-paywall routing
-- `app/auth.tsx` - Check if component remounts on state change
-- `app/paywall.tsx` - Navigation timing after purchase
+- `supabase/functions/delete-account/index.ts` - Edge Function (Steps 1-5)
+- `contexts/DataContext.tsx` (line 650-720) - Client-side deletion call
+- `supabase/migrations/` - Database constraint migrations
+- Supabase Dashboard → SQL Editor → Run constraint check query (see `check_constraints.sql`)
 
-**Potential Solutions:**
-1. Add `useRef` in auth.tsx to prevent duplicate PIN checks
-2. Add delay before navigation after purchase
-3. Check useEffect dependencies causing remount
+**Potential Solutions (Next Developer):**
+1. **Soft Delete (Pragmatic):** Change to `deleteUser(id, true)` - GDPR compliant but not hard delete
+2. **Manual Auth Table Cleanup:** Query Supabase support for permissions to manually delete from `auth.identities`, `auth.sessions`, `auth.refresh_tokens` before `deleteUser()`
+3. **Supabase Support Ticket:** This might be a known limitation - check Supabase Discord/forums
+4. **Alternative Flow:** Sign out client-side FIRST, wait 1-2 seconds, THEN call delete (may clear sessions properly)
+5. **Check Supabase Logs:** Dashboard → Functions → delete-account → View detailed error logs
+
+**Test Query (Run in Supabase SQL Editor):**
+```sql
+-- Check what's blocking deletion for your user ID
+SELECT * FROM auth.identities WHERE user_id = 'your-user-id';
+SELECT * FROM auth.sessions WHERE user_id = 'your-user-id';
+SELECT * FROM auth.refresh_tokens WHERE user_id = 'your-user-id';
+```
+
+**Documentation:**
+- `INVITE_SYSTEM_IMPLEMENTATION.md` - Full invite system docs
+- `DEPLOYMENT_GUIDE.md` - How to deploy Edge Functions
+- Edge Function logs: https://supabase.com/dashboard/project/jkseowelliyafkoizjzx/functions/delete-account
 
 ---
 

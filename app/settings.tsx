@@ -1,6 +1,6 @@
 /**
  * Settings Screen
- * Subscription status, currency, preferences, account management
+ * Currency, preferences, account management
  * Matches web prototype structure with smart progressive disclosure
  */
 
@@ -11,7 +11,6 @@ import { ChevronLeft, Upload, Download, Cloud } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { useData } from '../contexts/DataContext';
-import { useRevenueCatContext } from '../contexts/RevenueCatContext';
 
 // Enable LayoutAnimation on Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -22,7 +21,6 @@ export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets(); // Get safe area insets immediately
   const { primaryCurrency, setCurrency, signOut, deleteAccount, backupData, restoreData, supabaseUser, isAuthProcessing } = useData();
-  const { logOut: logOutRevenueCat } = useRevenueCatContext();
   const [faceIDEnabled, setFaceIDEnabled] = useState(true); // Mock state for now
   const [pendingCurrency, setPendingCurrency] = useState<'GBP' | 'USD' | 'EUR' | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
@@ -32,10 +30,6 @@ export default function SettingsScreen() {
   const [pinModalAction, setPinModalAction] = useState<'backup' | 'restore' | null>(null);
   const [pin, setPin] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  
-  // Free trial state (accurate - all users start with 14-day trial)
-  const trialDaysRemaining = 14;
-  const isTrialActive = trialDaysRemaining > 0;
 
   // Smooth layout animation on mount
   useEffect(() => {
@@ -146,10 +140,6 @@ export default function SettingsScreen() {
             try {
               console.log('👤 Settings: Starting sign out...');
               
-              // NOTE: We do NOT logout from RevenueCat on sign out
-              // RevenueCat subscription is tied to the device (Apple ID), not the user account
-              // This allows the subscription to persist when signing back in
-              
               // Sign out from Supabase
               await signOut();
               console.log('👤 Settings: Sign out completed');
@@ -207,12 +197,6 @@ export default function SettingsScreen() {
                   onPress: async () => {
                     console.log('🗑️ Settings: Final confirmation - calling deleteAccount()');
                     try {
-                      // CRITICAL: Log out from RevenueCat FIRST to clear subscription state
-                      console.log('🔓 Settings: Logging out from RevenueCat...');
-                      await logOutRevenueCat();
-                      console.log('✅ Settings: RevenueCat logged out');
-                      
-                      // Then delete account
                       await deleteAccount();
                       console.log('✅ Settings: deleteAccount() completed successfully');
                       // Navigation handled automatically by AuthGuard
@@ -257,28 +241,6 @@ export default function SettingsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Subscription Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Subscription</Text>
-          
-          <View style={styles.card}>
-            <View style={styles.subscriptionRow}>
-              <Text style={styles.subscriptionLabel}>Status</Text>
-              <View style={[styles.badge, isTrialActive && styles.badgeTrial]}>
-                <Text style={[styles.badgeText, isTrialActive && styles.badgeTextTrial]}>
-                  {isTrialActive ? `Trial (${trialDaysRemaining}d left)` : 'Expired'}
-                </Text>
-              </View>
-            </View>
-            
-            <Text style={styles.subscriptionDescription}>
-              {isTrialActive 
-                ? `${trialDaysRemaining === 1 ? '1 day' : `${trialDaysRemaining} days`} remaining in your free trial`
-                : 'Your trial has ended. Subscribe to continue.'}
-            </Text>
-          </View>
-        </View>
-
         {/* Currency Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Currency</Text>

@@ -73,8 +73,35 @@ Deno.serve(async (req) => {
     console.log(`📧 Email: ${user.email}`)
     console.log(`⏰ Timestamp: ${new Date().toISOString()}`)
 
-    // STEP 1: Delete backups (encrypted financial data)
-    console.log('1️⃣ Deleting encrypted backups...')
+    // STEP 1: Handle invite codes (remove user references)
+    console.log('1️⃣ Nullifying invite code references...')
+    
+    // Nullify codes created by this user (keep codes active for others who received them)
+    const { error: createdCodesError, count: createdCount } = await supabaseAdmin
+      .from('invite_codes')
+      .update({ created_by_user_id: null })
+      .eq('created_by_user_id', user.id)
+    
+    if (createdCodesError) {
+      console.warn(`⚠️ Created codes update warning: ${createdCodesError.message}`)
+    } else {
+      console.log(`✅ Nullified ${createdCount || 0} created invite codes`)
+    }
+    
+    // Nullify codes used by this user (keep audit trail that code was used)
+    const { error: usedCodesError, count: usedCount } = await supabaseAdmin
+      .from('invite_codes')
+      .update({ used_by_user_id: null })
+      .eq('used_by_user_id', user.id)
+    
+    if (usedCodesError) {
+      console.warn(`⚠️ Used codes update warning: ${usedCodesError.message}`)
+    } else {
+      console.log(`✅ Nullified ${usedCount || 0} used invite codes`)
+    }
+
+    // STEP 2: Delete backups (encrypted financial data)
+    console.log('2️⃣ Deleting encrypted backups...')
     const { error: backupsError, count: backupsCount } = await supabaseAdmin
       .from('backups')
       .delete({ count: 'exact' })
@@ -87,32 +114,31 @@ Deno.serve(async (req) => {
       console.log(`✅ Backups deleted (${backupsCount || 0} records)`)
     }
 
-    // STEP 2: Delete user profile (name, email, preferences from users table)
-    console.log('2️⃣ Deleting user profile...')
-    const { error: profileError, count: profileCount } = await supabaseAdmin
-      .from('users')
-      .delete({ count: 'exact' })
-      .eq('id', user.id)
+    // STEP 3: Sign out all user sessions (required for deletion to work)
+    console.log('3️⃣ Signing out all user sessions...')
+    const { error: signOutError } = await supabaseAdmin.auth.admin.signOut(user.id)
     
-    if (profileError) {
-      console.warn(`⚠️ Profile deletion warning: ${profileError.message}`)
-      // Continue - profile might not exist (user never completed onboarding)
+    if (signOutError) {
+      console.warn(`⚠️ Sign out warning: ${signOutError.message}`)
+      // Continue - user might not have active sessions
     } else {
-      console.log(`✅ Profile deleted (${profileCount || 0} records)`)
+      console.log('✅ All sessions signed out')
     }
 
-    // STEP 3: Delete auth user (CRITICAL for GDPR - removes email, metadata from auth.users)
-    console.log('3️⃣ Deleting auth user (GDPR CRITICAL - removes email & metadata)...')
+    // STEP 4: Delete auth user (CRITICAL for GDPR - removes email, metadata from auth.users)
+    // Note: public.users has ON DELETE CASCADE, so it will be automatically deleted
+    console.log('4️⃣ Deleting auth user (GDPR CRITICAL - removes email & metadata)...')
     const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(user.id)
     
     if (authError) {
       console.error('❌ Auth deletion failed:', authError)
+      console.error('❌ Full error:', JSON.stringify(authError, null, 2))
       throw new Error(`Failed to delete authentication record: ${authError.message}`)
     }
     
-    console.log('✅ Auth user deleted - email and metadata permanently removed')
+    console.log('✅ Auth user deleted - email and metadata permanently removed (CASCADE deleted public.users)')
 
-    // STEP 4: Create audit log (GDPR compliance - demonstrate deletion occurred)
+    // STEP 5: Create audit log (GDPR compliance - demonstrate deletion occurred)
     const auditLog = {
       user_id: user.id,
       email: user.email,

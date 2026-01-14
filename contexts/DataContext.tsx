@@ -7,6 +7,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Asset, Liability, User, Currency } from '../types';
 import {
   loadAssets,
@@ -442,6 +443,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
             photo_url: authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null,
             primary_currency: 'GBP',
             last_login_at: new Date().toISOString(),
+            invites_remaining: 5, // New users get 5 invites
           });
         
         const insertTimeoutPromise = new Promise<never>((_, reject) =>
@@ -455,6 +457,44 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
         if (insertError) throw insertError;
         console.log('✅ User profile created in Supabase');
+        
+        // STEP 2: Mark invite code as used (if user signed up with a code)
+        try {
+          const inviteCodeId = await AsyncStorage.getItem('@regent_invite_code_id');
+          if (inviteCodeId) {
+            console.log('🎟️ Marking invite code as used:', inviteCodeId);
+            const { error: markError } = await supabase.functions.invoke('mark-invite-used', {
+              body: { code_id: inviteCodeId }
+            });
+            
+            if (markError) {
+              console.warn('⚠️ Could not mark invite code as used:', markError);
+            } else {
+              console.log('✅ Invite code marked as used');
+              // Keep invite code in storage to maintain hasValidatedInvite state
+              // Only remove the code_id since it's been used
+              await AsyncStorage.removeItem('@regent_invite_code_id');
+            }
+          }
+        } catch (err) {
+          console.warn('⚠️ Error marking invite code as used:', err);
+          // Non-critical - don't block signup
+        }
+        
+        // STEP 3: Generate 5 invite codes for new user
+        try {
+          console.log('🎟️ Generating invite codes for new user...');
+          const { data: codesData, error: codesError } = await supabase.functions.invoke('generate-invite-codes');
+          
+          if (codesError) {
+            console.warn('⚠️ Could not generate invite codes:', codesError);
+          } else {
+            console.log('✅ Generated invite codes:', codesData?.codes);
+          }
+        } catch (err) {
+          console.warn('⚠️ Error generating invite codes:', err);
+          // Non-critical - don't block signup
+        }
       } else {
         console.log('🔄 Updating existing user profile...');
         

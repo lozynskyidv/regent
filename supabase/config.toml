@@ -43,3 +43,15 @@ enable_confirmations = false
 # Disable automatic JWT verification - we handle it manually in the function
 # This is because automatic verification was failing with "Invalid JWT" even with fresh tokens
 verify_jwt = false
+
+[functions.validate-invite]
+# Public function - no JWT required (anyone can validate codes)
+verify_jwt = false
+
+[functions.generate-invite-codes]
+# Requires authentication - we handle JWT verification manually
+verify_jwt = false
+
+[functions.mark-invite-used]
+# Requires authentication - we handle JWT verification manually
+verify_jwt = false

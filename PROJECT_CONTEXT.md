@@ -1,23 +1,23 @@
 # PROJECT CONTEXT - Regent iOS App
 
-**Last Updated:** January 7, 2026  
-**Version:** 0.6.0 (P0 MVP Complete ✅ + RevenueCat ✅ + Email Auth ✅)  
-**Platform:** iOS only (React Native Expo)
+**Last Updated:** January 14, 2026  
+**Version:** 0.7.0 (Invite-Only System ✅ - RevenueCat Removed)  
+**Platform:** iOS only (React Native Expo)  
+**Access Model:** Exclusive invite-only (replaced paid subscription)
 
 ---
 
 ## 🚀 QUICK START (5-Min Orientation)
 
 **What is Regent?**  
-Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber modernism + JPM restraint." Local storage, no backend.
+Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber modernism + JPM restraint." Local storage + Supabase backend. **Exclusive invite-only access.**
 
 **Current State (What's ACTUALLY Built):**  
 ✅ **P0 MVP COMPLETE:**
+- **Invite System** (RGNT-XXXXXX codes, viral growth mechanic - 5 codes per user)
 - **Authentication** (Google OAuth + Email/Password - fully functional with Supabase)
-- **Paywall** (14-day free trial with RevenueCat, £149/year subscription)
-- **RevenueCat Integration** (subscription management, purchase flow, restore purchases)
 - **Auth screen** (Face ID/PIN onboarding, fully functional)
-- **Home Screen** (Net Worth + Assets + Liabilities cards with live data)
+- **Home Screen** (Net Worth + Assets + Liabilities + ShareInviteCard)
 - **Edit Modals** (EditAssetModal, EditLiabilityModal - pre-populated forms, delete buttons)
 - **Detail Screens** (Assets/Liabilities full lists with swipe-to-edit/delete gestures)
 - **Global Modal Context** (centralized modal state, eliminated 66% code duplication)
@@ -27,18 +27,20 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Settings Screen** (currency selection, sign out, GDPR-compliant delete account)
 - **Cloud Backups** (encrypted with PIN, stored in Supabase)
 
-❌ **P1 PRIORITIES:** Apple OAuth (App Store requirement), Stock tracking, Bank connections, Performance chart, TestFlight
+⚠️ **KNOWN ISSUE:** Account deletion failing (see README.md for details and next steps)
+
+❌ **P1 PRIORITIES:** Fix account deletion, Apple OAuth (App Store requirement), Stock tracking, Bank connections, Performance chart, TestFlight
 
 **Tech Stack:**  
 - React Native (Expo SDK 54), React 19.1.0, TypeScript 5.9  
 - **Backend:** Supabase (auth, database, Edge Functions)  
-- **Payments:** RevenueCat (react-native-purchases 8.2.5) - subscription management  
+- **Access Control:** Custom invite-only system (Supabase Edge Functions + PostgreSQL)  
 - **Storage:** AsyncStorage (data) + SecureStore (PIN/tokens)  
 - **Auth:** Supabase Auth (Google OAuth, session management)  
-- **Cloud:** Supabase Edge Functions (account deletion, backups)  
+- **Cloud:** Supabase Edge Functions (validate-invite, generate-invite-codes, mark-invite-used, delete-account)  
 - Icons: Lucide React Native 0.562.0  
 - Gestures: react-native-gesture-handler 2.30.0 (swipe-to-edit/delete)  
-- State: React Context API (DataContext, ModalContext, RevenueCatContext)  
+- State: React Context API (DataContext, ModalContext)  
 - Navigation: Expo Router (file-based, **ALWAYS use `<Slot />` not `<Stack>`**)
 
 ---
@@ -47,17 +49,18 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 
 ```
 app/                  # Expo Router screens
-├── _layout.tsx       # Root (Slot routing, GestureHandlerRootView)
+├── _layout.tsx       # Root (Slot routing, GestureHandlerRootView, AuthGuard)
+├── invite-code.tsx   # Invite code entry (first screen for new users)
 ├── index.tsx         # Sign Up (Google OAuth UI)
-├── paywall.tsx       # TO BUILD: Paywall ("Start 14-Day Free Trial")
-├── auth.tsx          # Face ID/PIN auth (placeholder)
-├── home.tsx          # Dashboard (Net Worth + Assets + Liabilities)
+├── auth.tsx          # Face ID/PIN auth (fully functional)
+├── home.tsx          # Dashboard (Net Worth + Assets + Liabilities + ShareInviteCard)
 ├── assets-detail.tsx # Full asset list (swipe gestures)
 ├── liabilities-detail.tsx
 └── settings.tsx      # Currency, Sign Out, Delete Account
 
 components/           # Modals & Cards
 ├── NetWorthCard, AssetsCard, LiabilitiesCard
+├── ShareInviteCard   # NEW: Display & share invite codes
 ├── AssetTypePickerModal, LiabilityTypePickerModal
 │   └── (2-step flow: Step 1 = type picker, Step 2 = specific form)
 ├── Add[Bank|Property|OtherAsset]Modal.tsx
@@ -66,9 +69,19 @@ components/           # Modals & Cards
 └── SwipeableAssetItem, SwipeableLiabilityItem (gesture handlers)
 
 contexts/
-├── DataContext.tsx        # Global state (assets, liabilities, user)
-├── ModalContext.tsx       # Centralized modal management
-└── RevenueCatContext.tsx  # Subscription state (premium status, purchases)
+├── DataContext.tsx        # Global state (assets, liabilities, user, invites)
+└── ModalContext.tsx       # Centralized modal management
+
+supabase/
+├── migrations/
+│   ├── 001_create_invite_codes.sql  # Invite system schema
+│   ├── 002_fix_delete_constraints.sql
+│   └── 003_fix_all_auth_constraints.sql
+└── functions/
+    ├── validate-invite/      # Check if code is valid
+    ├── generate-invite-codes/ # Create 5 codes for new user
+    ├── mark-invite-used/      # Mark code as used
+    └── delete-account/        # GDPR-compliant deletion (HAS ISSUES)
 
 utils/
 ├── storage.ts        # AsyncStorage helpers

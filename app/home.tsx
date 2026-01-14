@@ -9,10 +9,11 @@ import { useModals } from '../contexts/ModalContext';
 import NetWorthCard from '../components/NetWorthCard';
 import AssetsCard from '../components/AssetsCard';
 import LiabilitiesCard from '../components/LiabilitiesCard';
+import ShareInviteCard from '../components/ShareInviteCard';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, assets, liabilities, netWorth, isLoading } = useData();
+  const { user, supabaseUser, assets, liabilities, netWorth, isLoading } = useData();
   const { openAddAssetFlow, openAddLiabilityFlow } = useModals();
   
   const [lastUpdated, setLastUpdated] = useState(new Date());
@@ -104,6 +105,11 @@ export default function HomeScreen() {
             currency={user?.primaryCurrency || 'GBP'} 
           />
         </View>
+
+        {/* Share Invite Card (only if user has invites) */}
+        {supabaseUser?.id && (
+          <ShareInviteCard userId={supabaseUser.id} />
+        )}
 
         {/* Assets Card */}
         <AssetsCard
