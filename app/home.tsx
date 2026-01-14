@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, ImageBackground } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Settings } from 'lucide-react-native';
+import { Settings, Plus } from 'lucide-react-native';
 import { Colors, Spacing } from '../constants';
+import { BorderRadius } from '../constants/Layout';
 import { useData } from '../contexts/DataContext';
 import { useModals } from '../contexts/ModalContext';
 import NetWorthCard from '../components/NetWorthCard';
 import AssetsCard from '../components/AssetsCard';
 import LiabilitiesCard from '../components/LiabilitiesCard';
 import ShareInviteCard from '../components/ShareInviteCard';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -53,6 +55,9 @@ export default function HomeScreen() {
   const totalAssets = assets.reduce((sum, asset) => sum + asset.value, 0);
   const totalLiabilities = liabilities.reduce((sum, liability) => sum + liability.value, 0);
 
+  // Check if empty state (no assets and no liabilities)
+  const isEmpty = assets.length === 0 && liabilities.length === 0;
+
   // Loading state
   if (isLoading) {
     return (
@@ -85,11 +90,15 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
         
-        {/* Page Title */}
-        <Text style={styles.pageTitle}>Overview</Text>
+        {/* Dynamic Page Title - "Welcome, [FirstName]" when empty, "Overview" when has data */}
+        <Text style={styles.pageTitle}>
+          {isEmpty ? `Welcome, ${(user?.name || 'User').split(' ')[0]}` : 'Overview'}
+        </Text>
         
-        {/* Timestamp */}
-        <Text style={styles.timestamp}>Updated {getTimeAgo()}</Text>
+        {/* Timestamp - Only show when NOT empty */}
+        {!isEmpty && (
+          <Text style={styles.timestamp}>Updated {getTimeAgo()}</Text>
+        )}
       </View>
 
       {/* Scrollable Content */}
@@ -98,39 +107,88 @@ export default function HomeScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        {/* Net Worth Card */}
-        <View style={{ marginBottom: Spacing.lg }}>
-          <NetWorthCard 
-            netWorth={netWorth} 
-            currency={user?.primaryCurrency || 'GBP'} 
-          />
-        </View>
+        {isEmpty ? (
+          /* ===== EMPTY STATE - 100% Match to Web Prototype ===== */
+          <View style={styles.emptyStateCard}>
+            {/* Hero Image Section with Gradient Overlay */}
+            <ImageBackground
+              source={{ uri: 'https://images.unsplash.com/photo-1665399320433-803b7515621a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxOWUMlMjBza3lsaW5lJTIwc3Vuc2V0JTIwZ29sZGVuJTIwaG91cnxlbnwxfHx8fDE3NjczOTE3NjV8MA&ixlib=rb-4.1.0&q=80&w=1080' }}
+              style={styles.heroSection}
+              imageStyle={styles.heroImage}
+            >
+              {/* Dark gradient overlay for text readability */}
+              <LinearGradient
+                colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.4)']}
+                style={styles.heroGradient}
+              />
+              
+              {/* Text content overlaid on image */}
+              <View style={styles.heroTextContainer}>
+                <Text style={styles.heroTitle}>
+                  Let's build your financial picture
+                </Text>
+                <Text style={styles.heroSubtitle}>
+                  Add your first asset to begin
+                </Text>
+              </View>
+            </ImageBackground>
 
-        {/* Share Invite Card (only if user has invites) */}
-        {supabaseUser?.id && (
-          <ShareInviteCard userId={supabaseUser.id} />
+            {/* CTA Section */}
+            <View style={styles.ctaSection}>
+              {/* Primary CTA Button */}
+              <TouchableOpacity
+                style={styles.primaryButton}
+                onPress={openAddAssetFlow}
+                activeOpacity={0.8}
+              >
+                <Plus size={20} color={Colors.background} strokeWidth={2} />
+                <Text style={styles.primaryButtonText}>Add Your First Asset</Text>
+              </TouchableOpacity>
+
+              {/* Helper text */}
+              <Text style={styles.helperText}>
+                Add accounts, investments, property, or cash
+              </Text>
+            </View>
+          </View>
+        ) : (
+          /* ===== NORMAL STATE - Show all cards ===== */
+          <>
+            {/* Net Worth Card */}
+            <View style={{ marginBottom: Spacing.lg }}>
+              <NetWorthCard 
+                netWorth={netWorth} 
+                currency={user?.primaryCurrency || 'GBP'} 
+              />
+            </View>
+
+            {/* Share Invite Card (only if user has invites) */}
+            {supabaseUser?.id && (
+              <ShareInviteCard userId={supabaseUser.id} />
+            )}
+
+            {/* Assets Card */}
+            <AssetsCard
+              assets={assets}
+              totalAssets={totalAssets}
+              currency={user?.primaryCurrency || 'GBP'}
+              onAddAsset={openAddAssetFlow}
+              onNavigateToDetail={() => router.push('/assets-detail')}
+            />
+
+            {/* Liabilities Card */}
+            <LiabilitiesCard
+              liabilities={liabilities}
+              totalLiabilities={totalLiabilities}
+              currency={user?.primaryCurrency || 'GBP'}
+              onAddLiability={openAddLiabilityFlow}
+              onNavigateToDetail={() => router.push('/liabilities-detail')}
+            />
+
+            {/* Bottom Spacer */}
+            <View style={{ height: Spacing['2xl'] }} />
+          </>
         )}
-
-        {/* Assets Card */}
-        <AssetsCard
-          assets={assets}
-          totalAssets={totalAssets}
-          currency={user?.primaryCurrency || 'GBP'}
-          onAddAsset={openAddAssetFlow}
-          onNavigateToDetail={() => router.push('/assets-detail')}
-        />
-
-        {/* Liabilities Card */}
-        <LiabilitiesCard
-          liabilities={liabilities}
-          totalLiabilities={totalLiabilities}
-          currency={user?.primaryCurrency || 'GBP'}
-          onAddLiability={openAddLiabilityFlow}
-          onNavigateToDetail={() => router.push('/liabilities-detail')}
-        />
-
-        {/* Bottom Spacer */}
-        <View style={{ height: Spacing['2xl'] }} />
       </ScrollView>
     </SafeAreaView>
   );
@@ -198,5 +256,86 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
     gap: Spacing.md, // 16px between Assets/Liabilities
+  },
+
+  // ===== Empty State Styles (100% Match to Web Prototype) =====
+  emptyStateCard: {
+    backgroundColor: Colors.secondary, // Subtle background
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+
+  // Hero Section (Image with gradient overlay)
+  heroSection: {
+    height: 200,
+    justifyContent: 'flex-end',
+    padding: Spacing.xl,
+  },
+  heroImage: {
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+  },
+  heroGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    borderTopLeftRadius: BorderRadius.lg,
+    borderTopRightRadius: BorderRadius.lg,
+  },
+  heroTextContainer: {
+    zIndex: 1,
+    width: '100%',
+  },
+  heroTitle: {
+    fontSize: 24,
+    fontWeight: '500',
+    letterSpacing: -0.24, // -0.01em
+    color: '#FFFFFF',
+    marginBottom: 6,
+  },
+  heroSubtitle: {
+    fontSize: 15,
+    color: 'rgba(255, 255, 255, 0.9)',
+    lineHeight: 22.5, // 1.5 * 15
+  },
+
+  // CTA Section
+  ctaSection: {
+    alignItems: 'center',
+    paddingHorizontal: Spacing.xl,
+    paddingTop: Spacing['2xl'],
+    paddingBottom: Spacing.xl,
+  },
+  primaryButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#1a1a1a', // Dark button (matches web)
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
+    width: '100%',
+    maxWidth: 320,
+  },
+  primaryButtonText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: Colors.background, // White text
+  },
+  helperText: {
+    fontSize: 14,
+    color: Colors.mutedForeground,
+    marginTop: 12,
+    opacity: 0.9,
   },
 });
