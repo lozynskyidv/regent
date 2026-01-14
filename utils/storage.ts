@@ -285,6 +285,8 @@ export async function clearAllData(): Promise<void> {
       STORAGE_KEYS.USER,
       STORAGE_KEYS.PREFERENCES,
       STORAGE_KEYS.SUBSCRIPTION,
+      '@regent_invite_code',      // Clear invite validation for fresh start
+      '@regent_invite_code_id',   // Clear invite code ID
     ]);
     console.log('✅ All data cleared');
   } catch (error) {

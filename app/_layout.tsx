@@ -35,7 +35,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     };
 
     checkInviteValidation();
-  }, [segments]); // Re-check when route changes
+  }, [segments, isAuthenticated]); // Re-check when route OR auth state changes
 
   useEffect(() => {
     // Wait for data to load before making routing decisions
