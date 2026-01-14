@@ -1,7 +1,7 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 14, 2026  
-**Version:** 0.7.0 (Invite-Only System ✅ - RevenueCat Removed)  
+**Version:** 0.7.1 (Account Deletion Fixed + Invite Flow Polished)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** Exclusive invite-only (replaced paid subscription)
 

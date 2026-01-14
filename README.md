@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.7.0 (Invite-Only System ✅ - RevenueCat Removed)  
+**Version:** 0.7.1 (Account Deletion Fixed + Invite Flow Polished)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -62,7 +62,15 @@ npx expo start --clear
 
 ## 🎯 Recent Changes (January 2026)
 
-### **🎟️ Invite-Only System** ✅ IMPLEMENTED (Replaced Paywall)
+### **🔧 Account Deletion & Invite Flow** ✅ FIXED (v0.7.1)
+- **Fixed:** Account deletion now works (removed restrictive `used_requires_user` constraint)
+- **Fixed:** Proper invite code clearing during account deletion
+- **Fixed:** Correct routing flow: delete account → invite screen → sign up → PIN → home
+- **Migration:** `004_fix_invite_codes_deletion.sql` removes blocking constraint
+- **Verified:** GDPR-compliant deletion with full invite code reset
+- **Tested:** Complete end-to-end account lifecycle
+
+### **🎟️ Invite-Only System** ✅ IMPLEMENTED (v0.7.0 - Replaced Paywall)
 - **Business Model Change:** Removed RevenueCat subscription paywall
 - **New Flow:** Invite Code → Sign Up → Face ID → Home
 - **Invite Codes:** Format `RGNT-XXXXXX` (6 alphanumeric, no confusing chars)
@@ -95,12 +103,14 @@ npx expo start --clear
 - AuthGuard routing based on premium status
 - Background user identification (doesn't block UI)
 
-### **GDPR-Compliant Account Deletion**
+### **GDPR-Compliant Account Deletion** ✅ WORKING
 - Complete data erasure (cloud + local)
 - Supabase Edge Function with admin privileges
-- Deletes: auth user, user profile, backups, local data, PIN, RevenueCat user ID
+- Deletes: auth user, user profile, backups, invite codes, local data, PIN
 - Token state management for reliable deletion
 - Comprehensive error handling with timeouts
+- **Fixed:** Removed restrictive CHECK constraint blocking deletion (migration `004`)
+- **Fixed:** Proper invite code clearing and routing flow
 
 ---
 
