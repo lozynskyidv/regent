@@ -122,17 +122,25 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
   }, [holdings]);
 
   const handleTickerChange = (id: string, ticker: string) => {
-    let formatted = ticker.toUpperCase().trim();
-    
-    // Auto-format crypto: BTC → BTC/USD (if user hasn't added /USD already)
-    if (formatted && !formatted.includes('/')) {
-      formatted = `${formatted}/USD`;
-    }
+    const formatted = ticker.toUpperCase().trim();
     
     setHoldings(prev =>
       prev.map(h =>
         h.id === id ? { ...h, ticker: formatted, currentPrice: 0, priceError: undefined } : h
       )
+    );
+  };
+
+  // Auto-format when user finishes typing (onBlur)
+  const handleTickerBlur = (id: string) => {
+    setHoldings(prev =>
+      prev.map(h => {
+        if (h.id === id && h.ticker && !h.ticker.includes('/')) {
+          // Auto-add /USD if not already present
+          return { ...h, ticker: `${h.ticker}/USD` };
+        }
+        return h;
+      })
     );
   };
 
@@ -289,6 +297,7 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
                         style={styles.holdingInput}
                         value={holding.ticker}
                         onChangeText={text => handleTickerChange(holding.id, text)}
+                        onBlur={() => handleTickerBlur(holding.id)}
                         placeholder="BTC"
                         placeholderTextColor={Colors.mutedForeground}
                         autoCapitalize="characters"
