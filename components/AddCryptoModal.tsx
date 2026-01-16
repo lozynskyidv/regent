@@ -57,10 +57,15 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
   const fetchPrice = async (ticker: string, holdingId: string) => {
     if (ticker.trim().length < 2) return;
 
-    // Set loading state
+    // Auto-format crypto pair (BTC → BTC/USD) before fetching
+    const formattedTicker = autoFormatCryptoPair(ticker);
+
+    // Set loading state and update ticker with formatted version
     setHoldings(prev =>
       prev.map(h =>
-        h.id === holdingId ? { ...h, isLoadingPrice: true, priceError: undefined } : h
+        h.id === holdingId 
+          ? { ...h, ticker: formattedTicker, isLoadingPrice: true, priceError: undefined } 
+          : h
       )
     );
 
@@ -68,14 +73,14 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
       const supabase = getSupabaseClient();
       const { data, error } = await supabase.functions.invoke('fetch-asset-prices', {
         body: { 
-          symbols: [ticker.toUpperCase()],
+          symbols: [formattedTicker],
           forceRefresh: true // Always fetch fresh prices (bypass corrupted cache)
         },
       });
 
       if (error) throw error;
 
-      const priceData = data[ticker.toUpperCase()];
+      const priceData = data[formattedTicker];
       if (priceData && priceData.price) {
         setHoldings(prev =>
           prev.map(h =>
@@ -89,7 +94,7 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
       }
     } catch (error: any) {
       // Log as info, not error (invalid tickers are expected user behavior)
-      console.log(`⚠️ Could not fetch price for ${ticker}:`, error.message);
+      console.log(`⚠️ Could not fetch price for ${formattedTicker}:`, error.message);
       setHoldings(prev =>
         prev.map(h =>
           h.id === holdingId
@@ -134,17 +139,14 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
     );
   };
 
-  // Auto-format when user finishes typing (onBlur)
-  const handleTickerBlur = (id: string) => {
-    setHoldings(prev =>
-      prev.map(h => {
-        if (h.id === id && h.ticker && !h.ticker.includes('/')) {
-          // Auto-add /USD if not already present
-          return { ...h, ticker: `${h.ticker}/USD` };
-        }
-        return h;
-      })
-    );
+  // Auto-format crypto pairs before fetching price
+  const autoFormatCryptoPair = (ticker: string): string => {
+    const formatted = ticker.trim().toUpperCase();
+    // If ticker doesn't have a pair (like BTC), add /USD
+    if (formatted && !formatted.includes('/') && formatted.length >= 2) {
+      return `${formatted}/USD`;
+    }
+    return formatted;
   };
 
   const handleQuantityChange = (id: string, quantity: string) => {
@@ -300,7 +302,6 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
                         style={styles.holdingInput}
                         value={holding.ticker}
                         onChangeText={text => handleTickerChange(holding.id, text)}
-                        onBlur={() => handleTickerBlur(holding.id)}
                         placeholder="BTC"
                         placeholderTextColor={Colors.mutedForeground}
                         autoCapitalize="characters"
