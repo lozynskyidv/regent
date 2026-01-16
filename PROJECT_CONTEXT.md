@@ -230,9 +230,15 @@ types/
 - ✅ Face ID/PIN Auth (onboarding, authentication)
 - ✅ Empty State Onboarding (hero card with NYC skyline, dynamic welcome message)
 - ✅ Home Screen (live data, charts, CRUD, formatted user names, pull-to-refresh)
-- ✅ Portfolio Tracking (live prices for stocks/ETFs/crypto/commodities via Twelve Data API)
-- ✅ Smart Price Caching (Supabase Edge Function, optimized for free tier)
-- ✅ Add/Edit/Delete Modals (all working, including AddPortfolioModal)
+- ✅ **Investment Tracking (4 Types):**
+  - ✅ Stocks (AAPL, MSFT, TSLA) - `AddStocksModal.tsx`
+  - ✅ Crypto (BTC/USD, ETH/USD) - `AddCryptoModal.tsx` with auto-formatting
+  - ✅ ETFs (SPY, QQQ, VOO) - `AddETFsModal.tsx`
+  - ✅ Commodities (GOLD, SILVER) - `AddCommoditiesModal.tsx`
+- ✅ Live Price Fetching (Twelve Data API, 800 calls/day free tier)
+- ✅ Smart Price Caching (Supabase Edge Function, 1hr stocks/30min crypto)
+- ✅ Pull-to-Refresh (manual price updates for all investment types)
+- ✅ Add/Edit/Delete Modals (all asset types working)
 - ✅ Detail Screens (swipe gestures, edit/delete)
 - ✅ Settings (currency switcher, sign out, GDPR-compliant delete account, restore purchases)
 - ✅ AsyncStorage persistence (all data saves/loads)
@@ -682,32 +688,70 @@ getUserFirstName() → "John"
 
 ### What It Is
 
-Live price fetching for investment portfolios (stocks, ETFs, crypto, commodities) with intelligent caching.
+**Split Investment Types:** 4 dedicated asset types (Stocks, Crypto, ETFs, Commodities) with live price fetching via Twelve Data API.
+
+**Key Decision:** Replaced single "Investment Portfolio" with 4 specific types for better UX and clarity.
 
 ### Architecture
 
-**Client:** `AddPortfolioModal.tsx` - Multi-holding entry with auto-fetch  
+**Client Modals:**
+- `AddStocksModal.tsx` - Track stocks (AAPL, MSFT, TSLA)
+- `AddCryptoModal.tsx` - Track crypto (BTC, ETH, SOL) with auto-formatting
+- `AddETFsModal.tsx` - Track ETFs (SPY, QQQ, VOO)
+- `AddCommoditiesModal.tsx` - Track commodities (GOLD, SILVER, OIL)
+
 **API:** Twelve Data API (800 calls/day free tier)  
 **Caching:** Supabase `asset_prices` table (reduces API calls)  
-**Edge Function:** `fetch-asset-prices` - Smart caching + fallback logic
+**Edge Function:** `fetch-asset-prices` - Smart caching + `forceRefresh` support
 
-### Features
+### User Experience
 
-**Supported Assets:**
-- ✅ Stocks (AAPL, MSFT, TSLA, GOOGL, NVDA, etc.)
-- ✅ ETFs (SPY, QQQ, VOO, etc.)
-- ✅ Crypto (BTC/USD, ETH/USD, etc.)
-- ✅ Commodities (GOLD, SILVER, etc.)
+**Add Asset Flow:**
+1. Tap "+ Add Asset"
+2. See 4 investment options (all with "Live prices" badges)
+3. Select type → Opens dedicated modal
+4. Enter name + holdings (ticker + quantity)
+5. Prices auto-fetch after 800ms debounce
+6. Save → Asset appears in net worth
 
-**Caching Strategy:**
+**Crypto Auto-Formatting:**
+- User types: "BTC"
+- After 800ms: Auto-formats to "BTC/USD" + fetches price
+- No interruption during typing (happens with price fetch)
+
+**Pull-to-Refresh:**
+- Works for ALL investment types (stocks, crypto, ETFs, commodities)
+- Fetches fresh prices for all holdings
+- Shows "Updated just now" timestamp
+
+### Supported Assets
+
+- **Stocks:** AAPL, MSFT, TSLA, GOOGL, NVDA, AMZN, META, etc.
+- **Crypto:** BTC/USD, ETH/USD, SOL/USD, ADA/USD, etc. (auto-formats from BTC)
+- **ETFs:** SPY, QQQ, VOO, VTI, IVV, SCHD, etc.
+- **Commodities:** GOLD, SILVER, OIL, COPPER, PLATINUM, etc.
+
+### Caching Strategy
+
 - **Stocks/ETFs/Commodities:** 1 hour cache
 - **Crypto:** 30 minute cache
-- **Pull-to-Refresh:** User can force update anytime
+- **Force Refresh:** `forceRefresh: true` on all modal fetches (bypasses stale cache)
+- **Pull-to-Refresh:** Uses cache if fresh (< 1 hour)
 
-**Cost Optimization:**
+### Cost Optimization
+
 - Free tier: 800 API calls/day
 - With caching: Supports 10+ active users
 - User-triggered updates only (no background jobs)
+- Estimated usage: ~100-175 calls/day for 10 users
+
+### Pricing Display
+
+**Critical:** All investments display in USD (not user's primary currency)
+- Individual prices: "$94,614" (not "€94,614")
+- Total value: "Total Value (USD) $47,307,000"
+- Stored with: `currency: 'USD'`
+- Matches how markets quote prices
 
 ### Implementation Details
 
@@ -727,10 +771,13 @@ Live price fetching for investment portfolios (stocks, ETFs, crypto, commodities
 5. Shows "Updated just now" timestamp
 
 **Files:**
-- `components/AddPortfolioModal.tsx` - Portfolio entry UI
+- `components/AddStocksModal.tsx` - Stock portfolio entry UI
+- `components/AddCryptoModal.tsx` - Crypto portfolio entry UI (with auto-formatting)
+- `components/AddETFsModal.tsx` - ETF portfolio entry UI
+- `components/AddCommoditiesModal.tsx` - Commodity portfolio entry UI
 - `supabase/functions/fetch-asset-prices/index.ts` - Price fetching logic
 - `supabase/migrations/005_create_asset_prices.sql` - Caching table
-- `app/home.tsx` - Pull-to-refresh implementation
+- `app/home.tsx` - Pull-to-refresh implementation (all investment types)
 
 **Database Schema:**
 ```sql
@@ -751,14 +798,32 @@ CREATE TABLE asset_prices (
 {
   holdings: [
     {
-      symbol: "AAPL",
-      shares: 500,
-      currentPrice: 258.21,
-      totalValue: 129105.00
+      symbol: "AAPL",        // or "BTC/USD" for crypto
+      name: "Apple Inc.",    // Fetched from API
+      shares: 500,           // or "units" for commodities
+      currentPrice: 258.21,  // Always in USD
+      totalValue: 129105.00, // shares * currentPrice
+      change: 2.5            // Percentage (future feature)
     }
   ],
   holdingsCount: 1,
   lastPriceUpdate: "2026-01-16T12:11:53.429Z"
+}
+```
+
+**Example Full Asset:**
+```typescript
+{
+  id: "abc123",
+  type: "stocks",           // or "crypto", "etf", "commodities"
+  name: "Tech Stocks",
+  value: 129105.00,
+  currency: "USD",          // Always USD for investments
+  metadata: {
+    holdings: [...],
+    holdingsCount: 1,
+    lastPriceUpdate: "2026-01-16T12:11:53.429Z"
+  }
 }
 ```
 

@@ -21,7 +21,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [hasValidatedInvite, setHasValidatedInvite] = useState<boolean | null>(null);
 
-  // Check if user has validated an invite code
+  // Check if user has validated an invite code (only once on mount)
   useEffect(() => {
     const checkInviteValidation = async () => {
       try {
@@ -35,7 +35,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
     };
 
     checkInviteValidation();
-  }, [segments, isAuthenticated]); // Re-check when route OR auth state changes
+  }, []); // Only check once on mount (invite validation doesn't change during session)
 
   useEffect(() => {
     // Wait for data to load before making routing decisions
