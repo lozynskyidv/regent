@@ -325,7 +325,7 @@ export default function AddStocksModal({ visible, onClose }: AddStocksModalProps
                     <View style={styles.priceDisplay}>
                       <Text style={styles.priceLabel}>Current Price:</Text>
                       <Text style={styles.priceValue}>
-                        {$}
+                        $
                         {holding.currentPrice.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
@@ -339,7 +339,7 @@ export default function AddStocksModal({ visible, onClose }: AddStocksModalProps
                     <View style={styles.valueDisplay}>
                       <Text style={styles.valueLabel}>Value:</Text>
                       <Text style={styles.valueAmount}>
-                        {$}
+                        $
                         {(parseFloat(holding.quantity) * holding.currentPrice).toLocaleString(
                           'en-GB',
                           {
@@ -365,7 +365,7 @@ export default function AddStocksModal({ visible, onClose }: AddStocksModalProps
               <View style={styles.totalCard}>
                 <Text style={styles.totalLabel}>Total Value (USD)</Text>
                 <Text style={styles.totalValue}>
-                  {$}
+                  $
                   {totalValue.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
