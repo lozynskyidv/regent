@@ -12,6 +12,10 @@ import AssetTypePickerModal from '../components/AssetTypePickerModal';
 import AddBankModal from '../components/AddBankModal';
 import AddPropertyModal from '../components/AddPropertyModal';
 import AddPortfolioModal from '../components/AddPortfolioModal';
+import AddStocksModal from '../components/AddStocksModal';
+import AddCryptoModal from '../components/AddCryptoModal';
+import AddETFsModal from '../components/AddETFsModal';
+import AddCommoditiesModal from '../components/AddCommoditiesModal';
 import AddOtherAssetModal from '../components/AddOtherAssetModal';
 import LiabilityTypePickerModal from '../components/LiabilityTypePickerModal';
 import AddMortgageModal from '../components/AddMortgageModal';
@@ -38,6 +42,10 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const [showBankModal, setShowBankModal] = useState(false);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
   const [showPortfolioModal, setShowPortfolioModal] = useState(false);
+  const [showStocksModal, setShowStocksModal] = useState(false);
+  const [showCryptoModal, setShowCryptoModal] = useState(false);
+  const [showETFsModal, setShowETFsModal] = useState(false);
+  const [showCommoditiesModal, setShowCommoditiesModal] = useState(false);
   const [showOtherAssetModal, setShowOtherAssetModal] = useState(false);
   
   // Liability modal states
@@ -83,6 +91,18 @@ export function ModalProvider({ children }: { children: ReactNode }) {
         break;
       case 'portfolio':
         setShowPortfolioModal(true);
+        break;
+      case 'stocks':
+        setShowStocksModal(true);
+        break;
+      case 'crypto':
+        setShowCryptoModal(true);
+        break;
+      case 'etf':
+        setShowETFsModal(true);
+        break;
+      case 'commodities':
+        setShowCommoditiesModal(true);
         break;
       case 'other':
         setShowOtherAssetModal(true);
@@ -141,6 +161,26 @@ export function ModalProvider({ children }: { children: ReactNode }) {
       <AddPortfolioModal
         visible={showPortfolioModal}
         onClose={() => setShowPortfolioModal(false)}
+      />
+
+      <AddStocksModal
+        visible={showStocksModal}
+        onClose={() => setShowStocksModal(false)}
+      />
+
+      <AddCryptoModal
+        visible={showCryptoModal}
+        onClose={() => setShowCryptoModal(false)}
+      />
+
+      <AddETFsModal
+        visible={showETFsModal}
+        onClose={() => setShowETFsModal(false)}
+      />
+
+      <AddCommoditiesModal
+        visible={showCommoditiesModal}
+        onClose={() => setShowCommoditiesModal(false)}
       />
 
       <AddOtherAssetModal
