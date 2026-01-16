@@ -113,6 +113,7 @@ npx expo start --clear
 - ✅ Auto-formatting happens during price fetch (not on blur/interrupting UX)
 - ✅ Pull-to-refresh recognizes all investment types (not just legacy 'portfolio')
 - ✅ Fixed JSX syntax errors with dollar signs
+- ✅ Searchable dropdown: Clean UI (no double icons), proper ticker selection, no React Native warnings
 
 ### **🎨 Empty State Onboarding** ✅ COMPLETE (v0.7.2 - January 14, 2026)
 - **Added:** Beautiful empty state card for new users (100% match to web prototype)

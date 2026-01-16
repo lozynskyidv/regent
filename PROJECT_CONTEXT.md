@@ -699,7 +699,7 @@ getUserFirstName() → "John"
 - `AddCryptoModal.tsx` - Track crypto with searchable dropdown (30 popular) + auto-formatting
 - `AddETFsModal.tsx` - Track ETFs with searchable dropdown (30 popular)
 - `AddCommoditiesModal.tsx` - Track commodities with searchable dropdown (20 popular)
-- `SymbolSearchInput.tsx` - Reusable dropdown component (instant search by ticker/name)
+- `SymbolSearchInput.tsx` - Reusable dropdown component (instant search, clean UI, ScrollView-based)
 
 **Data:**
 - `PopularSymbols.ts` - Curated lists (130+ symbols total, zero API calls)
@@ -725,6 +725,13 @@ getUserFirstName() → "John"
 - User types: "BTC"
 - After 800ms: Auto-formats to "BTC/USD" + fetches price
 - No interruption during typing (happens with price fetch)
+
+**Searchable Dropdown:**
+- Shows top 10 popular symbols on focus
+- Instant filtering by ticker OR name (e.g., "Apple" → AAPL)
+- Tap to select → Auto-fills ticker
+- Clean UI: No duplicate icons, proper state management
+- ScrollView-based (no VirtualizedList warnings)
 
 **Pull-to-Refresh:**
 - Works for ALL investment types (stocks, crypto, ETFs, commodities)
