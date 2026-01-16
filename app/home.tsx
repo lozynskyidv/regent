@@ -28,20 +28,22 @@ export default function HomeScreen() {
     setRefreshing(true);
 
     try {
-      // Get all portfolio assets
-      const portfolioAssets = assets.filter(a => a.type === 'portfolio');
+      // Get all investment assets (stocks, crypto, ETFs, commodities, legacy portfolio)
+      const investmentAssets = assets.filter(a => 
+        ['portfolio', 'stocks', 'crypto', 'etf', 'commodities'].includes(a.type)
+      );
       
-      if (portfolioAssets.length === 0) {
-        console.log('✅ No portfolios to refresh');
+      if (investmentAssets.length === 0) {
+        console.log('✅ No investments to refresh');
         setRefreshing(false);
         setLastUpdated(new Date());
         return;
       }
 
-      // Extract all unique symbols from all portfolios
+      // Extract all unique symbols from all investments
       const allSymbols = new Set<string>();
-      portfolioAssets.forEach(portfolio => {
-        portfolio.metadata?.holdings?.forEach(holding => {
+      investmentAssets.forEach(investment => {
+        investment.metadata?.holdings?.forEach(holding => {
           allSymbols.add(holding.symbol);
         });
       });
@@ -59,9 +61,9 @@ export default function HomeScreen() {
 
       console.log('✅ Prices fetched:', prices);
 
-      // Update each portfolio with fresh prices
-      for (const portfolio of portfolioAssets) {
-        const updatedHoldings = portfolio.metadata?.holdings?.map(holding => {
+      // Update each investment with fresh prices
+      for (const investment of investmentAssets) {
+        const updatedHoldings = investment.metadata?.holdings?.map(holding => {
           const priceData = prices[holding.symbol];
           if (priceData && priceData.price) {
             return {
@@ -76,11 +78,11 @@ export default function HomeScreen() {
         // Calculate new total value
         const newTotalValue = updatedHoldings?.reduce((sum, h) => sum + h.totalValue, 0) || 0;
 
-        // Update the portfolio asset
-        await updateAsset(portfolio.id, {
+        // Update the investment asset
+        await updateAsset(investment.id, {
           value: newTotalValue,
           metadata: {
-            ...portfolio.metadata,
+            ...investment.metadata,
             holdings: updatedHoldings,
             lastPriceUpdate: new Date().toISOString(),
           },

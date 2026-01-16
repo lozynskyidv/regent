@@ -283,7 +283,7 @@ export default function AddCommoditiesModal({ visible, onClose }: AddCommodities
                         style={styles.holdingInput}
                         value={holding.ticker}
                         onChangeText={text => handleTickerChange(holding.id, text)}
-                        placeholder="AAPL"
+                        placeholder="GOLD"
                         placeholderTextColor={Colors.mutedForeground}
                         autoCapitalize="characters"
                       />

@@ -66,16 +66,49 @@ npx expo start --clear
 ## 🎯 Recent Changes (January 2026)
 
 ### **📈 Portfolio Tracking with Live Prices** ✅ COMPLETE (v0.8.0 - January 16, 2026)
-- **Added:** Investment portfolio tracking with multi-holding support
-- **Added:** Live price fetching via Twelve Data API (stocks, ETFs, crypto, commodities)
-- **Added:** Supabase Edge Function `fetch-asset-prices` with intelligent caching
-- **Added:** Pull-to-refresh on home screen for manual price updates
-- **Added:** Database migration for `asset_prices` table (caching layer)
-- **Caching:** 1 hour for stocks/ETFs/commodities, 30 minutes for crypto
-- **UX:** Auto-fetch prices while typing ticker symbols
-- **Cost:** Optimized for free tier (800 calls/day supports 10+ active users)
-- **Supported Assets:** Stocks (AAPL, MSFT, TSLA), Crypto (BTC/USD, ETH/USD), Commodities (GOLD, SILVER), ETFs (SPY, QQQ, VOO)
-- **Files:** `components/AddPortfolioModal.tsx`, `supabase/functions/fetch-asset-prices/index.ts`, `supabase/migrations/005_create_asset_prices.sql`
+
+**Major UX Improvement:** Split "Investment Portfolio" into 4 specific asset types for clarity
+
+**What We Built:**
+- **4 Separate Investment Types:** Stocks, Crypto, ETFs, Commodities (each with dedicated modal)
+- **Live Price Fetching:** Twelve Data API integration with 800 calls/day free tier
+- **Smart Caching:** 1 hour for stocks/ETFs/commodities, 30 min for crypto
+- **Pull-to-Refresh:** Manual price updates on home screen (all investment types)
+- **Auto-Formatting:** Crypto pairs auto-format (BTC → BTC/USD) during price fetch
+- **USD Pricing:** All investments stored and displayed in USD (not user's primary currency)
+- **Multi-Holding Support:** Add multiple tickers per investment (e.g., 3 stocks in one portfolio)
+
+**User Flow:**
+1. Tap "+ Add Asset" → See: Stocks, Crypto, ETFs, Commodities (all with "Live prices" badges)
+2. Select type → Enter name + holdings (ticker + quantity)
+3. Prices auto-fetch after 800ms debounce
+4. Save → Asset appears in net worth
+5. Pull-to-refresh home screen → All investments update
+
+**Supported Assets:**
+- **Stocks:** AAPL, MSFT, TSLA, GOOGL, NVDA, etc.
+- **Crypto:** BTC/USD, ETH/USD, SOL/USD, etc. (auto-formats from BTC)
+- **ETFs:** SPY, QQQ, VOO, VTI, IVV, etc.
+- **Commodities:** GOLD, SILVER, OIL, COPPER, etc.
+
+**Technical Implementation:**
+- **Files Created:** `AddStocksModal.tsx`, `AddCryptoModal.tsx`, `AddETFsModal.tsx`, `AddCommoditiesModal.tsx`
+- **Edge Function:** `fetch-asset-prices` with `forceRefresh` support
+- **Database:** `asset_prices` table for caching (migration `005`)
+- **Types:** Extended `AssetType` to include `stocks`, `crypto`, `etf`, `commodities`
+
+**Cost Optimization:**
+- Free tier: 800 API calls/day
+- With caching: Supports 10+ active users
+- User-triggered updates only (no background jobs)
+- Estimated usage: ~100-175 calls/day for 10 users
+
+**Critical Fixes Applied:**
+- ✅ Force fresh prices (`forceRefresh: true`) to bypass corrupted cache
+- ✅ USD pricing for all investments (not user's primary currency)
+- ✅ Auto-formatting happens during price fetch (not on blur/interrupting UX)
+- ✅ Pull-to-refresh recognizes all investment types (not just legacy 'portfolio')
+- ✅ Fixed JSX syntax errors with dollar signs
 
 ### **🎨 Empty State Onboarding** ✅ COMPLETE (v0.7.2 - January 14, 2026)
 - **Added:** Beautiful empty state card for new users (100% match to web prototype)

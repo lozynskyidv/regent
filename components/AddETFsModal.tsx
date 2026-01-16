@@ -283,7 +283,7 @@ export default function AddETFsModal({ visible, onClose }: AddETFsModalProps) {
                         style={styles.holdingInput}
                         value={holding.ticker}
                         onChangeText={text => handleTickerChange(holding.id, text)}
-                        placeholder="AAPL"
+                        placeholder="SPY"
                         placeholderTextColor={Colors.mutedForeground}
                         autoCapitalize="characters"
                       />
