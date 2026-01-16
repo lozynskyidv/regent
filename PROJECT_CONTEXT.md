@@ -695,10 +695,14 @@ getUserFirstName() → "John"
 ### Architecture
 
 **Client Modals:**
-- `AddStocksModal.tsx` - Track stocks (AAPL, MSFT, TSLA)
-- `AddCryptoModal.tsx` - Track crypto (BTC, ETH, SOL) with auto-formatting
-- `AddETFsModal.tsx` - Track ETFs (SPY, QQQ, VOO)
-- `AddCommoditiesModal.tsx` - Track commodities (GOLD, SILVER, OIL)
+- `AddStocksModal.tsx` - Track stocks with searchable dropdown (50 popular)
+- `AddCryptoModal.tsx` - Track crypto with searchable dropdown (30 popular) + auto-formatting
+- `AddETFsModal.tsx` - Track ETFs with searchable dropdown (30 popular)
+- `AddCommoditiesModal.tsx` - Track commodities with searchable dropdown (20 popular)
+- `SymbolSearchInput.tsx` - Reusable dropdown component (instant search by ticker/name)
+
+**Data:**
+- `PopularSymbols.ts` - Curated lists (130+ symbols total, zero API calls)
 
 **API:** Twelve Data API (800 calls/day free tier)  
 **Caching:** Supabase `asset_prices` table (reduces API calls)  
@@ -710,9 +714,12 @@ getUserFirstName() → "John"
 1. Tap "+ Add Asset"
 2. See 4 investment options (all with "Live prices" badges)
 3. Select type → Opens dedicated modal
-4. Enter name + holdings (ticker + quantity)
-5. Prices auto-fetch after 800ms debounce
-6. Save → Asset appears in net worth
+4. Enter name + tap ticker field
+5. **Dropdown shows top 10 popular symbols** (e.g., AAPL, MSFT for stocks)
+6. Search by typing (filters by ticker OR name, e.g., "Apple" → AAPL)
+7. Select symbol OR type custom ticker
+8. Prices auto-fetch after 800ms debounce
+9. Enter quantity → Save → Asset appears in net worth
 
 **Crypto Auto-Formatting:**
 - User types: "BTC"

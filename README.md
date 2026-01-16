@@ -71,6 +71,7 @@ npx expo start --clear
 
 **What We Built:**
 - **4 Separate Investment Types:** Stocks, Crypto, ETFs, Commodities (each with dedicated modal)
+- **Searchable Dropdown:** 130+ popular symbols with instant search (no typos!)
 - **Live Price Fetching:** Twelve Data API integration with 800 calls/day free tier
 - **Smart Caching:** 1 hour for stocks/ETFs/commodities, 30 min for crypto
 - **Pull-to-Refresh:** Manual price updates on home screen (all investment types)
@@ -80,10 +81,11 @@ npx expo start --clear
 
 **User Flow:**
 1. Tap "+ Add Asset" → See: Stocks, Crypto, ETFs, Commodities (all with "Live prices" badges)
-2. Select type → Enter name + holdings (ticker + quantity)
-3. Prices auto-fetch after 800ms debounce
-4. Save → Asset appears in net worth
-5. Pull-to-refresh home screen → All investments update
+2. Select type → Enter name + tap ticker field
+3. **Dropdown shows top 10 popular symbols** (or search by typing)
+4. Select symbol OR type custom ticker → Prices auto-fetch after 800ms
+5. Enter quantity → Save → Asset appears in net worth
+6. Pull-to-refresh home screen → All investments update
 
 **Supported Assets:**
 - **Stocks:** AAPL, MSFT, TSLA, GOOGL, NVDA, etc.
@@ -92,7 +94,9 @@ npx expo start --clear
 - **Commodities:** GOLD, SILVER, OIL, COPPER, etc.
 
 **Technical Implementation:**
-- **Files Created:** `AddStocksModal.tsx`, `AddCryptoModal.tsx`, `AddETFsModal.tsx`, `AddCommoditiesModal.tsx`
+- **Modals:** `AddStocksModal.tsx`, `AddCryptoModal.tsx`, `AddETFsModal.tsx`, `AddCommoditiesModal.tsx`
+- **Dropdown:** `SymbolSearchInput.tsx` (reusable component with instant search)
+- **Data:** `PopularSymbols.ts` (50 stocks, 30 crypto, 30 ETFs, 20 commodities)
 - **Edge Function:** `fetch-asset-prices` with `forceRefresh` support
 - **Database:** `asset_prices` table for caching (migration `005`)
 - **Types:** Extended `AssetType` to include `stocks`, `crypto`, `etf`, `commodities`
