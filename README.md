@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.8.0 (Portfolio Tracking with Live Prices)  
+**Version:** 0.8.1 (UX Polish + Timestamp Improvements)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -51,9 +51,10 @@ npx expo start --clear
 ✅ **Viral Growth:** Each user gets 5 invite codes to share  
 ✅ **Authentication:** Google OAuth, Email/Password, Face ID/PIN, Supabase Auth  
 ✅ **Empty State Onboarding:** Beautiful hero card for new users with NYC skyline  
-✅ **Home Screen:** Net Worth, Assets, Liabilities cards + Invite Share Card  
+✅ **Home Screen:** Net Worth (with count-up animation), Assets, Liabilities cards + Invite Share Card  
 ✅ **Portfolio Tracking:** Live prices for stocks, ETFs, crypto, commodities via Twelve Data API  
-✅ **Pull-to-Refresh:** User-triggered price updates with smart caching (1 hour stocks, 30 min crypto)  
+✅ **Pull-to-Refresh:** User-triggered price updates with smart caching + timestamp tracking  
+✅ **Animations:** Smooth net worth count-up (0 → value) on load/refresh  
 ✅ **CRUD:** Add/Edit/Delete assets & liabilities  
 ✅ **Detail Screens:** Full lists with swipe gestures  
 ✅ **Modals:** 2-step flow (type picker → specific form)  
@@ -64,6 +65,29 @@ npx expo start --clear
 ---
 
 ## 🎯 Recent Changes (January 2026)
+
+### **✨ UX Polish & Timestamp System** ✅ COMPLETE (v0.8.1 - January 16, 2026)
+
+**What We Built:**
+- **Net Worth Count-Up Animation:** Smooth 0 → value animation (500ms, ease-out cubic)
+- **Persistent Timestamp System:** "Updated X ago" now accurate across app restarts
+- **Hybrid Time Display:** Relative time (<24h) → Absolute time (≥24h with clock time)
+- **Commodity Symbol Fix:** Corrected all 20 commodity symbols to forex pair format (XAU/USD, XAG/USD, etc.)
+- **Banking Badge Removed:** Removed misleading "Live sync" badge (TrueLayer not implemented yet)
+
+**Technical Implementation:**
+- React Native Animated API for 60fps count-up animation
+- AsyncStorage persistence for last data sync timestamp
+- Auto-updates timestamp on: app open, data changes, pull-to-refresh
+- Animation triggers on pull-to-refresh even when net worth unchanged (key prop pattern)
+
+**User Experience:**
+- Net worth animates from £0 → £480,000 on every screen load/refresh
+- Timestamp shows: "Updated just now" → "Updated 15m ago" → "Updated yesterday at 4:26 PM"
+- Commodities now fetch correct prices (Gold ~$2,700/oz, not $41)
+- Banking shows accurate "Cash, savings, checking accounts" description
+
+---
 
 ### **📈 Portfolio Tracking with Live Prices** ✅ COMPLETE (v0.8.0 - January 16, 2026)
 

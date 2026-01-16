@@ -13,6 +13,7 @@ const STORAGE_KEYS = {
   USER: 'regent_user',
   PREFERENCES: 'regent_preferences',
   SUBSCRIPTION: 'regent_subscription',
+  LAST_DATA_SYNC: 'regent_last_data_sync',
 } as const;
 
 // ============================================
@@ -271,6 +272,45 @@ export async function loadSubscription(): Promise<SubscriptionState> {
 }
 
 // ============================================
+// LAST DATA SYNC TIMESTAMP
+// ============================================
+
+/**
+ * Save the last time data was synced/updated
+ * Used for "Updated X ago" timestamp on home screen
+ */
+export async function saveLastDataSync(timestamp: Date = new Date()): Promise<void> {
+  try {
+    const isoString = timestamp.toISOString();
+    await AsyncStorage.setItem(STORAGE_KEYS.LAST_DATA_SYNC, isoString);
+    console.log('✅ Last data sync saved:', isoString);
+  } catch (error) {
+    console.error('❌ Error saving last data sync:', error);
+    throw error;
+  }
+}
+
+/**
+ * Load the last data sync timestamp
+ * Returns null if never synced before
+ */
+export async function loadLastDataSync(): Promise<Date | null> {
+  try {
+    const isoString = await AsyncStorage.getItem(STORAGE_KEYS.LAST_DATA_SYNC);
+    if (isoString === null) {
+      console.log('📭 No last data sync found');
+      return null;
+    }
+    const date = new Date(isoString);
+    console.log('✅ Last data sync loaded:', date.toISOString());
+    return date;
+  } catch (error) {
+    console.error('❌ Error loading last data sync:', error);
+    return null;
+  }
+}
+
+// ============================================
 // UTILITIES
 // ============================================
 
@@ -285,6 +325,7 @@ export async function clearAllData(): Promise<void> {
       STORAGE_KEYS.USER,
       STORAGE_KEYS.PREFERENCES,
       STORAGE_KEYS.SUBSCRIPTION,
+      STORAGE_KEYS.LAST_DATA_SYNC,
       '@regent_invite_code',      // Clear invite validation for fresh start
       '@regent_invite_code_id',   // Clear invite code ID
     ]);

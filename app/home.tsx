@@ -16,11 +16,11 @@ import { getSupabaseClient } from '../utils/supabase';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, supabaseUser, assets, liabilities, netWorth, primaryCurrency, isLoading, updateAsset } = useData();
+  const { user, supabaseUser, assets, liabilities, netWorth, primaryCurrency, isLoading, updateAsset, lastDataSync, updateLastDataSync } = useData();
   const { openAddAssetFlow, openAddLiabilityFlow } = useModals();
   
-  const [lastUpdated, setLastUpdated] = useState(new Date());
   const [refreshing, setRefreshing] = useState(false);
+  const [animationKey, setAnimationKey] = useState(0);
 
   // Refresh portfolio prices (pull-to-refresh)
   const refreshPortfolioPrices = async () => {
@@ -36,7 +36,8 @@ export default function HomeScreen() {
       if (investmentAssets.length === 0) {
         console.log('✅ No investments to refresh');
         setRefreshing(false);
-        setLastUpdated(new Date());
+        await updateLastDataSync();
+        setAnimationKey(prev => prev + 1); // Trigger animation even with no investments
         return;
       }
 
@@ -89,8 +90,9 @@ export default function HomeScreen() {
         });
       }
 
-      // Update timestamp
-      setLastUpdated(new Date());
+      // Update timestamp and trigger animation
+      await updateLastDataSync();
+      setAnimationKey(prev => prev + 1); // Trigger animation after price refresh
       console.log('✅ Pull-to-refresh: Complete!');
 
     } catch (error) {
@@ -132,25 +134,60 @@ export default function HomeScreen() {
     return `${firstInitial}. ${lastName}`;
   };
 
-  // Get time ago text with "Updated" prefix
+  /**
+   * Format timestamp with hybrid relative/absolute time
+   * < 1 min: "Updated just now"
+   * 1-59 min: "Updated 15m ago"
+   * 1-23 hours: "Updated 3h ago"
+   * >= 24 hours: "Updated yesterday at 4:26 PM" or "Updated Jan 15 at 4:26 PM"
+   */
   const getTimeAgo = () => {
-    const now = new Date();
-    const diff = Math.floor((now.getTime() - lastUpdated.getTime()) / 1000);
+    if (!lastDataSync) return 'Updated just now';
     
-    if (diff < 10) return 'Updated just now'; // < 10 seconds = just now
-    if (diff < 60) return 'Updated moments ago'; // < 1 minute
+    const now = new Date();
+    const diff = Math.floor((now.getTime() - lastDataSync.getTime()) / 1000);
+    
+    // Less than 1 minute
+    if (diff < 60) return 'Updated just now';
     
     const minutes = Math.floor(diff / 60);
-    if (minutes === 1) return 'Updated 1m ago';
-    if (minutes < 60) return `Updated ${minutes}m ago`;
+    
+    // 1-59 minutes
+    if (minutes < 60) {
+      return minutes === 1 ? 'Updated 1m ago' : `Updated ${minutes}m ago`;
+    }
     
     const hours = Math.floor(minutes / 60);
-    if (hours === 1) return 'Updated 1h ago';
-    if (hours < 24) return `Updated ${hours}h ago`;
     
-    const days = Math.floor(hours / 24);
-    if (days === 1) return 'Updated 1d ago';
-    return `Updated ${days}d ago`;
+    // 1-23 hours
+    if (hours < 24) {
+      return hours === 1 ? 'Updated 1h ago' : `Updated ${hours}h ago`;
+    }
+    
+    // 24+ hours - show absolute time
+    const syncDate = new Date(lastDataSync);
+    const timeString = syncDate.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit',
+      hour12: true 
+    });
+    
+    // Check if yesterday
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = syncDate.toDateString() === yesterday.toDateString();
+    
+    if (isYesterday) {
+      return `Updated yesterday at ${timeString}`;
+    }
+    
+    // Older than yesterday - show date
+    const dateString = syncDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+    
+    return `Updated ${dateString} at ${timeString}`;
   };
 
   // Calculate totals
@@ -268,6 +305,7 @@ export default function HomeScreen() {
             {/* Net Worth Card */}
             <View style={{ marginBottom: Spacing.lg }}>
               <NetWorthCard 
+                key={animationKey}
                 netWorth={netWorth} 
                 currency={primaryCurrency} 
               />

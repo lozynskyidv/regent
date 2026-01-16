@@ -34,8 +34,8 @@ export default function AssetTypePickerModal({
       id: 'bank',
       icon: Building2,
       title: 'Bank Account',
-      description: 'Connect via TrueLayer for auto-sync',
-      badge: 'Live sync',
+      description: 'Cash, savings, checking accounts',
+      // badge removed - TrueLayer not implemented yet
     },
     {
       id: 'stocks',

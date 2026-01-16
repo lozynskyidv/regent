@@ -1,7 +1,7 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 16, 2026  
-**Version:** 0.8.0 (Portfolio Tracking with Live Prices)  
+**Version:** 0.8.1 (UX Polish + Timestamp Improvements)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** Exclusive invite-only (replaced paid subscription)
 
@@ -18,9 +18,11 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Authentication** (Google OAuth + Email/Password - fully functional with Supabase)
 - **Auth screen** (Face ID/PIN onboarding, fully functional)
 - **Empty State Onboarding** (Beautiful hero card with NYC skyline for new users)
-- **Home Screen** (Net Worth + Assets + Liabilities + ShareInviteCard + Pull-to-Refresh)
+- **Home Screen** (Net Worth with count-up animation + Assets + Liabilities + ShareInviteCard + Pull-to-Refresh)
 - **Portfolio Tracking** (Live prices for stocks, ETFs, crypto, commodities via Twelve Data API)
 - **Smart Caching** (1 hour for stocks/ETFs, 30 min for crypto - optimized for 800 API calls/day free tier)
+- **Persistent Timestamps** (Accurate "Updated X ago" with hybrid relative/absolute time display)
+- **Smooth Animations** (Net worth count-up from 0 → value on every load/refresh)
 - **Dynamic User Display** (Formatted names: "J. Rockefeller", "Welcome, John")
 - **Edit Modals** (EditAssetModal, EditLiabilityModal - pre-populated forms, delete buttons)
 - **Detail Screens** (Assets/Liabilities full lists with swipe-to-edit/delete gestures)
@@ -863,6 +865,57 @@ curl -X POST "https://YOUR-PROJECT.supabase.co/functions/v1/fetch-asset-prices" 
   -H "Authorization: Bearer YOUR_ANON_KEY" \
   -d '{"symbols": ["AAPL"]}'
 ```
+
+---
+
+## ✨ UX POLISH & ANIMATIONS
+
+**Last Updated:** January 16, 2026  
+**Status:** ✅ PRODUCTION READY
+
+### Net Worth Count-Up Animation
+
+**What It Is:** Smooth animation from £0 → actual net worth value on every screen load and pull-to-refresh.
+
+**Implementation:**
+- React Native Animated API (60fps performance)
+- 500ms duration with ease-out cubic easing (matches web prototype)
+- Triggers on: component mount, pull-to-refresh, net worth changes
+- Uses key prop pattern to force re-animation even when value unchanged
+
+**Files:**
+- `components/NetWorthCard.tsx` - Animation logic with Animated.Value
+- `app/home.tsx` - Key prop management for re-triggering
+
+### Persistent Timestamp System
+
+**What It Is:** Accurate "Updated X ago" timestamp that persists across app restarts.
+
+**Hybrid Display Format:**
+- < 1 min: "Updated just now"
+- 1-59 min: "Updated 15m ago"  
+- 1-23 hours: "Updated 3h ago"
+- Yesterday: "Updated yesterday at 4:26 PM"
+- Older: "Updated Jan 15 at 4:26 PM"
+
+**Files:**
+- `utils/storage.ts` - saveLastDataSync(), loadLastDataSync()
+- `contexts/DataContext.tsx` - lastDataSync state + auto-updates
+- `app/home.tsx` - Hybrid time formatting logic
+
+### Commodity Symbol Fixes
+
+**What We Fixed:** All 20 commodity symbols updated to forex pair format (XAU/USD, XAG/USD, etc.)
+
+**Files:**
+- `constants/PopularSymbols.ts` - All commodity symbols corrected
+
+### Banking Badge Removal
+
+**What We Fixed:** Removed misleading "Live sync" badge (TrueLayer not implemented yet)
+
+**Files:**
+- `components/AssetTypePickerModal.tsx` - Badge removed
 
 ---
 

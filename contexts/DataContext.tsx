@@ -23,6 +23,8 @@ import {
   loadSubscription,
   saveSubscription,
   SubscriptionState as StorageSubscriptionState,
+  loadLastDataSync,
+  saveLastDataSync,
 } from '../utils/storage';
 import { generateId } from '../utils/generateId';
 import { getSupabaseClient, reinitializeSupabaseClient, setOnClientReinitialized } from '../utils/supabase';
@@ -40,6 +42,7 @@ interface DataContextType {
   liabilities: Liability[];
   user: User | null;
   primaryCurrency: Currency;
+  lastDataSync: Date | null;
   
   // Auth
   supabaseUser: SupabaseAuthUser | null;
@@ -73,6 +76,9 @@ interface DataContextType {
   // Actions - Subscription
   startTrial: () => Promise<void>;
   
+  // Actions - Timestamp
+  updateLastDataSync: () => Promise<void>;
+  
   // Actions - Auth & Backup
   signOut: () => Promise<void>;
   deleteAccount: () => Promise<void>;
@@ -100,6 +106,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [liabilities, setLiabilities] = useState<Liability[]>([]);
   const [user, setUserState] = useState<User | null>(null);
   const [primaryCurrency, setPrimaryCurrency] = useState<Currency>('GBP');
+  const [lastDataSync, setLastDataSync] = useState<Date | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -193,12 +200,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       console.log('📦 Loading data from AsyncStorage...');
       
-      const [loadedAssets, loadedLiabilities, loadedUser, preferences, subscription] = await Promise.all([
+      const [loadedAssets, loadedLiabilities, loadedUser, preferences, subscription, lastSync] = await Promise.all([
         loadAssets(),
         loadLiabilities(),
         loadUser(),
         loadPreferences(),
         loadSubscription(),
+        loadLastDataSync(),
       ]);
       
       setAssets(loadedAssets);
@@ -206,9 +214,19 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setUserState(loadedUser);
       setPrimaryCurrency(preferences.primaryCurrency);
       setHasStartedTrial(subscription.hasStartedTrial);
+      setLastDataSync(lastSync);
+      
+      // Update timestamp on app open (if we have data)
+      if (loadedAssets.length > 0 || loadedLiabilities.length > 0) {
+        const now = new Date();
+        setLastDataSync(now);
+        await saveLastDataSync(now);
+        console.log('✅ Data sync timestamp updated on app open');
+      }
       
       console.log('✅ Data loaded successfully');
       console.log('📊 Subscription state:', subscription);
+      console.log('🕐 Last data sync:', lastSync?.toISOString() || 'Never');
     } catch (err) {
       console.error('❌ Error loading data:', err);
       setError('Failed to load data');
@@ -231,16 +249,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addAsset = async (assetData: Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
+      const now = new Date();
       const newAsset: Asset = {
         ...assetData,
         id: generateId(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
       };
       
       const updatedAssets = [...assets, newAsset];
       await saveAssets(updatedAssets);
       setAssets(updatedAssets);
+      
+      // Update last data sync timestamp
+      setLastDataSync(now);
+      await saveLastDataSync(now);
+      
       console.log('✅ Asset added to context:', newAsset.name);
     } catch (err) {
       console.error('❌ Error adding asset:', err);
@@ -250,12 +274,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const updateAsset = async (id: string, updates: Partial<Omit<Asset, 'id' | 'createdAt' | 'updatedAt'>>) => {
     try {
+      const now = new Date();
       const updatedAssets = assets.map((asset) => {
         if (asset.id === id) {
           return {
             ...asset,
             ...updates,
-            updatedAt: new Date().toISOString(),
+            updatedAt: now.toISOString(),
           };
         }
         return asset;
@@ -263,6 +288,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       
       await saveAssets(updatedAssets);
       setAssets(updatedAssets);
+      
+      // Update last data sync timestamp
+      setLastDataSync(now);
+      await saveLastDataSync(now);
+      
       console.log('✅ Asset updated in context:', id);
     } catch (err) {
       console.error('❌ Error updating asset:', err);
@@ -272,9 +302,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const deleteAsset = async (id: string) => {
     try {
+      const now = new Date();
       const updatedAssets = assets.filter((asset) => asset.id !== id);
       await saveAssets(updatedAssets);
       setAssets(updatedAssets);
+      
+      // Update last data sync timestamp
+      setLastDataSync(now);
+      await saveLastDataSync(now);
+      
       console.log('✅ Asset deleted from context:', id);
     } catch (err) {
       console.error('❌ Error deleting asset:', err);
@@ -288,16 +324,22 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const addLiability = async (liabilityData: Omit<Liability, 'id' | 'createdAt' | 'updatedAt'>) => {
     try {
+      const now = new Date();
       const newLiability: Liability = {
         ...liabilityData,
         id: generateId(),
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
       };
       
       const updatedLiabilities = [...liabilities, newLiability];
       await saveLiabilities(updatedLiabilities);
       setLiabilities(updatedLiabilities);
+      
+      // Update last data sync timestamp
+      setLastDataSync(now);
+      await saveLastDataSync(now);
+      
       console.log('✅ Liability added to context:', newLiability.name);
     } catch (err) {
       console.error('❌ Error adding liability:', err);
@@ -307,12 +349,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const updateLiability = async (id: string, updates: Partial<Omit<Liability, 'id' | 'createdAt' | 'updatedAt'>>) => {
     try {
+      const now = new Date();
       const updatedLiabilities = liabilities.map((liability) => {
         if (liability.id === id) {
           return {
             ...liability,
             ...updates,
-            updatedAt: new Date().toISOString(),
+            updatedAt: now.toISOString(),
           };
         }
         return liability;
@@ -320,6 +363,11 @@ export function DataProvider({ children }: { children: ReactNode }) {
       
       await saveLiabilities(updatedLiabilities);
       setLiabilities(updatedLiabilities);
+      
+      // Update last data sync timestamp
+      setLastDataSync(now);
+      await saveLastDataSync(now);
+      
       console.log('✅ Liability updated in context:', id);
     } catch (err) {
       console.error('❌ Error updating liability:', err);
@@ -329,8 +377,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const deleteLiability = async (id: string) => {
     try {
+      const now = new Date();
       const updatedLiabilities = liabilities.filter((liability) => liability.id !== id);
       await saveLiabilities(updatedLiabilities);
+      
+      // Update last data sync timestamp
+      setLastDataSync(now);
+      await saveLastDataSync(now);
       setLiabilities(updatedLiabilities);
       console.log('✅ Liability deleted from context:', id);
     } catch (err) {
@@ -392,6 +445,26 @@ export function DataProvider({ children }: { children: ReactNode }) {
       console.log('✅ Trial started successfully');
     } catch (err) {
       console.error('❌ Error starting trial:', err);
+      throw err;
+    }
+  };
+
+  // ============================================
+  // TIMESTAMP ACTIONS
+  // ============================================
+
+  /**
+   * Update last data sync timestamp
+   * Called manually (e.g., after pull-to-refresh)
+   */
+  const updateLastDataSync = async () => {
+    try {
+      const now = new Date();
+      setLastDataSync(now);
+      await saveLastDataSync(now);
+      console.log('✅ Last data sync updated');
+    } catch (err) {
+      console.error('❌ Error updating last data sync:', err);
       throw err;
     }
   };
@@ -960,6 +1033,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     liabilities,
     user,
     primaryCurrency,
+    lastDataSync,
     
     // Auth
     supabaseUser,
@@ -984,6 +1058,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setUser,
     setCurrency,
     startTrial,
+    updateLastDataSync,
     signOut,
     deleteAccount,
     backupData,

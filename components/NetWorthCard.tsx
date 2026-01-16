@@ -1,9 +1,11 @@
 /**
  * Net Worth Card Component
  * Displays total net worth (assets - liabilities) with large, prominent typography
+ * Features smooth count-up animation from 0 to current value
  */
 
-import { View, Text, StyleSheet } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
 import { Colors, Spacing, BorderRadius, Shadows } from '../constants';
 
 interface NetWorthCardProps {
@@ -12,6 +14,12 @@ interface NetWorthCardProps {
 }
 
 export default function NetWorthCard({ netWorth, currency }: NetWorthCardProps) {
+  // State for displaying the animated value
+  const [displayValue, setDisplayValue] = useState(0);
+  
+  // Animated value for count-up animation
+  const animatedValue = useRef(new Animated.Value(0)).current;
+
   const formatCurrency = (value: number) => {
     const symbol = currency === 'GBP' ? '£' : currency === 'USD' ? '$' : '€';
     const formatted = Math.abs(value).toLocaleString('en-GB', {
@@ -21,13 +29,36 @@ export default function NetWorthCard({ netWorth, currency }: NetWorthCardProps) 
     return value < 0 ? `-${symbol}${formatted}` : `${symbol}${formatted}`;
   };
 
+  // Animate net worth from 0 to current value
+  useEffect(() => {
+    // Reset to 0 and animate to netWorth
+    animatedValue.setValue(0);
+    
+    // Add listener to update display value during animation
+    const listenerId = animatedValue.addListener(({ value }) => {
+      setDisplayValue(Math.round(value));
+    });
+    
+    Animated.timing(animatedValue, {
+      toValue: netWorth,
+      duration: 500, // 500ms duration (matches web prototype)
+      easing: Easing.out(Easing.cubic), // Ease-out cubic for smooth deceleration
+      useNativeDriver: false, // Text animations require JS driver
+    }).start();
+
+    // Cleanup listener on unmount
+    return () => {
+      animatedValue.removeListener(listenerId);
+    };
+  }, [netWorth, animatedValue]);
+
   return (
     <View style={styles.card}>
       {/* Label */}
       <Text style={styles.label}>NET WORTH</Text>
       
-      {/* Large Amount - Hero Typography */}
-      <Text style={styles.amount}>{formatCurrency(netWorth)}</Text>
+      {/* Large Amount - Hero Typography with Animation */}
+      <Text style={styles.amount}>{formatCurrency(displayValue)}</Text>
     </View>
   );
 }
