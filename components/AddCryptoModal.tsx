@@ -67,7 +67,10 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
     try {
       const supabase = getSupabaseClient();
       const { data, error } = await supabase.functions.invoke('fetch-asset-prices', {
-        body: { symbols: [ticker.toUpperCase()] },
+        body: { 
+          symbols: [ticker.toUpperCase()],
+          forceRefresh: true // Always fetch fresh prices (bypass corrupted cache)
+        },
       });
 
       if (error) throw error;
@@ -354,9 +357,9 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
                     <View style={styles.valueDisplay}>
                       <Text style={styles.valueLabel}>Value:</Text>
                       <Text style={styles.valueAmount}>
-                        {getCurrencySymbol()}
+                        $
                         {(parseFloat(holding.quantity) * holding.currentPrice).toLocaleString(
-                          'en-GB',
+                          'en-US',
                           {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,

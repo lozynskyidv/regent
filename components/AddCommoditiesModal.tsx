@@ -67,7 +67,7 @@ export default function AddCommoditiesModal({ visible, onClose }: AddCommodities
     try {
       const supabase = getSupabaseClient();
       const { data, error } = await supabase.functions.invoke('fetch-asset-prices', {
-        body: { symbols: [ticker.toUpperCase()] },
+        body: { symbols: [ticker.toUpperCase()], forceRefresh: true },
       });
 
       if (error) throw error;
