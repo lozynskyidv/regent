@@ -23,6 +23,8 @@ import { X, Plus, Trash2 } from 'lucide-react-native';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { useData } from '../contexts/DataContext';
 import { getSupabaseClient } from '../utils/supabase';
+import SymbolSearchInput from './SymbolSearchInput';
+import { POPULAR_CRYPTO } from '../constants/PopularSymbols';
 
 interface AddCryptoModalProps {
   visible: boolean;
@@ -298,13 +300,12 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
                   <View style={styles.holdingRow}>
                     <View style={styles.holdingField}>
                       <Text style={styles.holdingLabel}>Symbol</Text>
-                      <TextInput
-                        style={styles.holdingInput}
+                      <SymbolSearchInput
                         value={holding.ticker}
                         onChangeText={text => handleTickerChange(holding.id, text)}
-                        placeholder="BTC"
-                        placeholderTextColor={Colors.mutedForeground}
-                        autoCapitalize="characters"
+                        placeholder="Search: BTC, ETH..."
+                        symbols={POPULAR_CRYPTO}
+                        style={styles.holdingInput}
                       />
                     </View>
 

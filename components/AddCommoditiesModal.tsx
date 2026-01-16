@@ -23,6 +23,8 @@ import { X, Plus, Trash2 } from 'lucide-react-native';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { useData } from '../contexts/DataContext';
 import { getSupabaseClient } from '../utils/supabase';
+import SymbolSearchInput from './SymbolSearchInput';
+import { POPULAR_COMMODITIES } from '../constants/PopularSymbols';
 
 interface AddCommoditiesModalProps {
   visible: boolean;
@@ -279,13 +281,12 @@ export default function AddCommoditiesModal({ visible, onClose }: AddCommodities
                   <View style={styles.holdingRow}>
                     <View style={styles.holdingField}>
                       <Text style={styles.holdingLabel}>Ticker</Text>
-                      <TextInput
-                        style={styles.holdingInput}
+                      <SymbolSearchInput
                         value={holding.ticker}
                         onChangeText={text => handleTickerChange(holding.id, text)}
-                        placeholder="GOLD"
-                        placeholderTextColor={Colors.mutedForeground}
-                        autoCapitalize="characters"
+                        placeholder="Search: GOLD, SILVER..."
+                        symbols={POPULAR_COMMODITIES}
+                        style={styles.holdingInput}
                       />
                     </View>
 

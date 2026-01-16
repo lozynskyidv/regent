@@ -23,6 +23,8 @@ import { X, Plus, Trash2 } from 'lucide-react-native';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { useData } from '../contexts/DataContext';
 import { getSupabaseClient } from '../utils/supabase';
+import SymbolSearchInput from './SymbolSearchInput';
+import { POPULAR_ETFS } from '../constants/PopularSymbols';
 
 interface AddETFsModalProps {
   visible: boolean;
@@ -279,13 +281,12 @@ export default function AddETFsModal({ visible, onClose }: AddETFsModalProps) {
                   <View style={styles.holdingRow}>
                     <View style={styles.holdingField}>
                       <Text style={styles.holdingLabel}>Ticker</Text>
-                      <TextInput
-                        style={styles.holdingInput}
+                      <SymbolSearchInput
                         value={holding.ticker}
                         onChangeText={text => handleTickerChange(holding.id, text)}
-                        placeholder="SPY"
-                        placeholderTextColor={Colors.mutedForeground}
-                        autoCapitalize="characters"
+                        placeholder="Search: SPY, QQQ..."
+                        symbols={POPULAR_ETFS}
+                        style={styles.holdingInput}
                       />
                     </View>
 

@@ -23,6 +23,8 @@ import { X, Plus, Trash2 } from 'lucide-react-native';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { useData } from '../contexts/DataContext';
 import { getSupabaseClient } from '../utils/supabase';
+import SymbolSearchInput from './SymbolSearchInput';
+import { POPULAR_STOCKS } from '../constants/PopularSymbols';
 
 interface AddStocksModalProps {
   visible: boolean;
@@ -279,13 +281,12 @@ export default function AddStocksModal({ visible, onClose }: AddStocksModalProps
                   <View style={styles.holdingRow}>
                     <View style={styles.holdingField}>
                       <Text style={styles.holdingLabel}>Ticker</Text>
-                      <TextInput
-                        style={styles.holdingInput}
+                      <SymbolSearchInput
                         value={holding.ticker}
                         onChangeText={text => handleTickerChange(holding.id, text)}
-                        placeholder="AAPL"
-                        placeholderTextColor={Colors.mutedForeground}
-                        autoCapitalize="characters"
+                        placeholder="Search: AAPL, MSFT..."
+                        symbols={POPULAR_STOCKS}
+                        style={styles.holdingInput}
                       />
                     </View>
 
