@@ -85,7 +85,8 @@ export default function AddPortfolioModal({ visible, onClose }: AddPortfolioModa
         throw new Error('Price not found');
       }
     } catch (error: any) {
-      console.error('Error fetching price:', error);
+      // Log as info, not error (invalid tickers are expected user behavior)
+      console.log(`⚠️ Could not fetch price for ${holdingId}:`, error.message);
       setHoldings(prev =>
         prev.map(h =>
           h.id === holdingId
