@@ -10,12 +10,10 @@ import {
   View,
   Text,
   TextInput,
-  FlatList,
+  ScrollView,
   TouchableOpacity,
   StyleSheet,
-  Modal,
 } from 'react-native';
-import { Search } from 'lucide-react-native';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { Symbol } from '../constants/PopularSymbols';
 
@@ -24,7 +22,6 @@ interface SymbolSearchInputProps {
   onChangeText: (text: string) => void;
   placeholder: string;
   symbols: Symbol[];
-  style?: any;
 }
 
 export default function SymbolSearchInput({
@@ -32,7 +29,6 @@ export default function SymbolSearchInput({
   onChangeText,
   placeholder,
   symbols,
-  style,
 }: SymbolSearchInputProps) {
   const [showDropdown, setShowDropdown] = useState(false);
   const [filteredSymbols, setFilteredSymbols] = useState<Symbol[]>([]);
@@ -59,30 +55,28 @@ export default function SymbolSearchInput({
   };
 
   return (
-    <View style={[styles.container, style]}>
-      <View style={styles.inputWrapper}>
-        <TextInput
-          style={styles.input}
-          value={value}
-          onChangeText={onChangeText}
-          onFocus={() => setShowDropdown(true)}
-          placeholder={placeholder}
-          placeholderTextColor={Colors.mutedForeground}
-          autoCapitalize="characters"
-        />
-        <Search size={18} color={Colors.mutedForeground} style={styles.searchIcon} />
-      </View>
+    <View style={styles.container}>
+      <TextInput
+        style={styles.input}
+        value={value}
+        onChangeText={onChangeText}
+        onFocus={() => setShowDropdown(true)}
+        placeholder={placeholder}
+        placeholderTextColor={Colors.mutedForeground}
+        autoCapitalize="characters"
+      />
 
       {/* Dropdown */}
       {showDropdown && filteredSymbols.length > 0 && (
         <View style={styles.dropdown}>
-          <FlatList
-            data={filteredSymbols}
-            keyExtractor={item => item.ticker}
+          <ScrollView
+            style={styles.scrollView}
+            nestedScrollEnabled={true}
             keyboardShouldPersistTaps="handled"
-            style={styles.list}
-            renderItem={({ item }) => (
+          >
+            {filteredSymbols.map((item) => (
               <TouchableOpacity
+                key={item.ticker}
                 style={styles.dropdownItem}
                 onPress={() => handleSelect(item)}
               >
@@ -91,8 +85,8 @@ export default function SymbolSearchInput({
                   {item.name}
                 </Text>
               </TouchableOpacity>
-            )}
-          />
+            ))}
+          </ScrollView>
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setShowDropdown(false)}
@@ -110,24 +104,15 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 1000,
   },
-  inputWrapper: {
-    position: 'relative',
-  },
   input: {
     height: 48,
     borderWidth: 1,
     borderColor: Colors.border,
     borderRadius: BorderRadius.md,
     paddingHorizontal: Spacing.md,
-    paddingRight: 40,
     fontSize: 16,
     color: Colors.foreground,
     backgroundColor: Colors.background,
-  },
-  searchIcon: {
-    position: 'absolute',
-    right: Spacing.md,
-    top: 15,
   },
   dropdown: {
     position: 'absolute',
@@ -146,7 +131,7 @@ const styles = StyleSheet.create({
     elevation: 5,
     zIndex: 1001,
   },
-  list: {
+  scrollView: {
     maxHeight: 250,
   },
   dropdownItem: {

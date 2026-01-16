@@ -286,7 +286,6 @@ export default function AddStocksModal({ visible, onClose }: AddStocksModalProps
                         onChangeText={text => handleTickerChange(holding.id, text)}
                         placeholder="Search: AAPL, MSFT..."
                         symbols={POPULAR_STOCKS}
-                        style={styles.holdingInput}
                       />
                     </View>
 

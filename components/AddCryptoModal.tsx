@@ -305,7 +305,6 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
                         onChangeText={text => handleTickerChange(holding.id, text)}
                         placeholder="Search: BTC, ETH..."
                         symbols={POPULAR_CRYPTO}
-                        style={styles.holdingInput}
                       />
                     </View>
 

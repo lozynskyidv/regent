@@ -286,7 +286,6 @@ export default function AddETFsModal({ visible, onClose }: AddETFsModalProps) {
                         onChangeText={text => handleTickerChange(holding.id, text)}
                         placeholder="Search: SPY, QQQ..."
                         symbols={POPULAR_ETFS}
-                        style={styles.holdingInput}
                       />
                     </View>
 

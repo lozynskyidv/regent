@@ -286,7 +286,6 @@ export default function AddCommoditiesModal({ visible, onClose }: AddCommodities
                         onChangeText={text => handleTickerChange(holding.id, text)}
                         placeholder="Search: GOLD, SILVER..."
                         symbols={POPULAR_COMMODITIES}
-                        style={styles.holdingInput}
                       />
                     </View>
 
