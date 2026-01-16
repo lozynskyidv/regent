@@ -107,7 +107,8 @@ export default function AddPortfolioModal({ visible, onClose }: AddPortfolioModa
     const timers: NodeJS.Timeout[] = [];
 
     holdings.forEach(holding => {
-      if (holding.ticker.trim().length >= 2 && !holding.isLoadingPrice && holding.currentPrice === 0) {
+      // Only fetch if: ticker exists, not loading, no price yet, and no previous error
+      if (holding.ticker.trim().length >= 2 && !holding.isLoadingPrice && holding.currentPrice === 0 && !holding.priceError) {
         const timer = setTimeout(() => {
           fetchPrice(holding.ticker, holding.id);
         }, 800); // 800ms debounce
