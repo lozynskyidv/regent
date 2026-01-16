@@ -195,7 +195,7 @@ export default function AddCommoditiesModal({ visible, onClose }: AddCommodities
         name: portfolioName.trim(),
         type: 'commodities',
         value: totalValue,
-        currency: primaryCurrency,
+        currency: 'USD', // Always USD for investments (API returns USD prices)
         metadata: {
           holdings: holdingsMetadata,
           holdingsCount: validHoldings.length,
@@ -325,8 +325,8 @@ export default function AddCommoditiesModal({ visible, onClose }: AddCommodities
                     <View style={styles.priceDisplay}>
                       <Text style={styles.priceLabel}>Current Price:</Text>
                       <Text style={styles.priceValue}>
-                        {getCurrencySymbol()}
-                        {holding.currentPrice.toLocaleString('en-GB', {
+                        {$}
+                        {holding.currentPrice.toLocaleString('en-US', {
                           minimumFractionDigits: 2,
                           maximumFractionDigits: 2,
                         })}
@@ -339,7 +339,7 @@ export default function AddCommoditiesModal({ visible, onClose }: AddCommodities
                     <View style={styles.valueDisplay}>
                       <Text style={styles.valueLabel}>Value:</Text>
                       <Text style={styles.valueAmount}>
-                        {getCurrencySymbol()}
+                        {$}
                         {(parseFloat(holding.quantity) * holding.currentPrice).toLocaleString(
                           'en-GB',
                           {
@@ -363,10 +363,10 @@ export default function AddCommoditiesModal({ visible, onClose }: AddCommodities
             {/* Total Value Display */}
             {totalValue > 0 && (
               <View style={styles.totalCard}>
-                <Text style={styles.totalLabel}>Total Value</Text>
+                <Text style={styles.totalLabel}>Total Value (USD)</Text>
                 <Text style={styles.totalValue}>
-                  {getCurrencySymbol()}
-                  {totalValue.toLocaleString('en-GB', {
+                  {$}
+                  {totalValue.toLocaleString('en-US', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
                   })}
