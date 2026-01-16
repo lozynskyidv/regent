@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, ImageBackground } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, ImageBackground, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Settings, Plus } from 'lucide-react-native';
@@ -12,18 +12,92 @@ import AssetsCard from '../components/AssetsCard';
 import LiabilitiesCard from '../components/LiabilitiesCard';
 import ShareInviteCard from '../components/ShareInviteCard';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getSupabaseClient } from '../utils/supabase';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, supabaseUser, assets, liabilities, netWorth, isLoading } = useData();
+  const { user, supabaseUser, assets, liabilities, netWorth, primaryCurrency, isLoading, updateAsset } = useData();
   const { openAddAssetFlow, openAddLiabilityFlow } = useModals();
   
   const [lastUpdated, setLastUpdated] = useState(new Date());
+  const [refreshing, setRefreshing] = useState(false);
 
-  // Update timestamp when data changes
-  useEffect(() => {
-    setLastUpdated(new Date());
-  }, [assets, liabilities]);
+  // Refresh portfolio prices (pull-to-refresh)
+  const refreshPortfolioPrices = async () => {
+    console.log('🔄 Pull-to-refresh: Starting price refresh...');
+    setRefreshing(true);
+
+    try {
+      // Get all portfolio assets
+      const portfolioAssets = assets.filter(a => a.type === 'portfolio');
+      
+      if (portfolioAssets.length === 0) {
+        console.log('✅ No portfolios to refresh');
+        setRefreshing(false);
+        setLastUpdated(new Date());
+        return;
+      }
+
+      // Extract all unique symbols from all portfolios
+      const allSymbols = new Set<string>();
+      portfolioAssets.forEach(portfolio => {
+        portfolio.metadata?.holdings?.forEach(holding => {
+          allSymbols.add(holding.symbol);
+        });
+      });
+
+      const symbols = Array.from(allSymbols);
+      console.log(`🔄 Fetching prices for ${symbols.length} symbols:`, symbols);
+
+      // Fetch fresh prices from Supabase Edge Function
+      const supabase = getSupabaseClient();
+      const { data: prices, error } = await supabase.functions.invoke('fetch-asset-prices', {
+        body: { symbols, forceRefresh: false }, // Use cache if fresh (< 1 hour)
+      });
+
+      if (error) throw error;
+
+      console.log('✅ Prices fetched:', prices);
+
+      // Update each portfolio with fresh prices
+      for (const portfolio of portfolioAssets) {
+        const updatedHoldings = portfolio.metadata?.holdings?.map(holding => {
+          const priceData = prices[holding.symbol];
+          if (priceData && priceData.price) {
+            return {
+              ...holding,
+              currentPrice: priceData.price,
+              totalValue: holding.shares * priceData.price,
+            };
+          }
+          return holding;
+        });
+
+        // Calculate new total value
+        const newTotalValue = updatedHoldings?.reduce((sum, h) => sum + h.totalValue, 0) || 0;
+
+        // Update the portfolio asset
+        await updateAsset(portfolio.id, {
+          value: newTotalValue,
+          metadata: {
+            ...portfolio.metadata,
+            holdings: updatedHoldings,
+            lastPriceUpdate: new Date().toISOString(),
+          },
+        });
+      }
+
+      // Update timestamp
+      setLastUpdated(new Date());
+      console.log('✅ Pull-to-refresh: Complete!');
+
+    } catch (error) {
+      console.error('❌ Pull-to-refresh error:', error);
+      // Don't show error alert - silently fail and use cached data
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Get user's full name from Supabase user metadata or local user
   const getUserFullName = (): string => {
@@ -56,16 +130,25 @@ export default function HomeScreen() {
     return `${firstInitial}. ${lastName}`;
   };
 
-  // Get time ago text
+  // Get time ago text with "Updated" prefix
   const getTimeAgo = () => {
     const now = new Date();
-    const diff = Math.floor((now.getTime() - lastUpdated.getTime()) / 1000 / 60);
-    if (diff < 1) return 'just now';
-    if (diff === 1) return '1m ago';
-    if (diff < 60) return `${diff}m ago`;
-    const hours = Math.floor(diff / 60);
-    if (hours === 1) return '1h ago';
-    return `${hours}h ago`;
+    const diff = Math.floor((now.getTime() - lastUpdated.getTime()) / 1000);
+    
+    if (diff < 10) return 'Updated just now'; // < 10 seconds = just now
+    if (diff < 60) return 'Updated moments ago'; // < 1 minute
+    
+    const minutes = Math.floor(diff / 60);
+    if (minutes === 1) return 'Updated 1m ago';
+    if (minutes < 60) return `Updated ${minutes}m ago`;
+    
+    const hours = Math.floor(minutes / 60);
+    if (hours === 1) return 'Updated 1h ago';
+    if (hours < 24) return `Updated ${hours}h ago`;
+    
+    const days = Math.floor(hours / 24);
+    if (days === 1) return 'Updated 1d ago';
+    return `Updated ${days}d ago`;
   };
 
   // Calculate totals
@@ -114,7 +197,7 @@ export default function HomeScreen() {
         
         {/* Timestamp - Only show when NOT empty */}
         {!isEmpty && (
-          <Text style={styles.timestamp}>Updated {getTimeAgo()}</Text>
+          <Text style={styles.timestamp}>{getTimeAgo()}</Text>
         )}
       </View>
 
@@ -123,6 +206,15 @@ export default function HomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refreshPortfolioPrices}
+            tintColor={Colors.primary}
+            title="Updating prices..."
+            titleColor={Colors.mutedForeground}
+          />
+        }
       >
         {isEmpty ? (
           /* ===== EMPTY STATE - 100% Match to Web Prototype ===== */
@@ -175,7 +267,7 @@ export default function HomeScreen() {
             <View style={{ marginBottom: Spacing.lg }}>
               <NetWorthCard 
                 netWorth={netWorth} 
-                currency={user?.primaryCurrency || 'GBP'} 
+                currency={primaryCurrency} 
               />
             </View>
 
@@ -188,7 +280,7 @@ export default function HomeScreen() {
             <AssetsCard
               assets={assets}
               totalAssets={totalAssets}
-              currency={user?.primaryCurrency || 'GBP'}
+              currency={primaryCurrency}
               onAddAsset={openAddAssetFlow}
               onNavigateToDetail={() => router.push('/assets-detail')}
             />
@@ -197,7 +289,7 @@ export default function HomeScreen() {
             <LiabilitiesCard
               liabilities={liabilities}
               totalLiabilities={totalLiabilities}
-              currency={user?.primaryCurrency || 'GBP'}
+              currency={primaryCurrency}
               onAddLiability={openAddLiabilityFlow}
               onNavigateToDetail={() => router.push('/liabilities-detail')}
             />

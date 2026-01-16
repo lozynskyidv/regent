@@ -1,7 +1,7 @@
 # PROJECT CONTEXT - Regent iOS App
 
-**Last Updated:** January 14, 2026  
-**Version:** 0.7.2 (Empty State Onboarding + User Name Display)  
+**Last Updated:** January 16, 2026  
+**Version:** 0.8.0 (Portfolio Tracking with Live Prices)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** Exclusive invite-only (replaced paid subscription)
 
@@ -18,7 +18,9 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Authentication** (Google OAuth + Email/Password - fully functional with Supabase)
 - **Auth screen** (Face ID/PIN onboarding, fully functional)
 - **Empty State Onboarding** (Beautiful hero card with NYC skyline for new users)
-- **Home Screen** (Net Worth + Assets + Liabilities + ShareInviteCard)
+- **Home Screen** (Net Worth + Assets + Liabilities + ShareInviteCard + Pull-to-Refresh)
+- **Portfolio Tracking** (Live prices for stocks, ETFs, crypto, commodities via Twelve Data API)
+- **Smart Caching** (1 hour for stocks/ETFs, 30 min for crypto - optimized for 800 API calls/day free tier)
 - **Dynamic User Display** (Formatted names: "J. Rockefeller", "Welcome, John")
 - **Edit Modals** (EditAssetModal, EditLiabilityModal - pre-populated forms, delete buttons)
 - **Detail Screens** (Assets/Liabilities full lists with swipe-to-edit/delete gestures)
@@ -29,7 +31,7 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Settings Screen** (currency selection, sign out, GDPR-compliant delete account)
 - **Cloud Backups** (encrypted with PIN, stored in Supabase)
 
-❌ **P1 PRIORITIES:** Apple OAuth (App Store requirement), Stock tracking, Bank connections, Performance chart, TestFlight
+❌ **P1 PRIORITIES:** Apple OAuth (App Store requirement), Bank connections, Performance chart, TestFlight
 
 **Tech Stack:**  
 - React Native (Expo SDK 54), React 19.1.0, TypeScript 5.9  
@@ -37,7 +39,8 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Access Control:** Custom invite-only system (Supabase Edge Functions + PostgreSQL)  
 - **Storage:** AsyncStorage (data) + SecureStore (PIN/tokens)  
 - **Auth:** Supabase Auth (Google OAuth, session management)  
-- **Cloud:** Supabase Edge Functions (validate-invite, generate-invite-codes, mark-invite-used, delete-account)  
+- **Cloud:** Supabase Edge Functions (validate-invite, generate-invite-codes, mark-invite-used, delete-account, fetch-asset-prices)  
+- **External APIs:** Twelve Data API (live stock/crypto/commodity prices, 800 calls/day free tier)  
 - Icons: Lucide React Native 0.562.0  
 - Gestures: react-native-gesture-handler 2.30.0 (swipe-to-edit/delete)  
 - State: React Context API (DataContext, ModalContext)  
@@ -63,7 +66,8 @@ components/           # Modals & Cards
 ├── ShareInviteCard   # NEW: Display & share invite codes
 ├── AssetTypePickerModal, LiabilityTypePickerModal
 │   └── (2-step flow: Step 1 = type picker, Step 2 = specific form)
-├── Add[Bank|Property|OtherAsset]Modal.tsx
+├── Add[Bank|Property|OtherAsset|Portfolio]Modal.tsx
+│   └── AddPortfolioModal: Multi-holding, auto-fetch prices, live calculations
 ├── Add[Mortgage|Loan|OtherLiability]Modal.tsx
 ├── EditAssetModal, EditLiabilityModal (pre-populated, delete button)
 └── SwipeableAssetItem, SwipeableLiabilityItem (gesture handlers)
@@ -76,12 +80,15 @@ supabase/
 ├── migrations/
 │   ├── 001_create_invite_codes.sql  # Invite system schema
 │   ├── 002_fix_delete_constraints.sql
-│   └── 003_fix_all_auth_constraints.sql
+│   ├── 003_fix_all_auth_constraints.sql
+│   ├── 004_fix_invite_codes_deletion.sql
+│   └── 005_create_asset_prices.sql   # Price caching for portfolio tracking
 └── functions/
     ├── validate-invite/      # Check if code is valid
     ├── generate-invite-codes/ # Create 5 codes for new user
     ├── mark-invite-used/      # Mark code as used
-    └── delete-account/        # GDPR-compliant deletion (HAS ISSUES)
+    ├── delete-account/        # GDPR-compliant deletion
+    └── fetch-asset-prices/    # Live price fetching with smart caching
 
 utils/
 ├── storage.ts        # AsyncStorage helpers
@@ -222,8 +229,10 @@ types/
 - ✅ RevenueCat Integration (purchase flow, restore purchases, entitlements)
 - ✅ Face ID/PIN Auth (onboarding, authentication)
 - ✅ Empty State Onboarding (hero card with NYC skyline, dynamic welcome message)
-- ✅ Home Screen (live data, charts, CRUD, formatted user names)
-- ✅ Add/Edit/Delete Modals (all working)
+- ✅ Home Screen (live data, charts, CRUD, formatted user names, pull-to-refresh)
+- ✅ Portfolio Tracking (live prices for stocks/ETFs/crypto/commodities via Twelve Data API)
+- ✅ Smart Price Caching (Supabase Edge Function, optimized for free tier)
+- ✅ Add/Edit/Delete Modals (all working, including AddPortfolioModal)
 - ✅ Detail Screens (swipe gestures, edit/delete)
 - ✅ Settings (currency switcher, sign out, GDPR-compliant delete account, restore purchases)
 - ✅ AsyncStorage persistence (all data saves/loads)
@@ -233,7 +242,6 @@ types/
 
 **Not Built Yet (P1 - Next Priorities):**
 - ❌ **Apple OAuth** - Code implemented, needs Supabase configuration (App Store requirement)
-- ❌ Stock tracking (Twelve Data API integration)
 - ❌ Bank connections (TrueLayer OAuth flow)
 - ❌ Performance chart (net worth over time, line chart)
 - ❌ TestFlight distribution
@@ -667,6 +675,118 @@ getUserFirstName() → "John"
 
 ---
 
+## 📈 PORTFOLIO TRACKING IMPLEMENTATION
+
+**Last Updated:** January 16, 2026  
+**Status:** ✅ PRODUCTION READY
+
+### What It Is
+
+Live price fetching for investment portfolios (stocks, ETFs, crypto, commodities) with intelligent caching.
+
+### Architecture
+
+**Client:** `AddPortfolioModal.tsx` - Multi-holding entry with auto-fetch  
+**API:** Twelve Data API (800 calls/day free tier)  
+**Caching:** Supabase `asset_prices` table (reduces API calls)  
+**Edge Function:** `fetch-asset-prices` - Smart caching + fallback logic
+
+### Features
+
+**Supported Assets:**
+- ✅ Stocks (AAPL, MSFT, TSLA, GOOGL, NVDA, etc.)
+- ✅ ETFs (SPY, QQQ, VOO, etc.)
+- ✅ Crypto (BTC/USD, ETH/USD, etc.)
+- ✅ Commodities (GOLD, SILVER, etc.)
+
+**Caching Strategy:**
+- **Stocks/ETFs/Commodities:** 1 hour cache
+- **Crypto:** 30 minute cache
+- **Pull-to-Refresh:** User can force update anytime
+
+**Cost Optimization:**
+- Free tier: 800 API calls/day
+- With caching: Supports 10+ active users
+- User-triggered updates only (no background jobs)
+
+### Implementation Details
+
+**User Flow:**
+1. Tap "+ Add Asset" → Select "Investment Portfolio"
+2. Enter portfolio name (e.g., "Tech Stocks")
+3. Add holdings: Ticker (e.g., AAPL) + Quantity (e.g., 500)
+4. Price auto-fetches in 800ms (debounced)
+5. Total value calculates live: `shares × price`
+6. Save → Portfolio appears in net worth
+
+**Pull-to-Refresh:**
+1. User pulls down on home screen
+2. Fetches all unique symbols from portfolios
+3. Calls Edge Function with `forceRefresh: false` (uses cache if fresh)
+4. Updates asset values with new prices
+5. Shows "Updated just now" timestamp
+
+**Files:**
+- `components/AddPortfolioModal.tsx` - Portfolio entry UI
+- `supabase/functions/fetch-asset-prices/index.ts` - Price fetching logic
+- `supabase/migrations/005_create_asset_prices.sql` - Caching table
+- `app/home.tsx` - Pull-to-refresh implementation
+
+**Database Schema:**
+```sql
+CREATE TABLE asset_prices (
+  symbol TEXT PRIMARY KEY,
+  price NUMERIC NOT NULL,
+  currency TEXT NOT NULL,
+  asset_type TEXT NOT NULL,
+  exchange TEXT,
+  name TEXT,
+  change_percent NUMERIC,
+  updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+```
+
+**Asset Metadata Structure:**
+```typescript
+{
+  holdings: [
+    {
+      symbol: "AAPL",
+      shares: 500,
+      currentPrice: 258.21,
+      totalValue: 129105.00
+    }
+  ],
+  holdingsCount: 1,
+  lastPriceUpdate: "2026-01-16T12:11:53.429Z"
+}
+```
+
+### Deployment
+
+**Prerequisites:**
+- Twelve Data API key (sign up at twelvedata.com)
+- Supabase CLI installed
+
+**Setup:**
+```bash
+# 1. Run migration
+supabase db push
+
+# 2. Set API key secret
+supabase secrets set TWELVE_DATA_API_KEY=your_key_here
+
+# 3. Deploy Edge Function
+supabase functions deploy fetch-asset-prices
+
+# 4. Test
+curl -X POST "https://YOUR-PROJECT.supabase.co/functions/v1/fetch-asset-prices" \
+  -H "Authorization: Bearer YOUR_ANON_KEY" \
+  -d '{"symbols": ["AAPL"]}'
+```
+
+---
+
 ## 🗑️ GDPR-COMPLIANT ACCOUNT DELETION
 
 **Last Updated:** January 7, 2026  
@@ -771,31 +891,7 @@ supabase functions deploy delete-account
 
 ---
 
-### **2. Stock Tracking** (Twelve Data API)
-
-**Current State:** Users can only add "Other" assets manually  
-**Goal:** Let users track stock portfolios with live prices
-
-**What to Build:**
-- Create `AddStockModal.tsx`:
-  - Ticker input (AAPL, TSLA, etc.)
-  - Quantity input
-  - Manual price override (optional)
-- Integrate Twelve Data API:
-  - Sign up at twelvedata.com
-  - Add API key to `.env`
-  - Create `utils/stockApi.ts` helper
-  - Fetch live prices (15-min delay on free tier)
-- Update `types/index.ts`:
-  - Add `ticker`, `quantity`, `lastPrice` to Asset metadata
-- Add "Portfolio" category to home screen charts
-- Auto-refresh prices on app open
-
-**Starting Point:** Copy `AddBankModal.tsx` pattern, add ticker validation
-
----
-
-### **3. Bank Connections** (TrueLayer OAuth)
+### **2. Bank Connections** (TrueLayer OAuth)
 
 **Current State:** Users manually enter bank balances  
 **Goal:** Read-only UK bank account connections with auto-refresh
@@ -822,7 +918,7 @@ supabase functions deploy delete-account
 
 ---
 
-### **4. Performance Chart**
+### **3. Performance Chart**
 
 **Current State:** No historical tracking  
 **Goal:** Net worth over time visualization
@@ -853,7 +949,7 @@ supabase functions deploy delete-account
 
 ---
 
-### **5. TestFlight Beta**
+### **4. TestFlight Beta**
 
 **Current State:** Running in Expo Go only  
 **Goal:** Distribute standalone build to beta testers

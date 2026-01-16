@@ -11,6 +11,7 @@ import { AssetType, LiabilityType, Asset, Liability } from '../types';
 import AssetTypePickerModal from '../components/AssetTypePickerModal';
 import AddBankModal from '../components/AddBankModal';
 import AddPropertyModal from '../components/AddPropertyModal';
+import AddPortfolioModal from '../components/AddPortfolioModal';
 import AddOtherAssetModal from '../components/AddOtherAssetModal';
 import LiabilityTypePickerModal from '../components/LiabilityTypePickerModal';
 import AddMortgageModal from '../components/AddMortgageModal';
@@ -36,6 +37,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
   const [showAssetTypePicker, setShowAssetTypePicker] = useState(false);
   const [showBankModal, setShowBankModal] = useState(false);
   const [showPropertyModal, setShowPropertyModal] = useState(false);
+  const [showPortfolioModal, setShowPortfolioModal] = useState(false);
   const [showOtherAssetModal, setShowOtherAssetModal] = useState(false);
   
   // Liability modal states
@@ -80,8 +82,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
         setShowPropertyModal(true);
         break;
       case 'portfolio':
-        // TODO: Add portfolio modal when implementing stock tracking
-        console.log('Portfolio modal coming soon');
+        setShowPortfolioModal(true);
         break;
       case 'other':
         setShowOtherAssetModal(true);
@@ -135,6 +136,11 @@ export function ModalProvider({ children }: { children: ReactNode }) {
       <AddPropertyModal
         visible={showPropertyModal}
         onClose={() => setShowPropertyModal(false)}
+      />
+
+      <AddPortfolioModal
+        visible={showPortfolioModal}
+        onClose={() => setShowPortfolioModal(false)}
       />
 
       <AddOtherAssetModal

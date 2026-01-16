@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.7.2 (Empty State Onboarding + User Name Display)  
+**Version:** 0.8.0 (Portfolio Tracking with Live Prices)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -52,6 +52,8 @@ npx expo start --clear
 ✅ **Authentication:** Google OAuth, Email/Password, Face ID/PIN, Supabase Auth  
 ✅ **Empty State Onboarding:** Beautiful hero card for new users with NYC skyline  
 ✅ **Home Screen:** Net Worth, Assets, Liabilities cards + Invite Share Card  
+✅ **Portfolio Tracking:** Live prices for stocks, ETFs, crypto, commodities via Twelve Data API  
+✅ **Pull-to-Refresh:** User-triggered price updates with smart caching (1 hour stocks, 30 min crypto)  
 ✅ **CRUD:** Add/Edit/Delete assets & liabilities  
 ✅ **Detail Screens:** Full lists with swipe gestures  
 ✅ **Modals:** 2-step flow (type picker → specific form)  
@@ -62,6 +64,18 @@ npx expo start --clear
 ---
 
 ## 🎯 Recent Changes (January 2026)
+
+### **📈 Portfolio Tracking with Live Prices** ✅ COMPLETE (v0.8.0 - January 16, 2026)
+- **Added:** Investment portfolio tracking with multi-holding support
+- **Added:** Live price fetching via Twelve Data API (stocks, ETFs, crypto, commodities)
+- **Added:** Supabase Edge Function `fetch-asset-prices` with intelligent caching
+- **Added:** Pull-to-refresh on home screen for manual price updates
+- **Added:** Database migration for `asset_prices` table (caching layer)
+- **Caching:** 1 hour for stocks/ETFs/commodities, 30 minutes for crypto
+- **UX:** Auto-fetch prices while typing ticker symbols
+- **Cost:** Optimized for free tier (800 calls/day supports 10+ active users)
+- **Supported Assets:** Stocks (AAPL, MSFT, TSLA), Crypto (BTC/USD, ETH/USD), Commodities (GOLD, SILVER), ETFs (SPY, QQQ, VOO)
+- **Files:** `components/AddPortfolioModal.tsx`, `supabase/functions/fetch-asset-prices/index.ts`, `supabase/migrations/005_create_asset_prices.sql`
 
 ### **🎨 Empty State Onboarding** ✅ COMPLETE (v0.7.2 - January 14, 2026)
 - **Added:** Beautiful empty state card for new users (100% match to web prototype)
@@ -159,23 +173,11 @@ npx expo start --clear
 - 🔴 **BLOCKED:** Cannot configure without Apple Developer access
 
 **Effort:** 5-10 minutes (once enrollment approved)  
-**Documentation:** See `APPLE_OAUTH_README.md` for complete setup guide
+**Documentation:** See `APPLE_OAUTH_SETUP.md` for complete setup guide
 
 ---
 
-### 2. Stock Tracking (Twelve Data API)
-**Goal:** Let users manually add stock holdings with live prices  
-**What to build:**
-- Create `AddStockModal.tsx` (ticker input, quantity, manual price)
-- Integrate Twelve Data API for live price fetching
-- Add portfolio type to asset categories
-- Display portfolio breakdown on home screen
-
-**Current state:** Manual "Other" assets only
-
----
-
-### 3. Bank Connections (TrueLayer OAuth)
+### 2. Bank Connections (TrueLayer OAuth)
 **Goal:** Read-only UK bank account balance fetching  
 **What to build:**
 - TrueLayer OAuth flow (similar to Google OAuth)
@@ -187,7 +189,7 @@ npx expo start --clear
 
 ---
 
-### 4. Performance Chart
+### 3. Performance Chart
 **Goal:** Net worth over time visualization  
 **What to build:**
 - Historical snapshots table in Supabase
@@ -198,7 +200,7 @@ npx expo start --clear
 
 ---
 
-### 5. TestFlight Beta
+### 4. TestFlight Beta
 **Goal:** Distribute to beta testers  
 **What to do:**
 - Build with EAS: `eas build --platform ios`
