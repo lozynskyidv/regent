@@ -7,7 +7,7 @@
 export type Currency = 'GBP' | 'USD' | 'EUR';
 
 // Asset types
-export type AssetType = 'bank' | 'portfolio' | 'property' | 'other';
+export type AssetType = 'bank' | 'stocks' | 'crypto' | 'commodities' | 'etf' | 'portfolio' | 'property' | 'other';
 
 export interface Asset {
   id: string;

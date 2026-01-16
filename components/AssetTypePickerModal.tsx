@@ -6,7 +6,7 @@
 
 import { View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Building2, TrendingUp, Home, Plus } from 'lucide-react-native';
+import { Building2, TrendingUp, Home, Plus, LineChart, Bitcoin, Gem, BarChart3 } from 'lucide-react-native';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { AssetType } from '../types';
 
@@ -38,10 +38,31 @@ export default function AssetTypePickerModal({
       badge: 'Live sync',
     },
     {
-      id: 'portfolio',
-      icon: TrendingUp,
-      title: 'Investment Portfolio',
-      description: 'Track stocks with live prices',
+      id: 'stocks',
+      icon: LineChart,
+      title: 'Stocks',
+      description: 'Track AAPL, MSFT, TSLA, etc.',
+      badge: 'Live prices',
+    },
+    {
+      id: 'crypto',
+      icon: Bitcoin,
+      title: 'Crypto',
+      description: 'Track Bitcoin, Ethereum, etc.',
+      badge: 'Live prices',
+    },
+    {
+      id: 'etf',
+      icon: BarChart3,
+      title: 'ETFs',
+      description: 'Track SPY, QQQ, VOO, etc.',
+      badge: 'Live prices',
+    },
+    {
+      id: 'commodities',
+      icon: Gem,
+      title: 'Commodities',
+      description: 'Track gold, silver, oil, etc.',
       badge: 'Live prices',
     },
     {
