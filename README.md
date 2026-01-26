@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.8.1 (UX Polish + Timestamp Improvements)  
+**Version:** 0.8.2 (Performance Chart - In Progress)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -65,6 +65,27 @@ npx expo start --clear
 ---
 
 ## 🎯 Recent Changes (January 2026)
+
+### **📊 Performance Chart** 🟡 IN PROGRESS (v0.8.2 - January 26, 2026)
+
+**What We Built:**
+- Performance chart component with historical net worth tracking
+- Day 1 state: Current value + single dot + onboarding message
+- Day 2+ state: Line chart with time range selector (1M/3M/YTD/1Y)
+- Chart positioned after Net Worth, before Assets/Liabilities
+
+**Library Migration:**
+- ❌ Tried `victory-native` → Failed (heavy dependencies, version conflicts with Expo Go)
+- ✅ Switched to `react-native-chart-kit` → Works but styling needs polish
+
+**Current Status:**
+- ✅ Chart renders and shows data correctly
+- ✅ Day 1 empty state matches web prototype
+- 🟡 Styling is mediocre, needs refinement to match web quality
+
+**Next:** Fine-tune stroke width, colors, spacing to match web prototype exactly
+
+---
 
 ### **✨ UX Polish & Timestamp System** ✅ COMPLETE (v0.8.1 - January 16, 2026)
 
@@ -317,6 +338,7 @@ web-prototype/        # Reference only (NOT for production)
 
 ## 🐛 Known Issues
 
+**Performance Chart Styling:** Chart works but visual polish needs improvement to match web prototype (HIGH PRIORITY)  
 **Face ID in Expo Go:** Shows passcode (Expo Go limitation, works in standalone build)  
 **Currency:** Symbol-only change (no conversion yet)
 

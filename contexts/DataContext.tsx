@@ -8,7 +8,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Asset, Liability, User, Currency } from '../types';
+import { Asset, Liability, User, Currency, NetWorthSnapshot } from '../types';
 import {
   loadAssets,
   saveAssets,
@@ -25,6 +25,8 @@ import {
   SubscriptionState as StorageSubscriptionState,
   loadLastDataSync,
   saveLastDataSync,
+  loadSnapshots,
+  saveSnapshots,
 } from '../utils/storage';
 import { generateId } from '../utils/generateId';
 import { getSupabaseClient, reinitializeSupabaseClient, setOnClientReinitialized } from '../utils/supabase';
@@ -43,6 +45,7 @@ interface DataContextType {
   user: User | null;
   primaryCurrency: Currency;
   lastDataSync: Date | null;
+  snapshots: NetWorthSnapshot[];
   
   // Auth
   supabaseUser: SupabaseAuthUser | null;
@@ -107,6 +110,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [primaryCurrency, setPrimaryCurrency] = useState<Currency>('GBP');
   const [lastDataSync, setLastDataSync] = useState<Date | null>(null);
+  const [snapshots, setSnapshots] = useState<NetWorthSnapshot[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -200,13 +204,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       console.log('📦 Loading data from AsyncStorage...');
       
-      const [loadedAssets, loadedLiabilities, loadedUser, preferences, subscription, lastSync] = await Promise.all([
+      const [loadedAssets, loadedLiabilities, loadedUser, preferences, subscription, lastSync, loadedSnapshots] = await Promise.all([
         loadAssets(),
         loadLiabilities(),
         loadUser(),
         loadPreferences(),
         loadSubscription(),
         loadLastDataSync(),
+        loadSnapshots(),
       ]);
       
       setAssets(loadedAssets);
@@ -215,6 +220,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setPrimaryCurrency(preferences.primaryCurrency);
       setHasStartedTrial(subscription.hasStartedTrial);
       setLastDataSync(lastSync);
+      setSnapshots(loadedSnapshots);
       
       // Update timestamp on app open (if we have data)
       if (loadedAssets.length > 0 || loadedLiabilities.length > 0) {
@@ -226,6 +232,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       
       console.log('✅ Data loaded successfully');
       console.log('📊 Subscription state:', subscription);
+      console.log('📈 Snapshots loaded:', loadedSnapshots.length);
       console.log('🕐 Last data sync:', lastSync?.toISOString() || 'Never');
     } catch (err) {
       console.error('❌ Error loading data:', err);
@@ -242,6 +249,47 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const totalAssets = assets.reduce((sum, asset) => sum + asset.value, 0);
   const totalLiabilities = liabilities.reduce((sum, liability) => sum + liability.value, 0);
   const netWorth = totalAssets - totalLiabilities;
+
+  // ============================================
+  // DAILY SNAPSHOT CREATION (Performance Chart)
+  // ============================================
+
+  useEffect(() => {
+    const createDailySnapshot = async () => {
+      // Only create snapshots if we have data
+      if (assets.length === 0 && liabilities.length === 0) {
+        return;
+      }
+
+      const now = new Date();
+      const today = now.toISOString().split('T')[0]; // YYYY-MM-DD
+
+      // Check if we already have a snapshot for today
+      const hasToday = snapshots.some(s => 
+        s.timestamp.startsWith(today)
+      );
+
+      if (!hasToday) {
+        const newSnapshot: NetWorthSnapshot = {
+          id: generateId(),
+          netWorth,
+          totalAssets,
+          totalLiabilities,
+          timestamp: now.toISOString(),
+        };
+
+        const updatedSnapshots = [...snapshots, newSnapshot];
+        await saveSnapshots(updatedSnapshots);
+        setSnapshots(updatedSnapshots);
+        console.log('📸 Daily snapshot created:', {
+          netWorth: newSnapshot.netWorth,
+          date: today
+        });
+      }
+    };
+
+    createDailySnapshot();
+  }, [assets, liabilities]); // Run when data changes
 
   // ============================================
   // ASSET ACTIONS
@@ -1034,6 +1082,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     user,
     primaryCurrency,
     lastDataSync,
+    snapshots,
     
     // Auth
     supabaseUser,

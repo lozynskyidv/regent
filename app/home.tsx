@@ -11,12 +11,13 @@ import NetWorthCard from '../components/NetWorthCard';
 import AssetsCard from '../components/AssetsCard';
 import LiabilitiesCard from '../components/LiabilitiesCard';
 import ShareInviteCard from '../components/ShareInviteCard';
+import { PerformanceChart } from '../components/PerformanceChart';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getSupabaseClient } from '../utils/supabase';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, supabaseUser, assets, liabilities, netWorth, primaryCurrency, isLoading, updateAsset, lastDataSync, updateLastDataSync } = useData();
+  const { user, supabaseUser, assets, liabilities, netWorth, primaryCurrency, isLoading, updateAsset, lastDataSync, updateLastDataSync, snapshots } = useData();
   const { openAddAssetFlow, openAddLiabilityFlow } = useModals();
   
   const [refreshing, setRefreshing] = useState(false);
@@ -315,6 +316,13 @@ export default function HomeScreen() {
             {supabaseUser?.id && (
               <ShareInviteCard userId={supabaseUser.id} />
             )}
+
+            {/* Performance Chart - Position after Net Worth, before Assets */}
+            <PerformanceChart
+              snapshots={snapshots}
+              currentNetWorth={netWorth}
+              currency={primaryCurrency}
+            />
 
             {/* Assets Card */}
             <AssetsCard

@@ -96,3 +96,12 @@ export interface AuthState {
   hasFaceID: boolean;
   hasPIN: boolean;
 }
+
+// Net worth snapshot (for performance chart)
+export interface NetWorthSnapshot {
+  id: string;
+  netWorth: number;
+  totalAssets: number;
+  totalLiabilities: number;
+  timestamp: string; // ISO timestamp
+}

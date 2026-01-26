@@ -42,7 +42,9 @@
         {
           "faceIDPermission": "Regent uses Face ID to securely access your financial data."
         }
-      ]
+      ],
+      "expo-asset",
+      "expo-font"
     ],
     "scheme": "regent",
     "extra": {

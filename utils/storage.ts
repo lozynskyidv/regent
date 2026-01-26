@@ -4,7 +4,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Asset, Liability, User } from '../types';
+import { Asset, Liability, User, NetWorthSnapshot } from '../types';
 
 // Storage keys (no @ prefix - not needed for AsyncStorage)
 const STORAGE_KEYS = {
@@ -14,6 +14,7 @@ const STORAGE_KEYS = {
   PREFERENCES: 'regent_preferences',
   SUBSCRIPTION: 'regent_subscription',
   LAST_DATA_SYNC: 'regent_last_data_sync',
+  NET_WORTH_SNAPSHOTS: 'regent_net_worth_snapshots',
 } as const;
 
 // ============================================
@@ -311,6 +312,44 @@ export async function loadLastDataSync(): Promise<Date | null> {
 }
 
 // ============================================
+// NET WORTH SNAPSHOTS (Performance Chart)
+// ============================================
+
+/**
+ * Save net worth snapshots for performance tracking
+ */
+export async function saveSnapshots(snapshots: NetWorthSnapshot[]): Promise<void> {
+  try {
+    const jsonValue = JSON.stringify(snapshots);
+    await AsyncStorage.setItem(STORAGE_KEYS.NET_WORTH_SNAPSHOTS, jsonValue);
+    console.log('✅ Snapshots saved:', snapshots.length);
+  } catch (error) {
+    console.error('❌ Error saving snapshots:', error);
+    throw error;
+  }
+}
+
+/**
+ * Load net worth snapshots
+ * Returns empty array if none exist
+ */
+export async function loadSnapshots(): Promise<NetWorthSnapshot[]> {
+  try {
+    const jsonValue = await AsyncStorage.getItem(STORAGE_KEYS.NET_WORTH_SNAPSHOTS);
+    if (jsonValue === null) {
+      console.log('📭 No snapshots found');
+      return [];
+    }
+    const snapshots = JSON.parse(jsonValue) as NetWorthSnapshot[];
+    console.log('✅ Snapshots loaded:', snapshots.length);
+    return snapshots;
+  } catch (error) {
+    console.error('❌ Error loading snapshots:', error);
+    return [];
+  }
+}
+
+// ============================================
 // UTILITIES
 // ============================================
 
@@ -326,6 +365,7 @@ export async function clearAllData(): Promise<void> {
       STORAGE_KEYS.PREFERENCES,
       STORAGE_KEYS.SUBSCRIPTION,
       STORAGE_KEYS.LAST_DATA_SYNC,
+      STORAGE_KEYS.NET_WORTH_SNAPSHOTS,
       '@regent_invite_code',      // Clear invite validation for fresh start
       '@regent_invite_code_id',   // Clear invite code ID
     ]);

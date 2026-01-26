@@ -1,7 +1,7 @@
 # PROJECT CONTEXT - Regent iOS App
 
-**Last Updated:** January 16, 2026  
-**Version:** 0.8.1 (UX Polish + Timestamp Improvements)  
+**Last Updated:** January 26, 2026  
+**Version:** 0.8.2 (Performance Chart - In Progress)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** Exclusive invite-only (replaced paid subscription)
 
@@ -33,7 +33,7 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Settings Screen** (currency selection, sign out, GDPR-compliant delete account)
 - **Cloud Backups** (encrypted with PIN, stored in Supabase)
 
-❌ **P1 PRIORITIES:** Apple OAuth (App Store requirement), Bank connections, Performance chart, TestFlight
+❌ **P1 PRIORITIES:** Performance chart polish (HIGH), Apple OAuth (App Store requirement), Bank connections, TestFlight
 
 **Tech Stack:**  
 - React Native (Expo SDK 54), React 19.1.0, TypeScript 5.9  
@@ -257,6 +257,13 @@ types/
 ---
 
 ## 🔥 KNOWN ISSUES & WORKAROUNDS
+
+**Performance Chart Styling (HIGH PRIORITY):**
+- Chart renders but appearance is mediocre, doesn't match web prototype polish
+- Day 1 state works correctly (shows current value + dot + message)
+- Line visibility and spacing issues in full chart view (Day 2+)
+- Severity: High (affects premium brand perception)
+- **Next:** Fine-tune styling to match `web-prototype/src/components/HomeScreen.tsx` exactly
 
 **Face ID in Expo Go:**
 - Shows device passcode instead of Face ID UI (Expo Go limitation)
@@ -916,6 +923,83 @@ curl -X POST "https://YOUR-PROJECT.supabase.co/functions/v1/fetch-asset-prices" 
 
 **Files:**
 - `components/AssetTypePickerModal.tsx` - Badge removed
+
+---
+
+## 📊 PERFORMANCE CHART IMPLEMENTATION
+
+**Last Updated:** January 26, 2026  
+**Status:** 🟡 PARTIAL - Works but needs styling polish
+
+### What We Built
+
+**Feature:** Net worth over time visualization with historical snapshots and time range filtering.
+
+**Components:**
+- `components/PerformanceChart.tsx` - Main chart component
+- Daily snapshots stored in DataContext (local AsyncStorage)
+- Time range selector: 1M, 3M, YTD, 1Y
+- Two states: Day 1 (onboarding) vs Day 2+ (full chart)
+
+**Day 1 State (matches web prototype):**
+- Shows current net worth value (e.g., £250,000)
+- Single centered dot visualization
+- Message: "Your performance tracking begins today"
+- No metrics, no time range selector (minimal onboarding)
+
+**Day 2+ State (full chart):**
+- Line chart showing net worth trend
+- Performance metrics: ↑/↓ amount and percentage change
+- Time period label (e.g., "This month")
+- Time range selector (1M/3M/YTD/1Y buttons)
+
+### Library Migration Journey
+
+**Original Attempt: `victory-native`**
+- Popular charting library for React Native
+- **Why we tried it:** Rich features, good documentation, used by many apps
+- **Why it failed:**
+  1. Required `@shopify/react-native-skia` (heavy graphics engine)
+  2. Required `react-native-reanimated@~4.2.x` (Expo SDK 54 needs `~4.1.1`)
+  3. Required `react-native-worklets` (threading library)
+  4. Version conflicts with Expo Go and React 19
+  5. Multiple errors: "formatDateLabel is not a function", "Element type is invalid"
+  6. Development complexity too high for our use case
+
+**Current Solution: `react-native-chart-kit`**
+- Lighter weight, simpler API
+- No heavy native dependencies
+- Works with Expo Go (critical for fast iteration)
+- **Trade-off:** Less customization, harder to match web prototype exactly
+
+### Current Issues (🔴 HIGH PRIORITY)
+
+**Styling Mediocre:**
+- Chart appearance doesn't match web prototype polish
+- Line stroke visibility inconsistent (sometimes too light)
+- Spacing and margins need refinement
+- Overall "feel" lacks the premium quality of web version
+
+**What's Working:**
+- ✅ Day 1 state shows correctly
+- ✅ Data calculations accurate
+- ✅ Time range filtering works
+- ✅ Card positioned correctly (after Net Worth, before Assets)
+
+**Next Steps:**
+- Fine-tune stroke width, colors, container styling
+- Match web prototype exactly (`web-prototype/src/components/HomeScreen.tsx` lines 469-515)
+- May need alternative library if polish can't be achieved
+
+**Files:**
+- `components/PerformanceChart.tsx` - Chart component
+- `contexts/DataContext.tsx` - Snapshot creation logic (daily)
+- `app/home.tsx` - Integration (positioned after Net Worth)
+
+**Dependencies:**
+- `react-native-chart-kit@^6.12.0` (current charting library)
+- `react-native-svg@15.12.1` (peer dependency)
+- **Removed:** `victory-native`, `@shopify/react-native-skia`, `react-native-worklets`
 
 ---
 
