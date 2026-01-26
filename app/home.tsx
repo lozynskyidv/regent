@@ -22,6 +22,7 @@ export default function HomeScreen() {
   
   const [refreshing, setRefreshing] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   // Refresh portfolio prices (pull-to-refresh)
   const refreshPortfolioPrices = async () => {
@@ -246,6 +247,7 @@ export default function HomeScreen() {
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={scrollEnabled}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -323,6 +325,8 @@ export default function HomeScreen() {
               snapshots={snapshots}
               currentNetWorth={netWorth}
               currency={primaryCurrency}
+              onChartTouchStart={() => setScrollEnabled(false)}
+              onChartTouchEnd={() => setScrollEnabled(true)}
             />
 
             {/* Assets Card */}

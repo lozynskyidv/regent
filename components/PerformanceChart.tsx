@@ -20,9 +20,11 @@ interface PerformanceChartProps {
   snapshots: NetWorthSnapshot[];
   currentNetWorth: number;
   currency: Currency;
+  onChartTouchStart?: () => void;
+  onChartTouchEnd?: () => void;
 }
 
-export function PerformanceChart({ snapshots, currentNetWorth, currency }: PerformanceChartProps) {
+export function PerformanceChart({ snapshots, currentNetWorth, currency, onChartTouchStart, onChartTouchEnd }: PerformanceChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('1M');
   const chartOpacity = useRef(new Animated.Value(1)).current;
   const metricsOpacity = useRef(new Animated.Value(1)).current;
@@ -104,6 +106,9 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
       onPanResponderTerminationRequest: () => false,
       
       onPanResponderGrant: (evt) => {
+        // Disable parent ScrollView scrolling
+        onChartTouchStart?.();
+        
         // Store start position for direction detection
         gestureStartRef.current = {
           x: evt.nativeEvent.pageX,
@@ -135,6 +140,9 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
       },
       
       onPanResponderRelease: () => {
+        // Re-enable parent ScrollView scrolling
+        onChartTouchEnd?.();
+        
         // Clear gesture start reference
         gestureStartRef.current = null;
         
@@ -162,6 +170,9 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
       },
       
       onPanResponderTerminate: () => {
+        // Re-enable parent ScrollView if gesture was interrupted
+        onChartTouchEnd?.();
+        
         // Gesture was interrupted - clean up
         gestureStartRef.current = null;
         setSelectedPointIndex(null);
@@ -178,12 +189,19 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
   // Helper functions
   const formatDateLabel = (date: Date, range: TimeRange): string => {
     if (range === '1M') {
+      // Daily precision: "15 Jan"
       return `${date.getDate()} ${date.toLocaleString('en-GB', { month: 'short' })}`;
     }
-    if (range === '3M' || range === 'YTD') {
+    if (range === '3M') {
+      // Weekly precision: "15 Jan"
+      return `${date.getDate()} ${date.toLocaleString('en-GB', { month: 'short' })}`;
+    }
+    if (range === 'YTD') {
+      // Monthly precision: "Jan", "Feb"
       return date.toLocaleString('en-GB', { month: 'short' });
     }
-    return date.toLocaleString('en-GB', { month: 'short', year: '2-digit' });
+    // 1Y: Weekly precision with day: "15 Jan"
+    return `${date.getDate()} ${date.toLocaleString('en-GB', { month: 'short' })}`;
   };
 
   const getTimePeriodLabel = () => {
@@ -227,8 +245,15 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
     // Day 1 check: If we have fewer than 2 historical data points, show Day 1 state
     const isDay1 = sortedSnapshots.length < 2;
 
-    // Limit to max 10 data points for readability
-    const maxPoints = 10;
+    // Dynamic max points based on time range for better granularity
+    const getMaxPoints = () => {
+      if (timeRange === '1M') return 30;  // Daily for 1 month
+      if (timeRange === '3M') return 45;  // Every 2 days for 3 months
+      if (timeRange === 'YTD') return 50; // Variable, good granularity
+      return 50; // 1Y: ~weekly points
+    };
+    
+    const maxPoints = getMaxPoints();
     const step = Math.max(1, Math.floor(sortedSnapshots.length / maxPoints));
     const sampledSnapshots = sortedSnapshots.filter((_, index) => index % step === 0);
 

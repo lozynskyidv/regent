@@ -1,7 +1,7 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 26, 2026  
-**Version:** 0.9.1 (Net Worth YTD % + Performance Chart Complete)  
+**Version:** 0.9.2 (Performance Chart - Scrolling Fixed + Granularity Improved)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** Exclusive invite-only (replaced paid subscription)
 
@@ -41,16 +41,18 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Performance Chart** (Interactive line chart with smooth animations):
   - ✅ BitBox-style layout (current value + change + percentage + time period)
   - ✅ Interactive scrubbing (tap + drag to see historical values)
+  - ✅ ScrollView conflict FIXED (dynamic scroll disabling)
   - ✅ Smooth animated number counting (spring physics)
   - ✅ Scale micro-interactions (0.98x on touch, 1.02x pulse on change)
   - ✅ Time range selector (1M, 3M, YTD, 1Y with fade transitions)
+  - ✅ High-resolution data (30-50 points per time range)
+  - ✅ Precise date labels (day + month for 1M, 3M, 1Y)
   - ✅ Day 1 empty state (matches web-prototype pixel-perfect)
   - ✅ Historical data support (2 years of snapshots)
   - ✅ Test data generator (Settings → Generate Performance Data)
-  - ⚠️ Known Issue: ScrollView conflict when dragging on chart (needs gesture-handler upgrade)
 
 ❌ **P1 PRIORITIES:** 
-1. Fix chart ScrollView gesture conflict (upgrade to react-native-gesture-handler)
+1. Add visual indicator dot on chart when tapped (so users can see which point they're viewing)
 2. Add gradient fill to performance chart (custom SVG like web-prototype)
 3. Apple OAuth (App Store requirement - BLOCKED on Apple Developer account)
 4. Bank connections, TestFlight

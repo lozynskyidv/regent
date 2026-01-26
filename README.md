@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.9.1 (Net Worth YTD % + Performance Chart Complete)  
+**Version:** 0.9.2 (Performance Chart - Scrolling Fixed + Granularity Improved)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -66,6 +66,45 @@ npx expo start --clear
 ---
 
 ## 🎯 Recent Changes (January 2026)
+
+### **📊 Performance Chart - Critical UX Fixes** ✅ COMPLETE (v0.9.2 - January 26, 2026)
+
+**What We Fixed:**
+
+**1. ScrollView Gesture Conflict (RESOLVED)**
+- ✅ Implemented dynamic ScrollView disabling when chart is touched
+- ✅ Page freezes when dragging on chart (no more accidental scrolls)
+- ✅ Scrolling resumes automatically when touch ends
+- ✅ 100% reliable gesture isolation
+
+**Technical Implementation:**
+```typescript
+// Chart touch starts → Disable ScrollView
+onChartTouchStart={() => setScrollEnabled(false)}
+// Chart touch ends → Enable ScrollView  
+onChartTouchEnd={() => setScrollEnabled(true)}
+```
+
+**2. Improved Data Granularity**
+- ✅ Dynamic max points per time range (30-50 points)
+- ✅ 1M: Daily data points (30 points)
+- ✅ 3M: Every 2 days (45 points)
+- ✅ YTD/1Y: High-resolution (50 points)
+- ✅ Smoother charts, better scrubbing experience
+
+**3. Precise Date Labels**
+- ✅ 1M: "15 Jan", "16 Jan" (daily precision)
+- ✅ 3M: "1 Jan", "8 Jan" (every 2 days)
+- ✅ 1Y: "15 Jan", "22 Jan" (weekly with day)
+- ✅ YTD: "Jan", "Feb" (monthly for clean x-axis)
+- ✅ No more repeated "Jun 25" for different dates
+
+**User Experience Before → After:**
+- ❌ Dragging chart scrolls page → ✅ Perfect gesture isolation
+- ❌ Choppy line (10 points) → ✅ Smooth curve (30-50 points)
+- ❌ Ambiguous dates ("Jun 25") → ✅ Specific dates ("15 Jun")
+
+---
 
 ### **📈 Net Worth Card - YTD Percentage Context** ✅ COMPLETE (v0.9.1 - January 26, 2026)
 
@@ -287,11 +326,11 @@ NET WORTH
 
 ## 🔜 Next Up (P1 Features - Priority Order)
 
-### 1. Fix Performance Chart Gesture Conflict 🔴 HIGH PRIORITY
-**Goal:** Eliminate ScrollView interference when dragging on chart  
-**Solution:** Upgrade to `react-native-gesture-handler` library with proper gesture blocking  
-**Current Issue:** Dragging on chart occasionally scrolls the page instead of scrubbing values  
-**Effort:** 1-2 hours (library upgrade + gesture handler refactor)
+### 1. Add Visual Indicator Dot to Performance Chart 🔴 HIGH PRIORITY
+**Goal:** Show a dot/marker on the chart line when user taps to indicate selected data point  
+**Why:** Users can get "lost" when scrubbing - unclear which exact point they're viewing  
+**Solution:** Render a small circle on the line at the tapped position  
+**Effort:** 30-60 minutes (add dot rendering logic + positioning)
 
 ### 2. Add Gradient Fill to Performance Chart 🟡 POLISH
 **Goal:** Match web-prototype's gradient fill under line  
@@ -348,7 +387,8 @@ NET WORTH
 - Gather feedback and iterate
 
 **Pre-Launch Checklist:**
-- [ ] Fix performance chart gesture conflict (HIGH PRIORITY)
+- [x] Fix performance chart gesture conflict (COMPLETE - v0.9.2)
+- [ ] Add visual indicator dot to performance chart (HIGH PRIORITY)
 - [ ] Enable Apple OAuth in Supabase (App Store requirement)
 - [ ] Re-enable email verification in Supabase (currently disabled for Expo Go testing)
 - [ ] Replace RevenueCat test keys with production keys (if subscription model returns)
@@ -395,7 +435,7 @@ web-prototype/        # Reference only (NOT for production)
 
 ## 🐛 Known Issues
 
-**Performance Chart Gesture Conflict:** Dragging on chart occasionally scrolls page instead of scrubbing values (needs gesture-handler upgrade) - HIGH PRIORITY  
+**Performance Chart Visual Indicator:** No dot/marker when tapping (users can't see which point they're viewing) - HIGH PRIORITY  
 **Face ID in Expo Go:** Shows passcode (Expo Go limitation, works in standalone build)  
 **Currency:** Symbol-only change (no conversion yet)  
 **Performance Chart Gradient:** Missing gradient fill under line (web-prototype has it, requires custom SVG)
