@@ -31,6 +31,7 @@ import {
 import { generateId } from '../utils/generateId';
 import { getSupabaseClient, reinitializeSupabaseClient, setOnClientReinitialized } from '../utils/supabase';
 import { deriveKeyFromPIN, encryptData, decryptData } from '../utils/encryption';
+import { generateTestSnapshotsWithGrowth } from '../utils/generateTestSnapshots';
 import type { User as SupabaseAuthUser } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 
@@ -81,6 +82,7 @@ interface DataContextType {
   
   // Actions - Timestamp
   updateLastDataSync: () => Promise<void>;
+  generateTestData: (daysOfHistory?: number, growthPercent?: number) => Promise<NetWorthSnapshot[]>;
   
   // Actions - Auth & Backup
   signOut: () => Promise<void>;
@@ -515,6 +517,24 @@ export function DataProvider({ children }: { children: ReactNode }) {
       console.error('❌ Error updating last data sync:', err);
       throw err;
     }
+  };
+
+  /**
+   * Generate test snapshot data (Development only)
+   * Creates realistic historical data for testing performance chart
+   */
+  const generateTestData = async (daysOfHistory: number = 730, growthPercent: number = 50) => {
+    console.log('📊 Generating test snapshots...', { daysOfHistory, growthPercent, currentNetWorth: netWorth });
+    
+    const testSnapshots = generateTestSnapshotsWithGrowth(netWorth, daysOfHistory, growthPercent);
+    
+    await saveSnapshots(testSnapshots);
+    setSnapshots(testSnapshots);
+    
+    console.log('✅ Test snapshots generated:', testSnapshots.length, 'snapshots');
+    console.log('📈 Date range:', testSnapshots[0]?.timestamp, 'to', testSnapshots[testSnapshots.length - 1]?.timestamp);
+    
+    return testSnapshots;
   };
 
   // ============================================
@@ -1108,6 +1128,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setCurrency,
     startTrial,
     updateLastDataSync,
+    generateTestData,
     signOut,
     deleteAccount,
     backupData,

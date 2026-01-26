@@ -19,7 +19,9 @@ interface PerformanceChartProps {
 
 export function PerformanceChart({ snapshots, currentNetWorth, currency }: PerformanceChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('1M');
-  const screenWidth = Dimensions.get('window').width - (Spacing.lg * 2);
+  // Chart width = screen width - scroll padding (24px each side) + chart negative margins (12px each side)
+  // = screenWidth - 48 + 24 = screenWidth - 24
+  const screenWidth = Dimensions.get('window').width - (Spacing.lg * 2) + (Spacing.sm * 2);
 
   // Helper function to format date labels
   const formatDateLabel = (date: Date, range: TimeRange): string => {
@@ -118,12 +120,16 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
         
         <View style={styles.emptyStateContainer}>
           <View style={styles.dotContainer}>
-            <View style={styles.dot} />
+            {/* Outer ring */}
+            <View style={styles.dotRing}>
+              {/* Inner dot */}
+              <View style={styles.dot} />
+            </View>
           </View>
           
           <View style={styles.messageBox}>
-            <Text style={styles.messageTitle}>Your performance tracking begins today</Text>
-            <Text style={styles.messageSubtitle}>Check back tomorrow to see your first trend</Text>
+            <Text style={styles.messageTitle}>Performance tracking begins today</Text>
+            <Text style={styles.messageSubtitle}>Check back tomorrow for your trend</Text>
           </View>
         </View>
       </View>
@@ -152,7 +158,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
       <View style={styles.chartContainer}>
         <LineChart
           data={chartData}
-          width={screenWidth + (Spacing.xl * 2)}
+          width={screenWidth}
           height={150}
           strokeWidth={3}
           chartConfig={{
@@ -160,7 +166,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
             backgroundGradientFrom: Colors.card,
             backgroundGradientTo: Colors.card,
             decimalPlaces: 0,
-            color: () => 'rgb(100, 116, 139)',
+            color: () => 'rgb(71, 85, 105)',
             labelColor: () => 'transparent',
             style: {
               borderRadius: 0,
@@ -214,23 +220,30 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.card,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.xl,
+    borderRadius: BorderRadius.md,
+    padding: Spacing.lg,
     marginBottom: Spacing.lg,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 3,
+    elevation: 1,
   },
   title: {
     fontSize: 15,
-    color: Colors.muted,
+    color: Colors.mutedForeground,
     fontWeight: '500',
-    marginBottom: 4,
+    marginBottom: 8,
   },
   currentValue: {
     fontSize: 24,
     fontWeight: '400',
-    letterSpacing: -0.5,
+    letterSpacing: -0.24,
     lineHeight: 32,
     color: Colors.primary,
-    marginBottom: Spacing.sm,
+    marginBottom: 20,
   },
   header: {
     marginBottom: Spacing.md,
@@ -248,89 +261,100 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '500',
     letterSpacing: -0.2,
+    lineHeight: 28,
   },
   changePercent: {
     fontSize: 15,
     fontWeight: '500',
+    lineHeight: 22,
   },
   timePeriod: {
     fontSize: 12,
-    color: Colors.muted,
+    color: Colors.mutedForeground,
     marginTop: Spacing.xs,
   },
   chartContainer: {
     height: 150,
-    marginLeft: -Spacing.xl,
-    marginRight: -Spacing.xl,
+    marginLeft: -Spacing.sm,
+    marginRight: -Spacing.sm,
     marginBottom: Spacing.lg,
-    overflow: 'visible',
-    alignItems: 'center',
-    justifyContent: 'center',
+    overflow: 'hidden',
   },
   chart: {
-    marginLeft: -Spacing.lg,
+    marginLeft: 0,
     paddingRight: 0,
   },
   timeRangeContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'center',
     gap: 4,
-    marginTop: Spacing.xs,
+    marginTop: Spacing.md,
+    flexWrap: 'wrap',
   },
   timeRangeButton: {
     paddingHorizontal: Spacing.md,
     paddingVertical: Spacing.sm,
     borderRadius: BorderRadius.sm,
     backgroundColor: 'transparent',
+    minWidth: 48,
+    alignItems: 'center',
   },
   timeRangeButtonActive: {
     backgroundColor: Colors.background,
   },
   timeRangeText: {
     fontSize: 13,
-    color: Colors.muted,
+    color: Colors.mutedForeground,
     fontWeight: '500',
+    opacity: 0.6,
   },
   timeRangeTextActive: {
     color: Colors.primary,
+    opacity: 1,
   },
   // Empty state
   emptyStateContainer: {
-    alignItems: 'center',
-    paddingVertical: Spacing.xl,
+    width: '100%',
   },
   dotContainer: {
     height: 150,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: 16,
+  },
+  dotRing: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: 'rgba(100, 116, 139, 0.15)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   dot: {
     width: 10,
     height: 10,
     borderRadius: 5,
     backgroundColor: 'rgb(100, 116, 139)',
-    shadowColor: 'rgb(100, 116, 139)',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
   },
   messageBox: {
-    padding: Spacing.md,
+    padding: 16,
     borderRadius: BorderRadius.md,
-    backgroundColor: Colors.background,
+    backgroundColor: Colors.secondary,
     alignItems: 'center',
+    alignSelf: 'stretch',
   },
   messageTitle: {
     fontSize: 15,
     color: Colors.primary,
     fontWeight: '500',
-    marginBottom: Spacing.xs,
+    marginBottom: 4,
+    textAlign: 'center',
   },
   messageSubtitle: {
     fontSize: 14,
-    color: Colors.muted,
+    color: Colors.mutedForeground,
     textAlign: 'center',
-    lineHeight: 20,
+    lineHeight: 21,
   },
 });

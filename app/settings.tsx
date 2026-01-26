@@ -20,10 +20,14 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets(); // Get safe area insets immediately
-  const { primaryCurrency, setCurrency, signOut, deleteAccount, backupData, restoreData, supabaseUser, isAuthProcessing } = useData();
+  const { primaryCurrency, setCurrency, signOut, deleteAccount, backupData, restoreData, supabaseUser, isAuthProcessing, generateTestData, netWorth } = useData();
   const [faceIDEnabled, setFaceIDEnabled] = useState(true); // Mock state for now
   const [pendingCurrency, setPendingCurrency] = useState<'GBP' | 'USD' | 'EUR' | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  
+  const getCurrencySymbol = (currency: 'GBP' | 'USD' | 'EUR') => {
+    return { GBP: '£', USD: '$', EUR: '€' }[currency];
+  };
   
   // PIN modal state
   const [showPINModal, setShowPINModal] = useState(false);
@@ -402,6 +406,42 @@ export default function SettingsScreen() {
             <Text style={styles.deleteText}>Delete Account</Text>
             <Text style={styles.deleteDescription}>
               Permanently delete your account and all data
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Development / Test Data Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Development Tools</Text>
+          
+          <TouchableOpacity
+            style={styles.card}
+            onPress={async () => {
+              Alert.alert(
+                'Generate Test Data',
+                `This will create 2 years of historical performance data based on your current net worth (${getCurrencySymbol(primaryCurrency)}${netWorth.toLocaleString('en-GB')}).\n\nThis is for testing the performance chart.`,
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Generate',
+                    onPress: async () => {
+                      try {
+                        await generateTestData(730, 50); // 2 years, 50% growth
+                        Alert.alert('Success', 'Generated 730 days of test data! Check the performance chart on the home screen.');
+                      } catch (error) {
+                        Alert.alert('Error', 'Failed to generate test data');
+                        console.error(error);
+                      }
+                    }
+                  }
+                ]
+              );
+            }}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.settingLabel}>Generate Performance Data</Text>
+            <Text style={styles.settingDescription}>
+              Create 2 years of test data for chart visualization
             </Text>
           </TouchableOpacity>
         </View>
