@@ -114,13 +114,8 @@ Regent is invite-only during private beta.`;
     }
   };
 
-  // Don't show card if no invites remaining
+  // Don't show card if no invites remaining (only after loading completes)
   if (!isLoading && inviteCodes.length === 0) {
-    return null;
-  }
-
-  // Don't show card while loading
-  if (isLoading) {
     return null;
   }
 
@@ -132,7 +127,9 @@ Regent is invite-only during private beta.`;
       <View style={styles.header}>
         <Text style={styles.headerText}>Invite New Members</Text>
         <View style={styles.badge}>
-          <Text style={styles.badgeText}>{invitesRemaining} left</Text>
+          <Text style={styles.badgeText}>
+            {isLoading ? '...' : `${invitesRemaining} left`}
+          </Text>
         </View>
       </View>
 
@@ -145,11 +142,11 @@ Regent is invite-only during private beta.`;
       <TouchableOpacity
         style={styles.shareButton}
         onPress={handleShare}
-        disabled={isSharing}
+        disabled={isSharing || isLoading}
         activeOpacity={0.7}
       >
         <Text style={styles.shareButtonText}>
-          {isSharing ? 'Sharing...' : 'Share Invite'}
+          {isLoading ? 'Loading...' : isSharing ? 'Sharing...' : 'Share Invite'}
         </Text>
       </TouchableOpacity>
 

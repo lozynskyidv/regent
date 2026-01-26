@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.9.2 (Performance Chart - Scrolling Fixed + Granularity Improved)  
+**Version:** 0.9.3 (ShareInviteCard Repositioned + Performance Chart Dot Indicator)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -66,6 +66,32 @@ npx expo start --clear
 ---
 
 ## 🎯 Recent Changes (January 2026)
+
+### **🎯 ShareInviteCard Repositioned + Dot Indicator** ⚠️ PARTIAL (v0.9.3 - January 26, 2026)
+
+**What We Changed:**
+
+**1. ShareInviteCard Repositioned**
+- ✅ Moved from before PerformanceChart → after PerformanceChart
+- ✅ Better UX flow: Net Worth → Chart → Invite → Assets → Liabilities
+- ✅ Card now appears immediately (no 3-second delay)
+- ✅ Shows loading state ("..." badge, "Loading..." button) while fetching invite codes
+- ✅ Card structure consistent with other cards (no delayed pop-in)
+
+**2. Performance Chart Dot Indicator (IN PROGRESS)**
+- ✅ Visual indicator dot implemented with smooth interpolation
+- ✅ Dot follows finger when scrubbing (spring animations, opacity fade in/out)
+- ✅ Smooth continuous positioning (fractional indices, not discrete jumps)
+- ⚠️ **CRITICAL ISSUE:** Coordinate system mismatch - tapping right edge shows dot in middle
+- ❌ Dot positioning broken due to padding/coordinate system alignment issues
+- **Status:** Needs deeper investigation into react-native-chart-kit's internal coordinate mapping
+
+**Known Issues:**
+- Dot appears in wrong position (not aligned with touch point)
+- Multiple padding adjustment attempts failed (12px→16px→12px with separate constants)
+- Issue persists despite separating touch detection and dot rendering coordinate systems
+
+---
 
 ### **📊 Performance Chart - Critical UX Fixes** ✅ COMPLETE (v0.9.2 - January 26, 2026)
 
@@ -435,7 +461,7 @@ web-prototype/        # Reference only (NOT for production)
 
 ## 🐛 Known Issues
 
-**Performance Chart Visual Indicator:** No dot/marker when tapping (users can't see which point they're viewing) - HIGH PRIORITY  
+**Performance Chart Dot Positioning (CRITICAL):** Dot indicator implemented but broken - tapping right edge shows dot in middle due to coordinate system mismatch between touch detection and rendering. Multiple padding adjustments failed. Needs investigation into react-native-chart-kit's internal coordinate mapping.  
 **Face ID in Expo Go:** Shows passcode (Expo Go limitation, works in standalone build)  
 **Currency:** Symbol-only change (no conversion yet)  
 **Performance Chart Gradient:** Missing gradient fill under line (web-prototype has it, requires custom SVG)

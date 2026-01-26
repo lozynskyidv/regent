@@ -1,7 +1,7 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 26, 2026  
-**Version:** 0.9.2 (Performance Chart - Scrolling Fixed + Granularity Improved)  
+**Version:** 0.9.3 (ShareInviteCard Repositioned + Performance Chart Dot Indicator)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** Exclusive invite-only (replaced paid subscription)
 
@@ -18,7 +18,7 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Authentication** (Google OAuth + Email/Password - fully functional with Supabase)
 - **Auth screen** (Face ID/PIN onboarding, fully functional)
 - **Empty State Onboarding** (Beautiful hero card with NYC skyline for new users)
-- **Home Screen** (Net Worth with count-up animation + YTD % + Assets + Liabilities + ShareInviteCard + Pull-to-Refresh)
+- **Home Screen** (Net Worth with count-up animation + YTD % + PerformanceChart + ShareInviteCard + Assets + Liabilities + Pull-to-Refresh)
 - **Portfolio Tracking** (Live prices for stocks, ETFs, crypto, commodities via Twelve Data API)
 - **Smart Caching** (1 hour for stocks/ETFs, 30 min for crypto - optimized for 800 API calls/day free tier)
 - **Persistent Timestamps** (Accurate "Updated X ago" with hybrid relative/absolute time display)
@@ -50,9 +50,15 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
   - ✅ Day 1 empty state (matches web-prototype pixel-perfect)
   - ✅ Historical data support (2 years of snapshots)
   - ✅ Test data generator (Settings → Generate Performance Data)
+  - ✅ Visual indicator dot (appears when scrubbing, smooth interpolation)
+  - ⚠️ KNOWN ISSUE: Dot positioning has coordinate system mismatch (tapping right edge shows dot in middle)
+- **ShareInviteCard** (Repositioned after PerformanceChart):
+  - ✅ Moved from before PerformanceChart to after PerformanceChart (better UX flow)
+  - ✅ Immediate appearance (removed 3-second loading delay, shows loading state instead)
+  - ✅ Card structure consistent with other cards (no delayed pop-in)
 
 ❌ **P1 PRIORITIES:** 
-1. Add visual indicator dot on chart when tapped (so users can see which point they're viewing)
+1. Fix dot positioning coordinate system mismatch (CRITICAL - currently broken)
 2. Add gradient fill to performance chart (custom SVG like web-prototype)
 3. Apple OAuth (App Store requirement - BLOCKED on Apple Developer account)
 4. Bank connections, TestFlight
@@ -284,12 +290,20 @@ types/
 
 ## 🔥 KNOWN ISSUES & WORKAROUNDS
 
-**Performance Chart Styling (HIGH PRIORITY):**
-- Chart renders but appearance is mediocre, doesn't match web prototype polish
-- Day 1 state works correctly (shows current value + dot + message)
-- Line visibility and spacing issues in full chart view (Day 2+)
-- Severity: High (affects premium brand perception)
-- **Next:** Fine-tune styling to match `web-prototype/src/components/HomeScreen.tsx` exactly
+**Performance Chart Dot Positioning (CRITICAL):**
+- Visual indicator dot implemented with smooth interpolation and animations
+- Coordinate system mismatch between touch detection and dot rendering
+- **Issue:** Tapping on right edge of chart causes dot to appear in middle
+- **Root Cause:** Separate constants for touch padding vs dot padding don't align with library's internal coordinate system
+- **Attempted Fixes:** Adjusted horizontal/vertical padding (12px→16px), separated touch/dot constants, reverted changes
+- **Status:** Still broken - needs deeper investigation into react-native-chart-kit's internal coordinate mapping
+- Severity: High (breaks core interaction pattern)
+- **Next:** Consider alternative approaches (custom SVG chart, different library, or empirical padding calibration)
+
+**ShareInviteCard Loading Delay (FIXED):**
+- Previously appeared 3 seconds after other cards (async invite code loading)
+- **Fixed:** Card now appears immediately with loading state ("..." badge, "Loading..." button)
+- Card structure consistent with other cards on HomeScreen
 
 **Face ID in Expo Go:**
 - Shows device passcode instead of Face ID UI (Expo Go limitation)

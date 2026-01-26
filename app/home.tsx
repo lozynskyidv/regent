@@ -315,12 +315,7 @@ export default function HomeScreen() {
               />
             </View>
 
-            {/* Share Invite Card (only if user has invites) */}
-            {supabaseUser?.id && (
-              <ShareInviteCard userId={supabaseUser.id} />
-            )}
-
-            {/* Performance Chart - Position after Net Worth, before Assets */}
+            {/* Performance Chart - Position after Net Worth, before Share Invite */}
             <PerformanceChart
               snapshots={snapshots}
               currentNetWorth={netWorth}
@@ -328,6 +323,11 @@ export default function HomeScreen() {
               onChartTouchStart={() => setScrollEnabled(false)}
               onChartTouchEnd={() => setScrollEnabled(true)}
             />
+
+            {/* Share Invite Card - Positioned after Performance Chart */}
+            {supabaseUser?.id && (
+              <ShareInviteCard userId={supabaseUser.id} />
+            )}
 
             {/* Assets Card */}
             <AssetsCard
