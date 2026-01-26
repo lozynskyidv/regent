@@ -306,7 +306,7 @@ export default function HomeScreen() {
           /* ===== NORMAL STATE - Show all cards ===== */
           <>
             {/* Net Worth Card */}
-            <View style={{ marginBottom: Spacing.lg }}>
+            <View style={{ marginBottom: Spacing.md }}>
               <NetWorthCard 
                 key={animationKey}
                 netWorth={netWorth} 
@@ -314,6 +314,9 @@ export default function HomeScreen() {
                 snapshots={snapshots}
               />
             </View>
+
+            {/* Additional spacing for breathing room between hero cards */}
+            <View style={{ height: Spacing.sm }} />
 
             {/* Performance Chart - Position after Net Worth, before Share Invite */}
             <PerformanceChart

@@ -346,7 +346,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
     const value1 = dataValues[index1];
     const interpolatedValue = value0 + (value1 - value0) * fraction;
     
-    const chartHeight = 150;
+    const chartHeight = 120;
     const effectiveChartHeight = chartHeight - (2 * DOT_PADDING_VERTICAL);
     const valueRange = maxValue - minValue;
     const normalizedValue = valueRange === 0 ? 0.5 : (interpolatedValue - minValue) / valueRange;
@@ -506,8 +506,8 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
           <LineChart
             data={chartData}
             width={screenWidth}
-            height={150}
-            strokeWidth={3}
+            height={120}
+            strokeWidth={2.5}
             chartConfig={{
               backgroundColor: 'transparent',
               backgroundGradientFrom: Colors.card,
@@ -591,8 +591,8 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
 const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.card,
-    borderRadius: BorderRadius.md,
-    padding: Spacing.lg,
+    borderRadius: BorderRadius.lg, // Changed from md to lg for consistency with NetWorthCard
+    padding: Spacing.md, // Reduced from lg (24px) to md (16px) for compact layout
     marginBottom: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -620,7 +620,7 @@ const styles = StyleSheet.create({
     marginBottom: Spacing.md,
   },
   metricsContainer: {
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md, // Reduced from lg (24px) to md (16px) for compact layout
   },
   changeContainer: {
     flexDirection: 'row',
@@ -644,10 +644,10 @@ const styles = StyleSheet.create({
     color: Colors.mutedForeground,
   },
   chartContainer: {
-    height: 150,
+    height: 120, // Reduced from 150px to 120px for compact layout
     marginLeft: -Spacing.sm,
     marginRight: -Spacing.sm,
-    marginBottom: Spacing.lg,
+    marginBottom: Spacing.md, // Reduced from lg to md
     overflow: 'hidden',
   },
   chart: {
@@ -667,7 +667,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 4,
-    marginTop: Spacing.md,
+    marginTop: Spacing.sm, // Reduced from md to sm for compact layout
     flexWrap: 'wrap',
   },
   timeRangeButton: {
@@ -696,7 +696,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   dotContainer: {
-    height: 150,
+    height: 120, // Match chart height
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,

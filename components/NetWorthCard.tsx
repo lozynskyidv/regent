@@ -108,7 +108,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderRadius: BorderRadius.lg,
     paddingHorizontal: Spacing.xl,
-    paddingTop: Spacing.xl,
+    paddingTop: Spacing.lg, // Reduced from xl (32px) to lg (24px) for compact above-fold layout
     paddingBottom: Spacing.lg,
     borderWidth: 1,
     borderColor: Colors.border,
@@ -123,7 +123,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: Colors.mutedForeground,
     letterSpacing: 0.75, // 0.05em
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.sm, // Reduced from md (16px) to sm (12px) for compact layout
     textTransform: 'uppercase',
   },
   amount: {
