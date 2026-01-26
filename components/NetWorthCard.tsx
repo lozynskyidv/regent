@@ -2,18 +2,21 @@
  * Net Worth Card Component
  * Displays total net worth (assets - liabilities) with large, prominent typography
  * Features smooth count-up animation from 0 to current value
+ * Shows YTD percentage change for context
  */
 
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Easing } from 'react-native';
-import { Colors, Spacing, BorderRadius, Shadows } from '../constants';
+import { Colors, Spacing, BorderRadius } from '../constants';
+import { NetWorthSnapshot } from '../types';
 
 interface NetWorthCardProps {
   netWorth: number;
   currency: string;
+  snapshots: NetWorthSnapshot[];
 }
 
-export default function NetWorthCard({ netWorth, currency }: NetWorthCardProps) {
+export default function NetWorthCard({ netWorth, currency, snapshots }: NetWorthCardProps) {
   // State for displaying the animated value
   const [displayValue, setDisplayValue] = useState(0);
   
@@ -28,6 +31,36 @@ export default function NetWorthCard({ netWorth, currency }: NetWorthCardProps) 
     });
     return value < 0 ? `-${symbol}${formatted}` : `${symbol}${formatted}`;
   };
+
+  // Calculate YTD percentage change
+  const calculateYTDChange = (): { percent: string; isPositive: boolean } | null => {
+    if (snapshots.length === 0) return null;
+
+    const now = new Date();
+    const yearStart = new Date(now.getFullYear(), 0, 1); // January 1st of current year
+
+    // Find the earliest snapshot from this year (or closest to year start)
+    const ytdSnapshots = snapshots
+      .filter(s => new Date(s.timestamp) >= yearStart)
+      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    if (ytdSnapshots.length === 0) return null;
+
+    const startValue = ytdSnapshots[0].netWorth;
+    const currentValue = netWorth;
+    
+    if (startValue === 0) return null;
+
+    const change = currentValue - startValue;
+    const percentChange = (change / startValue) * 100;
+    
+    return {
+      percent: Math.abs(percentChange).toFixed(1),
+      isPositive: percentChange >= 0
+    };
+  };
+
+  const ytdChange = calculateYTDChange();
 
   // Animate net worth from 0 to current value
   useEffect(() => {
@@ -59,6 +92,13 @@ export default function NetWorthCard({ netWorth, currency }: NetWorthCardProps) 
       
       {/* Large Amount - Hero Typography with Animation */}
       <Text style={styles.amount}>{formatCurrency(displayValue)}</Text>
+      
+      {/* YTD Percentage Change */}
+      {ytdChange && (
+        <Text style={[styles.ytdChange, { color: ytdChange.isPositive ? '#22C55E' : '#EF4444' }]}>
+          {ytdChange.isPositive ? '↑' : '↓'} {ytdChange.percent}% this year
+        </Text>
+      )}
     </View>
   );
 }
@@ -92,5 +132,11 @@ const styles = StyleSheet.create({
     color: Colors.foreground,
     letterSpacing: -1.68, // -0.03em
     lineHeight: 61.6, // 1.1 * 56
+  },
+  ytdChange: {
+    fontSize: 13,
+    fontWeight: '500',
+    marginTop: Spacing.xs,
+    letterSpacing: -0.13, // -0.01em
   },
 });

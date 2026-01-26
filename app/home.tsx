@@ -308,7 +308,8 @@ export default function HomeScreen() {
               <NetWorthCard 
                 key={animationKey}
                 netWorth={netWorth} 
-                currency={primaryCurrency} 
+                currency={primaryCurrency}
+                snapshots={snapshots}
               />
             </View>
 

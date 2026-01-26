@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.9.0 (Performance Chart - Interactive MVP Complete)  
+**Version:** 0.9.1 (Net Worth YTD % + Performance Chart Complete)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -66,6 +66,37 @@ npx expo start --clear
 ---
 
 ## 🎯 Recent Changes (January 2026)
+
+### **📈 Net Worth Card - YTD Percentage Context** ✅ COMPLETE (v0.9.1 - January 26, 2026)
+
+**What We Added:**
+- ✅ **YTD Percentage Display:** Shows year-to-date growth/decline (e.g., "↑ 21.2% this year")
+- ✅ **Color-Coded Feedback:** Green for gains (↑), red for losses (↓)
+- ✅ **Smart Calculation:** Uses earliest snapshot from current calendar year
+- ✅ **Contextual Information:** Answers "Am I winning?" at a glance
+- ✅ **Minimal Design:** Small, muted text that doesn't compete with main number
+
+**User Experience:**
+```
+NET WORTH
+£262,733
+↑ 21.2% this year    ← NEW!
+```
+
+**Why This Matters:**
+- Adds context without clutter (single line, 13px text)
+- No scrolling needed to see performance
+- Aligns with modern finance app standards (Robinhood, Coinbase)
+- YTD period is meaningful and calendar-aligned
+- Reinforces Net Worth as the hero metric while providing growth context
+
+**Technical Implementation:**
+- Calculates YTD from snapshots (January 1st to now)
+- Handles edge cases (no data, zero start value)
+- Dynamic color (green/red based on positive/negative)
+- Graceful for Day 1 users (only shows if data available)
+
+---
 
 ### **📊 Performance Chart - Interactive MVP** ✅ COMPLETE (v0.9.0 - January 26, 2026)
 

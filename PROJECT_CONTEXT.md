@@ -1,7 +1,7 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 26, 2026  
-**Version:** 0.9.0 (Performance Chart - Interactive MVP Complete)  
+**Version:** 0.9.1 (Net Worth YTD % + Performance Chart Complete)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** Exclusive invite-only (replaced paid subscription)
 
@@ -18,7 +18,7 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Authentication** (Google OAuth + Email/Password - fully functional with Supabase)
 - **Auth screen** (Face ID/PIN onboarding, fully functional)
 - **Empty State Onboarding** (Beautiful hero card with NYC skyline for new users)
-- **Home Screen** (Net Worth with count-up animation + Assets + Liabilities + ShareInviteCard + Pull-to-Refresh)
+- **Home Screen** (Net Worth with count-up animation + YTD % + Assets + Liabilities + ShareInviteCard + Pull-to-Refresh)
 - **Portfolio Tracking** (Live prices for stocks, ETFs, crypto, commodities via Twelve Data API)
 - **Smart Caching** (1 hour for stocks/ETFs, 30 min for crypto - optimized for 800 API calls/day free tier)
 - **Persistent Timestamps** (Accurate "Updated X ago" with hybrid relative/absolute time display)
@@ -32,7 +32,13 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Currency Switcher** (GBP/USD/EUR - **symbol-only, NO value conversion**)
 - **Settings Screen** (currency selection, sign out, GDPR-compliant delete account, test data generator)
 - **Cloud Backups** (encrypted with PIN, stored in Supabase)
-- **Performance Chart (NEW!)** (Interactive line chart with smooth animations):
+- **Net Worth Card (ENHANCED!)** (Hero card with contextual YTD %):
+  - ✅ Large prominent net worth display with count-up animation
+  - ✅ YTD percentage change (↑ 21.2% this year)
+  - ✅ Color-coded feedback (green for gains, red for losses)
+  - ✅ Calculates from earliest snapshot of current calendar year
+  - ✅ Graceful handling of empty state (Day 1 users)
+- **Performance Chart** (Interactive line chart with smooth animations):
   - ✅ BitBox-style layout (current value + change + percentage + time period)
   - ✅ Interactive scrubbing (tap + drag to see historical values)
   - ✅ Smooth animated number counting (spring physics)
