@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.8.2 (Performance Chart - In Progress)  
+**Version:** 0.9.0 (Performance Chart - Interactive MVP Complete)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -58,32 +58,46 @@ npx expo start --clear
 ✅ **CRUD:** Add/Edit/Delete assets & liabilities  
 ✅ **Detail Screens:** Full lists with swipe gestures  
 ✅ **Modals:** 2-step flow (type picker → specific form)  
-✅ **Settings:** Currency switcher, Sign Out, GDPR-compliant Delete Account  
+✅ **Settings:** Currency switcher, Sign Out, GDPR-compliant Delete Account, Test Data Generator  
 ✅ **Charts:** Horizontal bar charts (category breakdown)  
-✅ **Data:** AsyncStorage persistence (auto-save), encrypted cloud backups
+✅ **Performance Chart:** Interactive line chart with scrubbing gesture, animated metrics, time ranges  
+✅ **Data:** AsyncStorage persistence (auto-save), encrypted cloud backups, historical snapshots
 
 ---
 
 ## 🎯 Recent Changes (January 2026)
 
-### **📊 Performance Chart** 🟡 IN PROGRESS (v0.8.2 - January 26, 2026)
+### **📊 Performance Chart - Interactive MVP** ✅ COMPLETE (v0.9.0 - January 26, 2026)
 
 **What We Built:**
-- Performance chart component with historical net worth tracking
-- Day 1 state: Current value + single dot + onboarding message
-- Day 2+ state: Line chart with time range selector (1M/3M/YTD/1Y)
-- Chart positioned after Net Worth, before Assets/Liabilities
+- ✅ **Interactive Line Chart:** Tap + drag to scrub through historical values
+- ✅ **BitBox-Style Layout:** Current value + change + percentage + time period (all in one card)
+- ✅ **Smooth Animations:** Spring physics for number counting, scale micro-interactions
+- ✅ **Animated Metrics:** Numbers count up/down smoothly when scrubbing (0.98x → 1.02x pulse)
+- ✅ **Time Range Selector:** 1M, 3M, YTD, 1Y with 600ms fade transitions
+- ✅ **Day 1 Empty State:** Pixel-perfect match to web-prototype (current value + dot + message)
+- ✅ **Test Data Generator:** Settings screen button to generate 2 years of historical data
+- ✅ **Historical Snapshots:** Support for 730+ data points with smart sampling
 
-**Library Migration:**
-- ❌ Tried `victory-native` → Failed (heavy dependencies, version conflicts with Expo Go)
-- ✅ Switched to `react-native-chart-kit` → Works but styling needs polish
+**User Experience:**
+- Tap + drag horizontally on chart → Values update in real-time
+- Release → Smooth return to current value (fade animation)
+- Switch time ranges → Smooth fade out/in transitions
+- Numbers animate between values (spring physics)
+- Scale feedback on touch (feels responsive)
 
-**Current Status:**
-- ✅ Chart renders and shows data correctly
-- ✅ Day 1 empty state matches web prototype
-- 🟡 Styling is mediocre, needs refinement to match web quality
+**Technical Implementation:**
+- `react-native-chart-kit` for line chart rendering
+- `PanResponder` for smooth scrubbing gesture
+- `Animated.Value` for number interpolation
+- Spring animations (tension: 100, friction: 10)
+- 10-point sampling for readability
+- `generateTestSnapshots.ts` utility for test data
 
-**Next:** Fine-tune stroke width, colors, spacing to match web prototype exactly
+**Known Issues:**
+- ⚠️ ScrollView conflict when dragging on chart (gesture occasionally scrolls page)
+- Next: Upgrade to `react-native-gesture-handler` for better gesture isolation
+- Future: Add gradient fill (requires custom SVG like web-prototype)
 
 ---
 
@@ -242,7 +256,18 @@ npx expo start --clear
 
 ## 🔜 Next Up (P1 Features - Priority Order)
 
-### 1. Apple OAuth 🟡 ON HOLD (Waiting for Apple Developer Enrollment)
+### 1. Fix Performance Chart Gesture Conflict 🔴 HIGH PRIORITY
+**Goal:** Eliminate ScrollView interference when dragging on chart  
+**Solution:** Upgrade to `react-native-gesture-handler` library with proper gesture blocking  
+**Current Issue:** Dragging on chart occasionally scrolls the page instead of scrubbing values  
+**Effort:** 1-2 hours (library upgrade + gesture handler refactor)
+
+### 2. Add Gradient Fill to Performance Chart 🟡 POLISH
+**Goal:** Match web-prototype's gradient fill under line  
+**Solution:** Custom SVG implementation (react-native-chart-kit doesn't support gradients)  
+**Effort:** 2-3 hours
+
+### 3. Apple OAuth 🟡 ON HOLD (Waiting for Apple Developer Enrollment)
 **Goal:** Enable Apple sign-in (App Store requirement)  
 **What to do:**
 - Enable Apple provider in Supabase Dashboard
@@ -292,12 +317,13 @@ npx expo start --clear
 - Gather feedback and iterate
 
 **Pre-Launch Checklist:**
+- [ ] Fix performance chart gesture conflict (HIGH PRIORITY)
 - [ ] Enable Apple OAuth in Supabase (App Store requirement)
 - [ ] Re-enable email verification in Supabase (currently disabled for Expo Go testing)
-- [ ] Replace RevenueCat test keys with production keys
-- [ ] Configure App Store Connect product (£149/year)
+- [ ] Replace RevenueCat test keys with production keys (if subscription model returns)
+- [ ] Configure App Store Connect product
 - [ ] Test Face ID in standalone build
-- [ ] Verify all entitlements in RevenueCat dashboard
+- [ ] Add gradient fill to performance chart
 
 ---
 
@@ -338,9 +364,10 @@ web-prototype/        # Reference only (NOT for production)
 
 ## 🐛 Known Issues
 
-**Performance Chart Styling:** Chart works but visual polish needs improvement to match web prototype (HIGH PRIORITY)  
+**Performance Chart Gesture Conflict:** Dragging on chart occasionally scrolls page instead of scrubbing values (needs gesture-handler upgrade) - HIGH PRIORITY  
 **Face ID in Expo Go:** Shows passcode (Expo Go limitation, works in standalone build)  
-**Currency:** Symbol-only change (no conversion yet)
+**Currency:** Symbol-only change (no conversion yet)  
+**Performance Chart Gradient:** Missing gradient fill under line (web-prototype has it, requires custom SVG)
 
 ---
 

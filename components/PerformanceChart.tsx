@@ -3,11 +3,16 @@
  * Shows net worth over time with react-native-chart-kit
  */
 
-import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, UIManager, Animated, PanResponder } from 'react-native';
 import { LineChart } from 'react-native-chart-kit';
-import { Colors, Typography, Spacing, BorderRadius } from '../constants';
+import { Colors, Spacing, BorderRadius } from '../constants';
 import { NetWorthSnapshot, Currency } from '../types';
+
+// Enable LayoutAnimation on Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 type TimeRange = '1M' | '3M' | 'YTD' | '1Y';
 
@@ -19,11 +24,158 @@ interface PerformanceChartProps {
 
 export function PerformanceChart({ snapshots, currentNetWorth, currency }: PerformanceChartProps) {
   const [timeRange, setTimeRange] = useState<TimeRange>('1M');
+  const chartOpacity = useRef(new Animated.Value(1)).current;
+  const metricsOpacity = useRef(new Animated.Value(1)).current;
+  const metricsScale = useRef(new Animated.Value(1)).current;
+  const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
+  const [displayedValue, setDisplayedValue] = useState<number>(currentNetWorth);
+  const [displayedChange, setDisplayedChange] = useState<number>(0);
+  const animatedValue = useRef(new Animated.Value(currentNetWorth)).current;
+  const animatedChange = useRef(new Animated.Value(0)).current;
+  const gestureStartRef = useRef<{ x: number; y: number } | null>(null);
+  
   // Chart width = screen width - scroll padding (24px each side) + chart negative margins (12px each side)
   // = screenWidth - 48 + 24 = screenWidth - 24
   const screenWidth = Dimensions.get('window').width - (Spacing.lg * 2) + (Spacing.sm * 2);
 
-  // Helper function to format date labels
+  // Handle time range change with smooth animation (like web: 1000ms ease-out)
+  const handleTimeRangeChange = (range: TimeRange) => {
+    if (range === timeRange) return;
+    
+    // Animate fade out and fade in with timing similar to web (slower, smoother)
+    Animated.parallel([
+      Animated.timing(chartOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(metricsOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setTimeRange(range);
+      
+      // Fade back in with ease-out
+      Animated.parallel([
+        Animated.timing(chartOpacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(metricsOpacity, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  };
+
+  // Calculate data point index from X position
+  const getDataPointIndexFromX = (x: number): number => {
+    const dataPoints = chartData.datasets[0].data;
+    if (dataPoints.length === 0) return -1;
+    
+    const chartPaddingLeft = 0;
+    const chartPaddingRight = 0;
+    const effectiveWidth = screenWidth - chartPaddingLeft - chartPaddingRight;
+    const touchX = x - chartPaddingLeft;
+    
+    // Each point is evenly distributed
+    const pointSpacing = effectiveWidth / (dataPoints.length - 1);
+    const index = Math.round(touchX / pointSpacing);
+    return Math.max(0, Math.min(index, dataPoints.length - 1));
+  };
+
+  // PanResponder for smooth scrubbing gesture
+  const panResponder = useRef(
+    PanResponder.create({
+      // Always capture touches in chart area
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      
+      // Aggressively block parent ScrollView - capture ALL touches
+      onStartShouldSetPanResponderCapture: () => true,
+      onMoveShouldSetPanResponderCapture: () => true,
+      
+      // NEVER let ScrollView steal this gesture
+      onPanResponderTerminationRequest: () => false,
+      
+      onPanResponderGrant: (evt) => {
+        // Store start position for direction detection
+        gestureStartRef.current = {
+          x: evt.nativeEvent.pageX,
+          y: evt.nativeEvent.pageY
+        };
+        
+        // Touch started - show value at touch position with haptic-like feedback
+        const x = evt.nativeEvent.locationX;
+        const index = getDataPointIndexFromX(x);
+        if (index >= 0) {
+          // Slight scale down on touch
+          Animated.spring(metricsScale, {
+            toValue: 0.98,
+            useNativeDriver: true,
+            tension: 300,
+            friction: 10,
+          }).start();
+          setSelectedPointIndex(index);
+        }
+      },
+      
+      onPanResponderMove: (evt) => {
+        // Dragging - update value in real-time with smooth animations
+        const x = evt.nativeEvent.locationX;
+        const index = getDataPointIndexFromX(x);
+        if (index >= 0 && index !== selectedPointIndex) {
+          setSelectedPointIndex(index);
+        }
+      },
+      
+      onPanResponderRelease: () => {
+        // Clear gesture start reference
+        gestureStartRef.current = null;
+        
+        // Touch ended - return to current value with smooth animation
+        Animated.parallel([
+          Animated.spring(metricsScale, {
+            toValue: 1,
+            useNativeDriver: true,
+            tension: 200,
+            friction: 12,
+          }),
+          Animated.timing(metricsOpacity, {
+            toValue: 0.6,
+            duration: 150,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          setSelectedPointIndex(null);
+          Animated.timing(metricsOpacity, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }).start();
+        });
+      },
+      
+      onPanResponderTerminate: () => {
+        // Gesture was interrupted - clean up
+        gestureStartRef.current = null;
+        setSelectedPointIndex(null);
+        Animated.spring(metricsScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 200,
+          friction: 12,
+        }).start();
+      },
+    })
+  ).current;
+
+  // Helper functions
   const formatDateLabel = (date: Date, range: TimeRange): string => {
     if (range === '1M') {
       return `${date.getDate()} ${date.toLocaleString('en-GB', { month: 'short' })}`;
@@ -32,6 +184,23 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
       return date.toLocaleString('en-GB', { month: 'short' });
     }
     return date.toLocaleString('en-GB', { month: 'short', year: '2-digit' });
+  };
+
+  const getTimePeriodLabel = () => {
+    if (timeRange === '1M') return 'This month';
+    if (timeRange === '3M') return 'Last 3 months';
+    if (timeRange === 'YTD') return 'This year';
+    return 'This year';
+  };
+
+  const getCurrencySymbol = (currency: Currency) => {
+    return { GBP: '£', USD: '$', EUR: '€' }[currency];
+  };
+
+  const formatCurrency = (value: number) => {
+    return `${getCurrencySymbol(currency)}${Math.abs(value).toLocaleString('en-GB', { 
+      maximumFractionDigits: 0 
+    })}`;
   };
 
   // Generate chart data based on time range
@@ -85,31 +254,68 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
     return { chartData, isDay1 };
   }, [snapshots, currentNetWorth, timeRange]);
 
-  // Calculate performance metrics
-  const firstValue = chartData.datasets[0].data[0];
-  const lastValue = chartData.datasets[0].data[chartData.datasets[0].data.length - 1];
-  const performanceChange = lastValue - firstValue;
+  // Calculate performance metrics (either for selected point or end of period)
+  const dataPoints = chartData.datasets[0].data;
+  const firstValue = dataPoints[0];
+  
+  // Use selected point if available, otherwise use last point
+  const displayIndex = selectedPointIndex !== null ? selectedPointIndex : dataPoints.length - 1;
+  const displayValue = dataPoints[displayIndex];
+  const displayLabel = selectedPointIndex !== null ? chartData.labels[selectedPointIndex] : getTimePeriodLabel();
+  
+  const performanceChange = displayValue - firstValue;
   const performancePercent = firstValue !== 0 
     ? ((performanceChange / firstValue) * 100).toFixed(1) 
     : '0.0';
   const isPositive = performanceChange >= 0;
 
-  const getCurrencySymbol = (currency: Currency) => {
-    return { GBP: '£', USD: '$', EUR: '€' }[currency];
-  };
+  // Animate value changes smoothly
+  useEffect(() => {
+    // Animate the value with spring for natural feel
+    Animated.parallel([
+      Animated.spring(animatedValue, {
+        toValue: displayValue,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 10,
+      }),
+      Animated.spring(animatedChange, {
+        toValue: performanceChange,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 10,
+      }),
+      Animated.sequence([
+        Animated.spring(metricsScale, {
+          toValue: 1.02,
+          useNativeDriver: true,
+          tension: 300,
+          friction: 10,
+        }),
+        Animated.spring(metricsScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 300,
+          friction: 10,
+        }),
+      ]),
+    ]).start();
+  }, [displayValue, performanceChange]);
 
-  const formatCurrency = (value: number) => {
-    return `${getCurrencySymbol(currency)}${Math.abs(value).toLocaleString('en-GB', { 
-      maximumFractionDigits: 0 
-    })}`;
-  };
+  // Listen to animated values and update displayed numbers
+  useEffect(() => {
+    const valueListener = animatedValue.addListener(({ value }) => {
+      setDisplayedValue(Math.round(value));
+    });
+    const changeListener = animatedChange.addListener(({ value }) => {
+      setDisplayedChange(Math.round(value));
+    });
 
-  const getTimePeriodLabel = () => {
-    if (timeRange === '1M') return 'This month';
-    if (timeRange === '3M') return 'Last 3 months';
-    if (timeRange === 'YTD') return 'This year';
-    return 'This year';
-  };
+    return () => {
+      animatedValue.removeListener(valueListener);
+      animatedChange.removeListener(changeListener);
+    };
+  }, []);
 
   // Day 1 state - matches web prototype (shows when < 2 historical data points)
   if (isDay1) {
@@ -139,70 +345,96 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency }: Perfo
   return (
     <View style={styles.card}>
       {/* Header with metrics */}
-      <View style={styles.metricsContainer}>
+      <Animated.View 
+        style={[
+          styles.metricsContainer, 
+          { 
+            opacity: metricsOpacity,
+            transform: [{ scale: metricsScale }]
+          }
+        ]}
+      >
         <Text style={styles.title}>Performance</Text>
+        
+        {/* Display Value - Animates smoothly between values */}
+        <Text style={styles.currentValue}>
+          {formatCurrency(displayedValue)}
+        </Text>
+        
+        {/* Change Amount and Percentage */}
         <View style={styles.changeContainer}>
           <Text style={[styles.changeAmount, { color: isPositive ? '#22C55E' : '#EF4444' }]}>
-            {isPositive ? '↑' : '↓'} {formatCurrency(performanceChange)}
+            {isPositive ? '↑' : '↓'} {formatCurrency(Math.abs(displayedChange))}
           </Text>
           <Text style={[styles.changePercent, { color: isPositive ? '#22C55E' : '#EF4444' }]}>
             ({isPositive ? '+' : ''}{performancePercent}%)
           </Text>
         </View>
+        
+        {/* Time Period or Selected Date */}
         <Text style={styles.timePeriod}>
-          {getTimePeriodLabel()}
+          {displayLabel}
         </Text>
-      </View>
+      </Animated.View>
 
       {/* Chart */}
-      <View style={styles.chartContainer}>
-        <LineChart
-          data={chartData}
-          width={screenWidth}
-          height={150}
-          strokeWidth={3}
-          chartConfig={{
-            backgroundColor: 'transparent',
-            backgroundGradientFrom: Colors.card,
-            backgroundGradientTo: Colors.card,
-            decimalPlaces: 0,
-            color: () => 'rgb(71, 85, 105)',
-            labelColor: () => 'transparent',
-            style: {
-              borderRadius: 0,
-            },
-            propsForDots: {
-              r: '0',
-            },
-            propsForBackgroundLines: {
-              stroke: 'transparent'
-            }
-          }}
-          bezier
-          style={styles.chart}
-          withInnerLines={false}
-          withOuterLines={false}
-          withVerticalLines={false}
-          withHorizontalLines={false}
-          withDots={false}
-          withShadow={false}
-          withVerticalLabels={false}
-          withHorizontalLabels={false}
-          fromZero={false}
-          segments={4}
-        />
-      </View>
+      <Animated.View style={[styles.chartContainer, { opacity: chartOpacity }]}>
+        <View pointerEvents="box-only">
+          <LineChart
+            data={chartData}
+            width={screenWidth}
+            height={150}
+            strokeWidth={3}
+            chartConfig={{
+              backgroundColor: 'transparent',
+              backgroundGradientFrom: Colors.card,
+              backgroundGradientTo: Colors.card,
+              decimalPlaces: 0,
+              color: () => 'rgb(71, 85, 105)',
+              labelColor: () => 'transparent',
+              style: {
+                borderRadius: 0,
+              },
+              propsForDots: {
+                r: '0',
+              },
+              propsForBackgroundLines: {
+                stroke: 'transparent'
+              }
+            }}
+            bezier
+            style={styles.chart}
+            withInnerLines={false}
+            withOuterLines={false}
+            withVerticalLines={false}
+            withHorizontalLines={false}
+            withDots={false}
+            withShadow={false}
+            withVerticalLabels={false}
+            withHorizontalLabels={false}
+            fromZero={false}
+            segments={4}
+          />
+          
+          {/* Transparent touch overlay with PanResponder */}
+          <View
+            style={styles.touchOverlay}
+            {...panResponder.panHandlers}
+          />
+        </View>
+      </Animated.View>
 
       {/* Time range selector */}
       <View style={styles.timeRangeContainer}>
         {(['1M', '3M', 'YTD', '1Y'] as TimeRange[]).map((range) => (
           <TouchableOpacity
             key={range}
-            onPress={() => setTimeRange(range)}
+            onPress={() => handleTimeRangeChange(range)}
             style={[
               styles.timeRangeButton,
               timeRange === range && styles.timeRangeButtonActive
             ]}
+            activeOpacity={0.7}
           >
             <Text style={[
               styles.timeRangeText,
@@ -235,33 +467,33 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.mutedForeground,
     fontWeight: '500',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   currentValue: {
-    fontSize: 24,
+    fontSize: 32,
     fontWeight: '400',
-    letterSpacing: -0.24,
-    lineHeight: 32,
+    letterSpacing: -0.32,
+    lineHeight: 40,
     color: Colors.primary,
-    marginBottom: 20,
+    marginBottom: 8,
   },
   header: {
     marginBottom: Spacing.md,
   },
   metricsContainer: {
-    marginBottom: Spacing.md,
+    marginBottom: Spacing.lg,
   },
   changeContainer: {
     flexDirection: 'row',
     alignItems: 'baseline',
     gap: Spacing.sm,
-    marginTop: Spacing.xs,
+    marginBottom: 6,
   },
   changeAmount: {
-    fontSize: 20,
+    fontSize: 17,
     fontWeight: '500',
-    letterSpacing: -0.2,
-    lineHeight: 28,
+    letterSpacing: -0.17,
+    lineHeight: 24,
   },
   changePercent: {
     fontSize: 15,
@@ -271,7 +503,6 @@ const styles = StyleSheet.create({
   timePeriod: {
     fontSize: 12,
     color: Colors.mutedForeground,
-    marginTop: Spacing.xs,
   },
   chartContainer: {
     height: 150,
@@ -283,6 +514,14 @@ const styles = StyleSheet.create({
   chart: {
     marginLeft: 0,
     paddingRight: 0,
+  },
+  touchOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'transparent',
   },
   timeRangeContainer: {
     flexDirection: 'row',
