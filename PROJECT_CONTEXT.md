@@ -1091,7 +1091,22 @@ supabase functions deploy delete-account
 
 ## 📋 NEXT PRIORITIES (P1 Features - In Priority Order)
 
-### **1. Apple OAuth** 🔴 **CRITICAL - APP STORE REQUIREMENT**
+### **1. Performance Chart Polish** 🔴 HIGH PRIORITY
+
+**Current State:** Chart works but styling is mediocre  
+**Goal:** Match web prototype visual quality exactly
+
+**Quick Fix:** Fine-tune `components/PerformanceChart.tsx` styling:
+- Reference: `web-prototype/src/components/HomeScreen.tsx` (lines 469-515)
+- Fix line stroke visibility (`rgb(100, 116, 139)`, 2.5px width)
+- Match spacing, margins, overall polish
+
+**Effort:** 1-2 hours  
+**Why Priority 1:** Affects premium brand perception (user-facing)
+
+---
+
+### **2. Apple OAuth** 🔴 **CRITICAL - APP STORE REQUIREMENT**
 
 **Current State:** Code fully implemented in `app/index.tsx`, needs Supabase configuration  
 **Goal:** Enable Apple sign-in (App Store requires it if Google OAuth exists)
@@ -1107,7 +1122,7 @@ supabase functions deploy delete-account
 
 ---
 
-### **2. Bank Connections** (TrueLayer OAuth)
+### **3. Bank Connections** (TrueLayer OAuth)
 
 **Current State:** Users manually enter bank balances  
 **Goal:** Read-only UK bank account connections with auto-refresh
@@ -1131,37 +1146,6 @@ supabase functions deploy delete-account
   - Show "Connected" badge on bank assets
 
 **Starting Point:** See `app/index.tsx` Google OAuth flow, adapt for TrueLayer
-
----
-
-### **3. Performance Chart**
-
-**Current State:** No historical tracking  
-**Goal:** Net worth over time visualization
-
-**What to Build:**
-- Supabase table for snapshots:
-  ```sql
-  CREATE TABLE snapshots (
-    id UUID PRIMARY KEY,
-    user_id UUID REFERENCES users(id),
-    net_worth NUMERIC,
-    total_assets NUMERIC,
-    total_liabilities NUMERIC,
-    created_at TIMESTAMPTZ DEFAULT NOW()
-  );
-  ```
-- Snapshot creation logic:
-  - Calculate net worth on app open
-  - Store snapshot if 24+ hours since last
-  - Don't snapshot if no data change
-- Create `PerformanceChart.tsx`:
-  - Use `react-native-chart-kit` for line chart
-  - Time range selector (1M, 3M, 6M, 1Y, All)
-  - Show % change and absolute change
-- Add to home screen below existing cards
-
-**Starting Point:** Create Supabase table, add snapshot logic to `DataContext.tsx`
 
 ---
 
