@@ -31,9 +31,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   const chartOpacity = useRef(new Animated.Value(1)).current;
   const metricsOpacity = useRef(new Animated.Value(1)).current;
   
-  // FIX #3: React Native Animated (stable, no crashes)
-  const dotX = useRef(new Animated.Value(0)).current;
-  const dotY = useRef(new Animated.Value(0)).current;
+  // Dot appearance (instant response, no animations)
   const dotOpacity = useRef(new Animated.Value(0)).current;
   const dotScale = useRef(new Animated.Value(0.8)).current;
   const [dotPosition, setDotPosition] = useState<{ x: number; y: number } | null>(null);
@@ -301,15 +299,11 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
 
   // Update dot position when fractional position changes
   useEffect(() => {
-    console.log('💎 useEffect ENTRY - fractionalPosition:', fractionalPosition);
-    console.log('💎 chartPoints.length:', chartPoints.length);
-    
     if (fractionalPosition !== null && chartPoints.length > 0) {
       const clampedPosition = Math.max(0, Math.min(fractionalPosition, chartPoints.length - 1));
       const lowerIndex = Math.floor(clampedPosition);
       const upperIndex = Math.min(Math.ceil(clampedPosition), chartPoints.length - 1);
       const fraction = clampedPosition - lowerIndex;
-      console.log('💎 Indices:', { lowerIndex, upperIndex });
       
       const lowerPoint = chartPoints[lowerIndex];
       const upperPoint = chartPoints[upperIndex];
@@ -321,56 +315,20 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
       
       const targetX = lowerPoint.x + (upperPoint.x - lowerPoint.x) * fraction;
       const targetY = lowerPoint.y + (upperPoint.y - lowerPoint.y) * fraction;
-      console.log('💎 Target:', { targetX, targetY });
       
+      // Set dot position (interpolation provides smooth movement)
       setDotPosition({ x: targetX, y: targetY });
       
-      console.log('💎 Starting animations...');
-      Animated.parallel([
-        Animated.spring(dotX, {
-          toValue: targetX,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 10,
-        }),
-        Animated.spring(dotY, {
-          toValue: targetY,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 10,
-        }),
-        Animated.spring(dotOpacity, {
-          toValue: 1,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 10,
-        }),
-        Animated.spring(dotScale, {
-          toValue: 1,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 10,
-        }),
-      ]).start();
-      console.log('💎 Animations complete - EXIT');
+      // Set opacity and scale to 1 instantly (no animation needed)
+      dotOpacity.setValue(1);
+      dotScale.setValue(1);
     } else {
-      console.log('💎 Hiding dot');
+      // Hide dot instantly when gesture ends
       setDotPosition(null);
-      Animated.parallel([
-        Animated.timing(dotOpacity, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(dotScale, {
-          toValue: 0.8,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]).start();
-      console.log('💎 Hide complete - EXIT');
+      dotOpacity.setValue(0);
+      dotScale.setValue(0.8);
     }
-  }, [fractionalPosition, chartPoints]); // chartPoints added to deps
+  }, [fractionalPosition, chartPoints, dotOpacity, dotScale]);
 
   // Pan gesture with runOnJS for all JS thread operations
   const panGesture = useMemo(() => {
