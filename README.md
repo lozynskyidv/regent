@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.9.3 (ShareInviteCard Repositioned + Performance Chart Dot Indicator)  
+**Version:** 0.9.4 (Custom SVG Performance Chart)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -67,29 +67,60 @@ npx expo start --clear
 
 ## 🎯 Recent Changes (January 2026)
 
-### **🎯 ShareInviteCard Repositioned + Dot Indicator** ⚠️ PARTIAL (v0.9.3 - January 26, 2026)
+### **📊 Custom SVG Performance Chart** ⚠️ IN PROGRESS (v0.9.4 - January 27, 2026)
 
 **What We Changed:**
 
-**1. ShareInviteCard Repositioned**
-- ✅ Moved from before PerformanceChart → after PerformanceChart
-- ✅ Better UX flow: Net Worth → Chart → Invite → Assets → Liabilities
-- ✅ Card now appears immediately (no 3-second delay)
-- ✅ Shows loading state ("..." badge, "Loading..." button) while fetching invite codes
-- ✅ Card structure consistent with other cards (no delayed pop-in)
+**Migrated from react-native-chart-kit to Custom SVG Implementation**
 
-**2. Performance Chart Dot Indicator (IN PROGRESS)**
-- ✅ Visual indicator dot implemented with smooth interpolation
-- ✅ Dot follows finger when scrubbing (spring animations, opacity fade in/out)
-- ✅ Smooth continuous positioning (fractional indices, not discrete jumps)
-- ⚠️ **CRITICAL ISSUE:** Coordinate system mismatch - tapping right edge shows dot in middle
-- ❌ Dot positioning broken due to padding/coordinate system alignment issues
-- **Status:** Needs deeper investigation into react-native-chart-kit's internal coordinate mapping
+**Why We Made the Change:**
+- ❌ `react-native-chart-kit` had opaque coordinate system causing dot positioning bugs
+- ❌ No gradient fill support (design requirement from web prototype)
+- ❌ Library limitations prevented precise coordinate control
+- ✅ Custom SVG gives full control over rendering, animations, and interactions
+
+**What's New:**
+- ✅ **Gradient Fill:** Beautiful gradient under line (15% opacity → 0%, matches web prototype)
+- ✅ **Custom Bezier Curves:** Smooth cubic interpolation for professional appearance
+- ✅ **Perfect Coordinate Control:** We calculate every X,Y position explicitly
+- ✅ **Dot Interpolation:** Smooth movement between data points with fractional positioning
+- ✅ **Data Freeze During Gesture:** Prevents race conditions and coordinate mismatches
+- ✅ **Spring Animations:** Natural physics for dot appearance/disappearance
+- ✅ **Precise Positioning:** Dot follows finger accurately on both X and Y axes
+
+**Implementation Highlights:**
+```typescript
+// Custom SVG with gradient definition
+<Svg width={screenWidth} height={CHART_HEIGHT}>
+  <Defs>
+    <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+      <Stop offset="0%" stopColor="rgb(71, 85, 105)" stopOpacity={0.15} />
+      <Stop offset="100%" stopColor="rgb(71, 85, 105)" stopOpacity={0} />
+    </LinearGradient>
+  </Defs>
+  <Path d={gradientPath} fill="url(#chartGradient)" />
+  <Path d={linePath} stroke="rgb(71, 85, 105)" strokeWidth={2.5} />
+</Svg>
+```
 
 **Known Issues:**
-- Dot appears in wrong position (not aligned with touch point)
-- Multiple padding adjustment attempts failed (12px→16px→12px with separate constants)
-- Issue persists despite separating touch detection and dot rendering coordinate systems
+- ⚠️ **Touch Event Fall-Through (CRITICAL):** Tapping on chart sometimes switches time range to previous button
+  - Example: On 1Y chart, tap line → switches to YTD
+  - Root cause: PanResponder on svgContainer (310px) but visual chart extends to 334px (negative margins)
+  - When tapping near edges, touch falls through to buttons below
+  - Attempted fix with hitSlop didn't resolve (possible React Native limitation)
+- ⚠️ ~700 lines of custom code vs ~200 with library (more to maintain)
+
+**Trade-Offs:**
+- ✅ Worth it: Beautiful gradient, full control, matches web design
+- ⚠️ Need to solve: Touch event capture issue for production readiness
+
+**See PROJECT_CONTEXT.md for:**
+- Complete technical deep-dive
+- Failed attempts and lessons learned
+- 5 potential solutions with pros/cons
+- Coordinate system documentation
+- Bezier curve generation details
 
 ---
 

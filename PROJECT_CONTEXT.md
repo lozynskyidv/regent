@@ -1,7 +1,7 @@
 # PROJECT CONTEXT - Regent iOS App
 
-**Last Updated:** January 26, 2026  
-**Version:** 0.9.3 (ShareInviteCard Repositioned + Performance Chart Dot Indicator)  
+**Last Updated:** January 27, 2026  
+**Version:** 0.9.4 (Custom SVG Performance Chart)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** Exclusive invite-only (replaced paid subscription)
 
@@ -38,30 +38,32 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
   - ✅ Color-coded feedback (green for gains, red for losses)
   - ✅ Calculates from earliest snapshot of current calendar year
   - ✅ Graceful handling of empty state (Day 1 users)
-- **Performance Chart** (Interactive line chart with smooth animations):
+- **Performance Chart** (Custom SVG implementation with gradient fill):
+  - ✅ **CUSTOM SVG CHART** (migrated from react-native-chart-kit for full control)
+  - ✅ Gradient fill under line (matches web prototype design)
+  - ✅ Custom bezier curves (smooth cubic interpolation)
   - ✅ BitBox-style layout (current value + change + percentage + time period)
   - ✅ Interactive scrubbing (tap + drag to see historical values)
   - ✅ ScrollView conflict FIXED (dynamic scroll disabling)
   - ✅ Smooth animated number counting (spring physics)
-  - ✅ Scale micro-interactions (0.98x on touch, 1.02x pulse on change)
   - ✅ Time range selector (1M, 3M, YTD, 1Y with fade transitions)
   - ✅ High-resolution data (30-50 points per time range)
   - ✅ Precise date labels (day + month for 1M, 3M, 1Y)
   - ✅ Day 1 empty state (matches web-prototype pixel-perfect)
   - ✅ Historical data support (2 years of snapshots)
   - ✅ Test data generator (Settings → Generate Performance Data)
-  - ✅ Visual indicator dot (appears when scrubbing, smooth interpolation)
-  - ⚠️ KNOWN ISSUE: Dot positioning has coordinate system mismatch (tapping right edge shows dot in middle)
+  - ✅ Visual indicator dot (smooth interpolation, spring animations)
+  - ✅ Data freeze during gesture (prevents coordinate system mismatches)
+  - ⚠️ KNOWN ISSUE: Touch events fall through to buttons (tapping chart switches time ranges)
 - **ShareInviteCard** (Repositioned after PerformanceChart):
   - ✅ Moved from before PerformanceChart to after PerformanceChart (better UX flow)
   - ✅ Immediate appearance (removed 3-second loading delay, shows loading state instead)
   - ✅ Card structure consistent with other cards (no delayed pop-in)
 
 ❌ **P1 PRIORITIES:** 
-1. Fix dot positioning coordinate system mismatch (CRITICAL - currently broken)
-2. Add gradient fill to performance chart (custom SVG like web-prototype)
-3. Apple OAuth (App Store requirement - BLOCKED on Apple Developer account)
-4. Bank connections, TestFlight
+1. Fix touch event fall-through on Performance Chart (CRITICAL - causes accidental button switches)
+2. Apple OAuth (App Store requirement - BLOCKED on Apple Developer account)
+3. Bank connections, TestFlight
 
 **Tech Stack:**  
 - React Native (Expo SDK 54), React 19.1.0, TypeScript 5.9  
@@ -1395,6 +1397,391 @@ const styles = StyleSheet.create({
 - **Matches web prototype:** Step 1 = Type Picker (Bank/Portfolio/Property/Other), Step 2 = Specific Form
 - **Better UX:** Clear separation, easier to extend (add new asset types)
 - **Implementation:** `AssetTypePickerModal` → opens → `AddBankModal` / `AddPropertyModal` / etc.
+
+---
+
+## 📊 PERFORMANCE CHART: CUSTOM SVG IMPLEMENTATION (Deep Dive)
+
+**Last Updated:** January 27, 2026  
+**Status:** ⚠️ **IN PROGRESS** - Core functionality working, but touch event conflicts remain  
+**Component:** `/components/PerformanceChart.tsx`
+
+---
+
+### The Journey: From Library to Custom SVG
+
+#### **What We Had (react-native-chart-kit)**
+
+**Initial Implementation (v0.9.0 - v0.9.2):**
+- Used `react-native-chart-kit` for line charts
+- Simple integration, battle-tested library
+- Basic scrubbing gesture with PanResponder overlay
+
+**Problems We Encountered:**
+1. **Dot Positioning Bug (CRITICAL):** Tapping right edge showed dot in middle of chart
+2. **No Gradient Support:** Library didn't support gradient fill under line (design requirement from web prototype)
+3. **Coordinate System Black Box:** Internal coordinate mapping was opaque and inconsistent
+4. **Race Conditions:** Chart data could update mid-gesture, causing dot to jump to wrong position
+
+**What We Tried (Failed Attempts):**
+- ✅ Attempted padding calibration (DOT_PADDING_VERTICAL adjustments) → Still inaccurate
+- ❌ Attempted to freeze chartData during gesture → Fixed X-axis but Y-axis still wrong
+- ❌ Attempted to use touch Y coordinate directly → Oversimplified, broke when tapping off-line
+- **Root Cause:** Library's internal rendering didn't expose exact coordinate calculations
+
+---
+
+#### **What We Have Now (Custom SVG with react-native-svg)**
+
+**Migration (v0.9.3 - January 27, 2026):**
+- Replaced `react-native-chart-kit` with custom `react-native-svg` implementation
+- Full control over coordinate system, gradient fill, animations
+- Built from scratch: bezier curves, SVG paths, gradient definitions
+
+**Current Implementation:**
+
+```typescript
+// Custom SVG chart with gradient
+<Svg width={screenWidth} height={CHART_HEIGHT}>
+  <Defs>
+    <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+      <Stop offset="0%" stopColor="rgb(71, 85, 105)" stopOpacity={0.15} />
+      <Stop offset="100%" stopColor="rgb(71, 85, 105)" stopOpacity={0} />
+    </LinearGradient>
+  </Defs>
+  
+  {/* Gradient fill area */}
+  <Path d={gradientPath} fill="url(#chartGradient)" />
+  
+  {/* Line */}
+  <Path
+    d={linePath}
+    stroke="rgb(71, 85, 105)"
+    strokeWidth={2.5}
+    fill="none"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  />
+</Svg>
+
+// Interactive dot with interpolation
+{dotPosition && (
+  <Animated.View
+    style={[
+      styles.indicatorDot,
+      {
+        left: dotPosition.x - 6,
+        top: dotPosition.y - 6,
+        opacity: dotOpacity,
+        transform: [{ scale: dotScale }],
+      },
+    ]}
+    pointerEvents="none"
+  />
+)}
+```
+
+**Key Features:**
+- ✅ Smooth bezier curves (cubic interpolation for smooth lines)
+- ✅ Gradient fill under line (matches web prototype design)
+- ✅ Precise coordinate control (we calculate every X, Y position)
+- ✅ Dot interpolation (smooth movement between data points)
+- ✅ Data freeze during gesture (prevents coordinate system mismatches)
+- ✅ Custom animations (spring physics, opacity fades)
+
+---
+
+### Current Status: What Works & What Doesn't
+
+#### **✅ What Works Perfectly:**
+
+1. **Visual Design:**
+   - Beautiful gradient fill (15% opacity at top → 0% at bottom)
+   - Smooth bezier curves (professional, polished appearance)
+   - Matches web prototype aesthetic exactly
+   - No overflow or clipping issues (overflow: 'hidden' works correctly)
+
+2. **Core Chart Functionality:**
+   - Time range switching (1M, 3M, YTD, 1Y) with smooth fade animations
+   - Data sampling (30-50 points per range for optimal granularity)
+   - Performance metrics (value, change, percentage) with smooth counting animations
+   - Day 1 empty state (matches web prototype pixel-perfect)
+   - Historical data support (2 years of snapshots from generator)
+
+3. **Gesture System:**
+   - Smooth scrubbing (tap + drag across chart)
+   - Data freeze during gesture (prevents race conditions)
+   - Fractional positioning (0.0 to n-1.0 for smooth interpolation)
+   - Dot interpolation (smooth movement between data points)
+   - Spring animations (dot appears/disappears with natural physics)
+   - ScrollView conflict resolution (dynamic scroll disabling)
+
+4. **Coordinate System:**
+   - Precise X-axis positioning (dot follows finger horizontally)
+   - Precise Y-axis positioning (dot follows line vertically)
+   - Consistent calculations (same width used for rendering and touch detection)
+   - Data locking (chartData frozen during gesture to prevent sync issues)
+
+---
+
+#### **⚠️ What's Broken (KNOWN ISSUES):**
+
+**1. Touch Event Fall-Through (CRITICAL)**
+
+**Symptom:**
+- Tapping on chart line sometimes switches time range to previous button
+- Example: On 1Y chart, tap line → switches to YTD
+- Example: On YTD chart, tap line → switches to 3M
+
+**Root Cause Analysis:**
+```
+Visual chart extends 334px (due to negative margins):
+├─ chartContainer: negative margins -12px each side
+└─ Visual width: card content (310px) + 24px = 334px
+
+Touch capture area is only 310px:
+├─ svgContainer: 310px (no negative margins)
+├─ PanResponder attached to svgContainer
+└─ Touch area: 310px only
+
+When user taps at X=320px (within visual 334px):
+├─ Touch is OUTSIDE svgContainer bounds (>310px)
+├─ PanResponder doesn't capture
+└─ Touch falls through to buttons below
+```
+
+**Why hitSlop Doesn't Work:**
+- We added `hitSlop={{ left: 12, right: 12, top: 0, bottom: 20 }}`
+- This extends touch capture area by 12px on each side
+- Should theoretically work, but touch events still fall through
+- Possible React Native bug or gesture handler priority issue
+
+**What We've Tried:**
+- ✅ Increased gap between chart and buttons (28px → 40px) → Didn't fix
+- ✅ Added hitSlop to extend touch area → Didn't fix
+- ❌ Moved PanResponder to chartContainer → Broke coordinate system (locationX offset)
+- ❌ Added pointerEvents="box-only" → No effect
+- ❌ Increased timeouts and delays → Not a timing issue
+
+**Why It's Hard to Fix:**
+- PanResponder locationX is relative to the element it's attached to
+- Moving to chartContainer breaks coordinates (need to account for negative margins)
+- hitSlop should work but doesn't (possible framework limitation)
+- Touch events in React Native are complex with gesture handlers
+
+---
+
+**2. No Visual Feedback for Button Conflict**
+
+**Issue:**
+- When touch falls through and activates button, user sees:
+  - Chart suddenly switches (unexpected behavior)
+  - No visual indication that they missed the chart area
+  - Confusing UX (looks like a bug, not user error)
+
+---
+
+### Potential Solutions (Not Yet Implemented)
+
+#### **Solution 1: Move PanResponder + Adjust Coordinates**
+```typescript
+// Attach to chartContainer instead of svgContainer
+<Animated.View 
+  style={[styles.chartContainer, { opacity: chartOpacity }]}
+  {...panResponder.panHandlers}
+>
+  <View style={styles.svgContainer}>
+    <Svg width={actualWidth} height={CHART_HEIGHT}>
+
+// Adjust touch calculations
+const x = evt.nativeEvent.locationX;
+const adjustedX = x - negativeMarginOffset; // Account for negative margins
+const effectiveWidth = actualWidth - (2 * CHART_PADDING_HORIZONTAL);
+```
+
+**Pros:** Captures full visual area including negative margins  
+**Cons:** Requires coordinate system adjustments, more complex math  
+**Risk:** Medium - Coordinate calculations become more complex
+
+---
+
+#### **Solution 2: Remove Negative Margins**
+```typescript
+chartContainer: {
+  height: 120,
+  marginLeft: 0,  // Remove negative margins
+  marginRight: 0,
+  marginBottom: Spacing.lg,
+  overflow: 'hidden',
+}
+
+// Adjust screenWidth calculation
+const screenWidth = Dimensions.get('window').width - (Spacing.lg * 2) - (Spacing.md * 2);
+```
+
+**Pros:** Simple, visual bounds = touch bounds  
+**Cons:** Chart won't extend to edges (loses design intent)  
+**Risk:** Low - Clean solution but changes visual design
+
+---
+
+#### **Solution 3: Use onLayout + Measured Width**
+```typescript
+const [measuredWidth, setMeasuredWidth] = useState(fallbackWidth);
+
+<View 
+  style={styles.svgContainer}
+  onLayout={(e) => setMeasuredWidth(e.nativeEvent.layout.width)}
+  {...panResponder.panHandlers}
+>
+  <Svg width={measuredWidth} height={CHART_HEIGHT}>
+
+// Use measured width for all calculations
+const effectiveWidth = measuredWidth - (2 * CHART_PADDING_HORIZONTAL);
+```
+
+**Pros:** Adapts to actual rendered width, no assumptions  
+**Cons:** Still doesn't fix negative margin touch area issue  
+**Risk:** Medium - Adds complexity without solving core issue  
+**Note:** We tried this and it broke dot positioning (shifted left)
+
+---
+
+#### **Solution 4: Guard Buttons Against Rapid Taps**
+```typescript
+const [lastChartTouchTime, setLastChartTouchTime] = useState(0);
+
+// In button onPress
+onPress={() => {
+  const now = Date.now();
+  if (now - lastChartTouchTime < 500) {
+    // Ignore - likely a fall-through touch
+    return;
+  }
+  handleTimeRangeChange(range);
+}}
+
+// In PanResponder
+onPanResponderGrant: () => {
+  setLastChartTouchTime(Date.now());
+  ...
+}
+```
+
+**Pros:** Simple, doesn't change layout or coordinates  
+**Cons:** Hacky workaround, doesn't fix root cause, could miss legitimate taps  
+**Risk:** Low - Easy to implement and remove if needed
+
+---
+
+#### **Solution 5: Increase Vertical Gap to 60-80px**
+```typescript
+chartContainer: {
+  marginBottom: Spacing['2xl'], // 48px instead of 24px
+}
+
+timeRangeContainer: {
+  marginTop: Spacing.lg, // 24px instead of 16px
+}
+// Total gap: 72px (much harder to accidentally hit buttons)
+```
+
+**Pros:** Reduces likelihood of accidental button presses  
+**Cons:** Wastes vertical space, doesn't fix the underlying issue  
+**Risk:** Low - Safe but inelegant
+
+---
+
+### Technical Details
+
+#### **Coordinate System:**
+```typescript
+// SVG coordinate space
+const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
+const effectiveHeight = CHART_HEIGHT - (2 * CHART_PADDING_VERTICAL);
+
+// Map data value to Y coordinate
+const normalizedValue = (value - minValue) / (maxValue - minValue);
+const y = CHART_PADDING_VERTICAL + effectiveHeight - (normalizedValue * effectiveHeight);
+
+// Map data index to X coordinate
+const x = CHART_PADDING_HORIZONTAL + (index / (dataPoints.length - 1)) * effectiveWidth;
+```
+
+#### **Bezier Curve Generation:**
+```typescript
+const linePath = points.reduce((path, point, index) => {
+  if (index === 0) {
+    return `M ${point.x},${point.y}`;
+  }
+  
+  // Smooth bezier curve between points
+  const prevPoint = points[index - 1];
+  const controlX1 = prevPoint.x + (point.x - prevPoint.x) / 3;
+  const controlY1 = prevPoint.y;
+  const controlX2 = prevPoint.x + (2 * (point.x - prevPoint.x)) / 3;
+  const controlY2 = point.y;
+  
+  return `${path} C ${controlX1},${controlY1} ${controlX2},${controlY2} ${point.x},${point.y}`;
+}, '');
+```
+
+#### **Gradient Fill Path:**
+```typescript
+// Same line path, but closed to bottom
+const gradientPath = `${linePath} L ${lastPoint.x},${CHART_HEIGHT} L ${firstPoint.x},${CHART_HEIGHT} Z`;
+```
+
+#### **Dot Interpolation:**
+```typescript
+// Smooth movement between data points
+const lowerIndex = Math.floor(fractionalPosition);
+const upperIndex = Math.ceil(fractionalPosition);
+const fraction = fractionalPosition - lowerIndex;
+
+const dotPosition = {
+  x: lowerPoint.x + (upperPoint.x - lowerPoint.x) * fraction,
+  y: lowerPoint.y + (upperPoint.y - lowerPoint.y) * fraction,
+  value: lowerPoint.value + (upperPoint.value - lowerPoint.value) * fraction,
+};
+```
+
+---
+
+### Why Custom SVG Was Worth It (Despite Issues)
+
+**Benefits Achieved:**
+1. ✅ Gradient fill (design requirement from web prototype)
+2. ✅ Perfect coordinate control (dot positioning accurate on X and Y)
+3. ✅ No black-box library limitations
+4. ✅ Full customization potential (can add any feature we want)
+5. ✅ Smooth bezier curves (professional appearance)
+6. ✅ Performance (lightweight SVG, no heavy library)
+
+**Trade-Offs:**
+1. ⚠️ Touch event fall-through (solvable but tricky)
+2. ⚠️ More code to maintain (~700 lines vs ~200 with library)
+3. ⚠️ Need to handle edge cases ourselves (empty data, single point, etc.)
+
+**Verdict:** Worth it for control and design requirements, but need to solve touch issue for production.
+
+---
+
+### Recommended Next Steps
+
+**Short Term (Critical):**
+1. Try Solution 4 (guard buttons) as immediate band-aid
+2. Increase vertical gap to 60px+ to reduce occurrence
+
+**Medium Term (Proper Fix):**
+1. Investigate React Native gesture handler priorities
+2. Test Solution 1 (move PanResponder + adjust coordinates) thoroughly
+3. Consider custom gesture handler instead of PanResponder
+
+**Long Term (Enhancement):**
+1. Add haptic feedback when dot snaps to data points
+2. Add tooltip showing exact value and date on scrub
+3. Consider gesture handler library upgrade if fix is framework-related
 
 ---
 
