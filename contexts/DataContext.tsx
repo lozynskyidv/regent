@@ -667,17 +667,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   /**
    * Sign out user
-   * Clears Supabase session but keeps PIN and financial data
-   * User will need to re-enter PIN on next app launch
+   * PRIVACY FIX: Clears ALL data (auth, financial data, AND PIN)
+   * This prevents data leakage when multiple users use the same device
    * 
-   * CRITICAL FIX v5: Reinitialize Supabase Client
-   * - signOut() clears session from AsyncStorage
-   * - Nuclear cleanup removes ALL Supabase keys
-   * - Reinitialize client to eliminate in-memory corruption
-   * - This provides truly clean slate for next sign-in
+   * CRITICAL: Complete data wipe on sign out
+   * - Clears Supabase session
+   * - Clears ALL financial data (assets, liabilities, snapshots, user profile)
+   * - Clears PIN from SecureStore
+   * - Resets React state to initial values
+   * - Reinitializes Supabase client for clean slate
    */
   const signOut = async () => {
-    console.log('🔐 DataContext: Starting sign out...');
+    console.log('🔐 DataContext: Starting sign out with complete data wipe...');
     
     // Set auth processing lock to block other auth operations
     setIsAuthProcessing(true);
@@ -702,8 +703,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
       await Promise.race([signOutPromise, timeoutPromise]);
       console.log('✅ Supabase signOut completed');
       
-      // STEP 2: Nuclear AsyncStorage cleanup - remove ALL Supabase keys
-      // This prevents accumulation that causes getSession() to slow down over cycles
+      // STEP 2: Clear ALL financial data from AsyncStorage
+      console.log('🧹 Clearing all financial data...');
+      await clearAllData();
+      console.log('✅ All financial data cleared');
+      
+      // STEP 3: Clear PIN from SecureStore
+      console.log('🔑 Clearing PIN from SecureStore...');
+      try {
+        await SecureStore.deleteItemAsync('regent_pin_hash');
+        console.log('✅ PIN cleared');
+      } catch (pinError) {
+        console.warn('⚠️ PIN deletion failed (non-critical):', pinError);
+      }
+      
+      // STEP 4: Nuclear AsyncStorage cleanup - remove ALL Supabase keys
       console.log('🧹 Nuclear cleanup: Removing ALL Supabase keys from AsyncStorage...');
       try {
         const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
@@ -717,32 +731,37 @@ export function DataProvider({ children }: { children: ReactNode }) {
         );
         
         if (supabaseKeys.length > 0) {
-          console.log(`🗑️ Removing ${supabaseKeys.length} Supabase keys from AsyncStorage:`, supabaseKeys);
+          console.log(`🗑️ Removing ${supabaseKeys.length} Supabase keys:`, supabaseKeys);
           await AsyncStorage.multiRemove(supabaseKeys);
-          console.log('✅ AsyncStorage cleaned');
+          console.log('✅ Supabase keys cleaned');
         } else {
-          console.log('✅ AsyncStorage already clean');
+          console.log('✅ Supabase keys already clean');
         }
-        
-        // Verify PIN is still in SecureStore (should NOT be affected by AsyncStorage cleanup)
-        const pinHash = await SecureStore.getItemAsync('regent_pin_hash');
-        console.log('🔑 PIN hash in SecureStore after cleanup:', pinHash ? 'EXISTS ✅' : 'MISSING ❌');
       } catch (cleanupError) {
         console.warn('⚠️ AsyncStorage cleanup failed (non-critical):', cleanupError);
       }
       
-      // STEP 3: REINITIALIZE SUPABASE CLIENT (NEW!)
-      // This eliminates in-memory corruption (refresh timers, listeners, cache)
-      // Provides truly clean slate - addresses root cause of auth race condition
-      console.log('🔄 Reinitializing Supabase client to clear in-memory state...');
-      reinitializeSupabaseClient();
-      console.log('✅ Supabase client reinitialized - all corruption cleared');
+      // STEP 5: Reset React state to initial values
+      console.log('🔄 Resetting React state to initial values...');
+      setAssets([]);
+      setLiabilities([]);
+      setUserState(null);
+      setPrimaryCurrency('GBP');
+      setLastDataSync(null);
+      setSnapshots([]);
+      setHasStartedTrial(false);
+      console.log('✅ React state reset');
       
-      // STEP 4: Mandatory cooldown to let AsyncStorage settle
+      // STEP 6: Reinitialize Supabase client
+      console.log('🔄 Reinitializing Supabase client...');
+      reinitializeSupabaseClient();
+      console.log('✅ Supabase client reinitialized');
+      
+      // STEP 7: Mandatory cooldown to let AsyncStorage settle
       console.log('⏳ Auth cooldown: Waiting 1000ms for AsyncStorage to settle...');
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      console.log('✅ Signed out successfully - Fresh client ready for next sign-in');
+      console.log('✅ Sign out complete - All data wiped, device ready for new user');
     } catch (err) {
       console.error('❌ Sign out error:', err);
       // Auth state already cleared at the start, just throw the error
@@ -752,10 +771,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setIsAuthProcessing(false);
       console.log('🔓 Auth lock released');
     }
-    
-    // NOTE: We do NOT delete the PIN here
-    // PIN is tied to the device, not the Supabase session
-    // User will use the same PIN when they sign back in
   };
 
   /**
@@ -851,7 +866,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         await AsyncStorage.multiRemove(['@regent_invite_code', '@regent_invite_code_id']);
         log('✅ Invite codes cleared');
       } catch (err) {
-        log('⚠️ Error clearing invite codes:', err);
+        log(`⚠️ Error clearing invite codes: ${err}`);
       }
 
       // CRITICAL: Clear React state SECOND to trigger AuthGuard re-check
@@ -907,7 +922,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           log('✅ PIN verified deleted');
         }
       } catch (pinError) {
-        log('❌ Error deleting PIN:', pinError);
+        log(`❌ Error deleting PIN: ${pinError}`);
       }
       
       // Verify trial state is cleared from AsyncStorage
@@ -923,7 +938,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
           log('✅ Trial state verified cleared');
         }
       } catch (trialError) {
-        log('❌ Error verifying trial state:', trialError);
+        log(`❌ Error verifying trial state: ${trialError}`);
       }
       
       log('✅ Local data cleared and verified');
