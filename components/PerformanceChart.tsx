@@ -38,18 +38,17 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   const animatedChange = useRef(new Animated.Value(0)).current;
   const gestureStartRef = useRef<{ x: number; y: number } | null>(null);
   
-  // 🔒 Freeze data during gesture to prevent coordinate system mismatches
+  // 🐛 DEBUG: Track last touch position for visual debugging
   const [isGestureActive, setIsGestureActive] = useState(false);
   const [lockedDataPoints, setLockedDataPoints] = useState<number[] | null>(null);
   
-  // Chart dimensions - FIX: Account for scroll padding only (chart extends with negative margins)
   const screenWidth = Dimensions.get('window').width - (Spacing.lg * 2);
   const CHART_HEIGHT = 120;
   const CHART_PADDING_HORIZONTAL = 12;
   const CHART_PADDING_VERTICAL = 20;
 
-  // Handle time range change with smooth animation
   const handleTimeRangeChange = (range: TimeRange) => {
+    if (isGestureActive) return;
     if (range === timeRange) return;
     
     setSelectedPointIndex(null);
@@ -177,8 +176,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   }, [snapshots, currentNetWorth, timeRange]);
 
   // Calculate performance metrics
-  // 🔒 Use locked data during gesture, fresh data otherwise
-  const dataPoints = chartData.datasets[0].data;
+  const dataPoints = useMemo(() => chartData.datasets[0].data, [chartData]);
   const activeDataPoints = isGestureActive && lockedDataPoints ? lockedDataPoints : dataPoints;
   const firstValue = activeDataPoints[0];
   
@@ -192,8 +190,6 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
     : '0.0';
   const isPositive = performanceChange >= 0;
 
-  // Calculate SVG path and gradient area for the chart
-  // 🔒 Use locked data during gesture to prevent coordinate system mismatches
   const { linePath, gradientPath, chartPoints } = useMemo(() => {
     const points = isGestureActive && lockedDataPoints ? lockedDataPoints : dataPoints;
     if (points.length === 0) return { linePath: '', gradientPath: '', chartPoints: [] };
@@ -234,7 +230,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
     const gradientPath = `${linePath} L ${calculatedPoints[calculatedPoints.length - 1].x},${CHART_HEIGHT} L ${calculatedPoints[0].x},${CHART_HEIGHT} Z`;
 
     return { linePath, gradientPath, chartPoints: calculatedPoints };
-  }, [dataPoints, lockedDataPoints, isGestureActive, screenWidth, CHART_HEIGHT, CHART_PADDING_HORIZONTAL, CHART_PADDING_VERTICAL]);
+  }, [dataPoints, lockedDataPoints, isGestureActive, screenWidth]);
 
   // Calculate dot position from fractional index
   const dotPosition = useMemo(() => {
@@ -275,7 +271,6 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
       onPanResponderGrant: (evt) => {
         onChartTouchStart?.();
         
-        // 🔒 Freeze data at gesture start to prevent coordinate system mismatches
         setIsGestureActive(true);
         setLockedDataPoints(dataPoints);
         
@@ -301,7 +296,6 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
         const x = evt.nativeEvent.locationX;
         const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
         const touchX = x - CHART_PADDING_HORIZONTAL;
-        // 🔒 Use locked data length for consistent calculations during gesture
         const activeLength = lockedDataPoints ? lockedDataPoints.length : dataPoints.length;
         const fractionalPos = (touchX / effectiveWidth) * (activeLength - 1);
         const clampedFractional = Math.max(0, Math.min(fractionalPos, activeLength - 1));
@@ -319,13 +313,10 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
       onPanResponderRelease: () => {
         onChartTouchEnd?.();
         
-        // 🔒 Unfreeze data when gesture ends
         setIsGestureActive(false);
         setLockedDataPoints(null);
-        
         gestureStartRef.current = null;
         
-        // Subtle fade animation for metrics on release
         Animated.timing(metricsOpacity, {
           toValue: 0.6,
           duration: 150,
@@ -343,11 +334,8 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
       
       onPanResponderTerminate: () => {
         onChartTouchEnd?.();
-        
-        // 🔒 Unfreeze data if gesture is interrupted
         setIsGestureActive(false);
         setLockedDataPoints(null);
-        
         gestureStartRef.current = null;
         setSelectedPointIndex(null);
         setFractionalPosition(null);
@@ -477,11 +465,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
 
       {/* Chart */}
       <Animated.View style={[styles.chartContainer, { opacity: chartOpacity }]}>
-        <View 
-          style={styles.svgContainer}
-          hitSlop={{ left: 12, right: 12, top: 0, bottom: 20 }}
-          {...panResponder.panHandlers}
-        >
+        <View style={styles.svgContainer}>
           <Svg width={screenWidth} height={CHART_HEIGHT}>
             <Defs>
               <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
@@ -490,13 +474,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
               </LinearGradient>
             </Defs>
             
-            {/* Gradient fill area */}
-            <Path
-              d={gradientPath}
-              fill="url(#chartGradient)"
-            />
-            
-            {/* Line */}
+            <Path d={gradientPath} fill="url(#chartGradient)" />
             <Path
               d={linePath}
               stroke="rgb(71, 85, 105)"
@@ -507,7 +485,6 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
             />
           </Svg>
 
-          {/* Interactive dot */}
           {dotPosition && (
             <Animated.View
               style={[
@@ -522,6 +499,12 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
               pointerEvents="none"
             />
           )}
+          
+          <View 
+            style={StyleSheet.absoluteFill}
+            onStartShouldSetResponder={() => true}
+            {...panResponder.panHandlers} 
+          />
         </View>
       </Animated.View>
 
@@ -604,9 +587,7 @@ const styles = StyleSheet.create({
   },
   chartContainer: {
     height: 120,
-    marginLeft: -Spacing.sm,
-    marginRight: -Spacing.sm,
-    marginBottom: Spacing.lg, // FIX: Increased gap (24px) to prevent accidental button presses
+    marginBottom: Spacing.lg,
     overflow: 'hidden',
   },
   svgContainer: {
@@ -618,7 +599,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 4,
-    marginTop: Spacing.md, // FIX: Increased gap (16px) to prevent accidental button presses
+    marginTop: Spacing.md,
     flexWrap: 'wrap',
   },
   timeRangeButton: {

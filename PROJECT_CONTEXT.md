@@ -1524,60 +1524,238 @@ const styles = StyleSheet.create({
 
 ---
 
-#### **⚠️ What's Broken (KNOWN ISSUES):**
+#### **⚠️ CRITICAL UNSOLVED BUG - Touch Event Fall-Through**
 
-**1. Touch Event Fall-Through (CRITICAL)**
-
-**Symptom:**
-- Tapping on chart line sometimes switches time range to previous button
-- Example: On 1Y chart, tap line → switches to YTD
-- Example: On YTD chart, tap line → switches to 3M
-
-**Root Cause Analysis:**
-```
-Visual chart extends 334px (due to negative margins):
-├─ chartContainer: negative margins -12px each side
-└─ Visual width: card content (310px) + 24px = 334px
-
-Touch capture area is only 310px:
-├─ svgContainer: 310px (no negative margins)
-├─ PanResponder attached to svgContainer
-└─ Touch area: 310px only
-
-When user taps at X=320px (within visual 334px):
-├─ Touch is OUTSIDE svgContainer bounds (>310px)
-├─ PanResponder doesn't capture
-└─ Touch falls through to buttons below
-```
-
-**Why hitSlop Doesn't Work:**
-- We added `hitSlop={{ left: 12, right: 12, top: 0, bottom: 20 }}`
-- This extends touch capture area by 12px on each side
-- Should theoretically work, but touch events still fall through
-- Possible React Native bug or gesture handler priority issue
-
-**What We've Tried:**
-- ✅ Increased gap between chart and buttons (28px → 40px) → Didn't fix
-- ✅ Added hitSlop to extend touch area → Didn't fix
-- ❌ Moved PanResponder to chartContainer → Broke coordinate system (locationX offset)
-- ❌ Added pointerEvents="box-only" → No effect
-- ❌ Increased timeouts and delays → Not a timing issue
-
-**Why It's Hard to Fix:**
-- PanResponder locationX is relative to the element it's attached to
-- Moving to chartContainer breaks coordinates (need to account for negative margins)
-- hitSlop should work but doesn't (possible framework limitation)
-- Touch events in React Native are complex with gesture handlers
+**Last Debugging Session:** January 27, 2026 (6+ hours)  
+**Status:** UNRESOLVED  
+**Impact:** Blocks production readiness
 
 ---
 
-**2. No Visual Feedback for Button Conflict**
+### **The Problem**
 
-**Issue:**
-- When touch falls through and activates button, user sees:
-  - Chart suddenly switches (unexpected behavior)
-  - No visual indication that they missed the chart area
-  - Confusing UX (looks like a bug, not user error)
+**Symptom:**
+When tapping on the chart line (any time range except 1M), the **entire chart shape morphs dramatically** while displaying scrubbing data for a specific date.
+
+**Example:**
+1. View 3M chart showing "Last 3 months" with gradual upward trend
+2. Tap on chart line
+3. Label correctly changes to specific date (e.g., "13 Dec") ← This works!
+4. BUT: Entire chart line morphs to completely different shape (different data pattern) ← This is broken!
+
+**Why This Is Critical:**
+- Chart is completely unusable for time ranges 3M, YTD, 1Y
+- Only 1M works (because it's already selected, so button press has no effect)
+- Users cannot interact with historical data without triggering accidental time range changes
+- Makes the entire interactive chart feature effectively broken
+
+---
+
+### **Root Cause (Confirmed)**
+
+Touch events fall through the chart to time range buttons below:
+
+1. User taps chart line
+2. Touch event falls through transparent overlay
+3. `handleTimeRangeChange` is called (changes `timeRange` state)
+4. `chartData` useMemo recalculates with different time period data
+5. Chart renders with NEW time range data
+6. User sees different chart shape (not the one they were viewing)
+
+The morphing happens because `timeRange` state changes, triggering data recalculation for a different time period.
+
+---
+
+### **Everything We Tried (All Failed)**
+
+**January 27, 2026 - 6+ Hour Debugging Session:**
+
+#### **Attempt 1: Remove Negative Margins**
+```typescript
+// BEFORE:
+chartContainer: {
+  marginLeft: -Spacing.sm,  // -12px
+  marginRight: -Spacing.sm, // -12px
+}
+
+// AFTER:
+chartContainer: {
+  // No negative margins
+}
+```
+**Theory:** Negative margins caused layout confusion  
+**Result:** FAILED - Issue persisted
+
+---
+
+#### **Attempt 2: Transparent Overlay with PanResponder**
+```typescript
+<View style={styles.svgContainer}>
+  <Svg>...</Svg>
+  <View style={StyleSheet.absoluteFill} {...panResponder.panHandlers} />
+</View>
+```
+**Theory:** Overlay on top captures all touches  
+**Result:** FAILED - Touches still fell through
+
+---
+
+#### **Attempt 3: Multi-Layer Defense (3 fixes simultaneously)**
+```typescript
+// Fix 1: Block buttons during gesture
+const handleTimeRangeChange = (range: TimeRange) => {
+  if (isGestureActive) return;  // ← Should block button press
+  // ...
+}
+
+// Fix 2: Memoize dataPoints to prevent reference changes
+const dataPoints = useMemo(() => chartData.datasets[0].data, [chartData]);
+
+// Fix 3: Aggressive touch capture
+<View 
+  style={StyleSheet.absoluteFill}
+  onStartShouldSetResponder={() => true}  // ← Force capture
+  {...panResponder.panHandlers} 
+/>
+```
+**Theory:** Triple defense layer (button blocking + data stability + touch capture)  
+**Result:** FAILED - Issue persisted despite all 3 fixes
+
+---
+
+#### **Attempt 4: SVG pointerEvents="none"**
+```typescript
+<Svg pointerEvents="none">...</Svg>
+```
+**Theory:** Make SVG transparent to touches so they pass to parent  
+**Result:** FAILED - Issue persisted
+
+---
+
+#### **Attempt 5: Data Locking Mechanism**
+```typescript
+onPanResponderGrant: (evt) => {
+  setIsGestureActive(true);
+  setLockedDataPoints(dataPoints);  // ← Freeze data at gesture start
+  // ...
+}
+
+const { linePath, gradientPath, chartPoints } = useMemo(() => {
+  const points = isGestureActive && lockedDataPoints 
+    ? lockedDataPoints   // ← Use frozen data during gesture
+    : dataPoints;
+  // ...
+}, [dataPoints, lockedDataPoints, isGestureActive, screenWidth]);
+```
+**Theory:** Lock data during gesture so chart can't recalculate  
+**Result:** FAILED - Issue persisted (suggests timeRange changes BEFORE gesture starts)
+
+---
+
+#### **Attempt 6: Remove `react-native-chart-kit` Remnants**
+Confirmed via grep that old library wasn't in use (red herring).  
+**Result:** Not relevant to the issue
+
+---
+
+### **Why This Is So Hard**
+
+**The Paradox:**
+- Button blocking (`if (isGestureActive) return`) should prevent this
+- BUT touches reach buttons BEFORE `PanResponder.onPanResponderGrant` can set `isGestureActive = true`
+- React Native's touch event system may prioritize `TouchableOpacity` over `PanResponder`
+
+**Touch Event Priority in React Native:**
+```
+User taps screen
+    ↓
+1. TouchableOpacity captures first (buttons have higher priority?)
+2. handleTimeRangeChange executes
+3. timeRange state changes
+4. Component re-renders
+5. THEN PanResponder.onPanResponderGrant fires (too late!)
+```
+
+**The z-index/layering mystery:**
+- Transparent overlay is positioned last in JSX (should be on top)
+- `StyleSheet.absoluteFill` covers entire area
+- `onStartShouldSetResponder={() => true}` explicitly requests capture
+- But touches still fall through to buttons
+
+---
+
+### **Technical Analysis**
+
+**What SHOULD Happen:**
+1. Transparent overlay with PanResponder captures touch
+2. `onPanResponderGrant` fires → sets `isGestureActive = true`
+3. Even if touch somehow reaches button, `isGestureActive` check blocks it
+4. Data stays frozen with `lockedDataPoints`
+5. Chart shape stays identical, only date label changes
+
+**What ACTUALLY Happens:**
+1. Touch bypasses overlay (unclear why)
+2. Button `onPress` fires → `handleTimeRangeChange` executes
+3. `timeRange` changes → `chartData` recalculates
+4. Chart renders with different data
+5. THEN `onPanResponderGrant` fires (too late)
+
+---
+
+### **Current Code State**
+
+The chart component now has:
+- ✅ Clean code (no negative margins, simplified layout)
+- ✅ Proper memoization (`dataPoints` is stable)
+- ✅ Button blocking during gestures
+- ✅ Transparent overlay with aggressive touch capture
+- ✅ Data locking mechanism
+- ❌ But touch fall-through still occurs
+
+File: `/components/PerformanceChart.tsx` (~680 lines)
+
+---
+
+### **Potential Next Steps (Not Yet Attempted)**
+
+1. **Explore react-native-gesture-handler**
+   - More reliable touch handling than PanResponder
+   - May have better priority/capture system
+   - Would require rewriting gesture logic
+
+2. **Different Component Hierarchy**
+   - Wrap entire card (chart + buttons) in parent View
+   - PanResponder on parent, check if touch is within chart bounds
+   - Manually prevent button interaction during chart touch
+
+3. **Explicit z-index Styling**
+   - React Native doesn't officially support z-index
+   - But elevation (Android) and zIndex (iOS) might help
+   - Worth trying as last resort
+
+4. **Debug Touch Event Flow**
+   - Add extensive logging to see exact touch event sequence
+   - Confirm which component receives touch first
+   - Measure timing between button press and PanResponder
+
+5. **Disable Buttons During Chart Interaction**
+   - Pass `disabled` prop to TouchableOpacity buttons
+   - Control from parent component state
+   - More explicit than `isGestureActive` check
+
+---
+
+### **Lessons Learned**
+
+1. React Native's touch event system is more complex than expected
+2. PanResponder vs TouchableOpacity priority is unpredictable
+3. Layout solutions (margins, overlays) don't solve touch routing
+4. State-based solutions (locking, blocking) fail if timing is wrong
+5. Multiple simultaneous fixes don't work if root cause is architectural
+
+**Time Investment:** 6+ hours of debugging, 6 different approaches, 0 solutions
+
+**Recommendation:** Consider this a known limitation until react-native-gesture-handler investigation or complete architecture redesign.
 
 ---
 
