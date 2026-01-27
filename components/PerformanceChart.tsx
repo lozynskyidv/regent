@@ -355,7 +355,10 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
         const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
         const touchX = x - CHART_PADDING_HORIZONTAL;
         
-        const fractionalPos = (touchX / effectiveWidth) * (chartPoints.length - 1);
+        // Clamp touchX to valid chart boundaries (prevent dot going outside)
+        const clampedTouchX = Math.max(0, Math.min(touchX, effectiveWidth));
+        
+        const fractionalPos = (clampedTouchX / effectiveWidth) * (chartPoints.length - 1);
         const clampedFractional = Math.max(0, Math.min(fractionalPos, chartPoints.length - 1));
         const snappedIndex = Math.round(clampedFractional);
         
@@ -374,7 +377,10 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
         const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
         const touchX = x - CHART_PADDING_HORIZONTAL;
         
-        const fractionalPos = (touchX / effectiveWidth) * (chartPoints.length - 1);
+        // Clamp touchX to valid chart boundaries (prevent dot going outside)
+        const clampedTouchX = Math.max(0, Math.min(touchX, effectiveWidth));
+        
+        const fractionalPos = (clampedTouchX / effectiveWidth) * (chartPoints.length - 1);
         const clampedFractional = Math.max(0, Math.min(fractionalPos, chartPoints.length - 1));
         const snappedIndex = Math.round(clampedFractional);
         
