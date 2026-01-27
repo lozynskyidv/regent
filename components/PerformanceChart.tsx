@@ -4,7 +4,8 @@
  */
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Platform, UIManager, Animated, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, Platform, UIManager, Animated } from 'react-native';
+import { Gesture, GestureDetector, TouchableOpacity } from 'react-native-gesture-handler';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { NetWorthSnapshot, Currency } from '../types';
@@ -28,8 +29,14 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   const [timeRange, setTimeRange] = useState<TimeRange>('1M');
   const chartOpacity = useRef(new Animated.Value(1)).current;
   const metricsOpacity = useRef(new Animated.Value(1)).current;
+  
+  // FIX #3: React Native Animated (stable, no crashes)
+  const dotX = useRef(new Animated.Value(0)).current;
+  const dotY = useRef(new Animated.Value(0)).current;
   const dotOpacity = useRef(new Animated.Value(0)).current;
   const dotScale = useRef(new Animated.Value(0.8)).current;
+  const [dotPosition, setDotPosition] = useState<{ x: number; y: number } | null>(null);
+  
   const [selectedPointIndex, setSelectedPointIndex] = useState<number | null>(null);
   const [fractionalPosition, setFractionalPosition] = useState<number | null>(null);
   const [displayedValue, setDisplayedValue] = useState<number>(currentNetWorth);
@@ -38,7 +45,6 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   const animatedChange = useRef(new Animated.Value(0)).current;
   const gestureStartRef = useRef<{ x: number; y: number } | null>(null);
   
-  // 🐛 DEBUG: Track last touch position for visual debugging
   const [isGestureActive, setIsGestureActive] = useState(false);
   const [lockedDataPoints, setLockedDataPoints] = useState<number[] | null>(null);
   
@@ -175,9 +181,14 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
     return { chartData, isDay1 };
   }, [snapshots, currentNetWorth, timeRange]);
 
-  // Calculate performance metrics
+  // Single source of truth - simplified data flow
   const dataPoints = useMemo(() => chartData.datasets[0].data, [chartData]);
-  const activeDataPoints = isGestureActive && lockedDataPoints ? lockedDataPoints : dataPoints;
+  
+  // Single activeDataPoints calculation (no multiple sources)
+  const activeDataPoints = useMemo(() => {
+    return isGestureActive && lockedDataPoints ? lockedDataPoints : dataPoints;
+  }, [isGestureActive, lockedDataPoints, dataPoints]);
+  
   const firstValue = activeDataPoints[0];
   
   const displayIndex = selectedPointIndex !== null ? selectedPointIndex : activeDataPoints.length - 1;
@@ -190,8 +201,9 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
     : '0.0';
   const isPositive = performanceChange >= 0;
 
+  // FIX #1 & #4: chartPoints calculation WITHOUT causing circular dependency
   const { linePath, gradientPath, chartPoints } = useMemo(() => {
-    const points = isGestureActive && lockedDataPoints ? lockedDataPoints : dataPoints;
+    const points = activeDataPoints;
     if (points.length === 0) return { linePath: '', gradientPath: '', chartPoints: [] };
 
     const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
@@ -230,92 +242,130 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
     const gradientPath = `${linePath} L ${calculatedPoints[calculatedPoints.length - 1].x},${CHART_HEIGHT} L ${calculatedPoints[0].x},${CHART_HEIGHT} Z`;
 
     return { linePath, gradientPath, chartPoints: calculatedPoints };
-  }, [dataPoints, lockedDataPoints, isGestureActive, screenWidth]);
+  }, [activeDataPoints, screenWidth]);
 
-  // Calculate dot position from fractional index
-  const dotPosition = useMemo(() => {
-    if (fractionalPosition === null || chartPoints.length === 0) return null;
-
-    const clampedPosition = Math.max(0, Math.min(fractionalPosition, chartPoints.length - 1));
+  // Update dot position when fractional position changes
+  useEffect(() => {
+    console.log('💎 useEffect ENTRY - fractionalPosition:', fractionalPosition);
+    console.log('💎 chartPoints.length:', chartPoints.length);
     
-    // Get surrounding points for interpolation
-    const lowerIndex = Math.floor(clampedPosition);
-    const upperIndex = Math.ceil(clampedPosition);
-    const fraction = clampedPosition - lowerIndex;
-
-    if (lowerIndex === upperIndex) {
-      // Exact point
-      return chartPoints[lowerIndex];
-    }
-
-    // Interpolate between two points
-    const lowerPoint = chartPoints[lowerIndex];
-    const upperPoint = chartPoints[upperIndex];
-    
-    return {
-      x: lowerPoint.x + (upperPoint.x - lowerPoint.x) * fraction,
-      y: lowerPoint.y + (upperPoint.y - lowerPoint.y) * fraction,
-      value: lowerPoint.value + (upperPoint.value - lowerPoint.value) * fraction,
-    };
-  }, [fractionalPosition, chartPoints]);
-
-  // PanResponder for touch interaction
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onStartShouldSetPanResponderCapture: () => true,
-      onMoveShouldSetPanResponderCapture: () => true,
-      onPanResponderTerminationRequest: () => false,
+    if (fractionalPosition !== null && chartPoints.length > 0) {
+      const clampedPosition = Math.max(0, Math.min(fractionalPosition, chartPoints.length - 1));
+      const lowerIndex = Math.floor(clampedPosition);
+      const upperIndex = Math.min(Math.ceil(clampedPosition), chartPoints.length - 1);
+      const fraction = clampedPosition - lowerIndex;
+      console.log('💎 Indices:', { lowerIndex, upperIndex });
       
-      onPanResponderGrant: (evt) => {
+      const lowerPoint = chartPoints[lowerIndex];
+      const upperPoint = chartPoints[upperIndex];
+      
+      if (!lowerPoint || !upperPoint) {
+        console.warn('⚠️ Points missing:', { lowerIndex, upperIndex, chartPointsLength: chartPoints.length });
+        return;
+      }
+      
+      const targetX = lowerPoint.x + (upperPoint.x - lowerPoint.x) * fraction;
+      const targetY = lowerPoint.y + (upperPoint.y - lowerPoint.y) * fraction;
+      console.log('💎 Target:', { targetX, targetY });
+      
+      setDotPosition({ x: targetX, y: targetY });
+      
+      console.log('💎 Starting animations...');
+      Animated.parallel([
+        Animated.spring(dotX, {
+          toValue: targetX,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 10,
+        }),
+        Animated.spring(dotY, {
+          toValue: targetY,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 10,
+        }),
+        Animated.spring(dotOpacity, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 10,
+        }),
+        Animated.spring(dotScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 100,
+          friction: 10,
+        }),
+      ]).start();
+      console.log('💎 Animations complete - EXIT');
+    } else {
+      console.log('💎 Hiding dot');
+      setDotPosition(null);
+      Animated.parallel([
+        Animated.timing(dotOpacity, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(dotScale, {
+          toValue: 0.8,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+      console.log('💎 Hide complete - EXIT');
+    }
+  }, [fractionalPosition, chartPoints]); // chartPoints added to deps
+
+  // Pan gesture - NO refs in worklets (prevents native crashes)
+  const panGesture = useMemo(() => {
+    return Gesture.Pan()
+      .onStart((event) => {
+        console.log('🎯 Gesture onStart - ENTRY');
         onChartTouchStart?.();
         
-        setIsGestureActive(true);
+        // Lock current data
         setLockedDataPoints(dataPoints);
+        setIsGestureActive(true);
         
-        gestureStartRef.current = {
-          x: evt.nativeEvent.pageX,
-          y: evt.nativeEvent.pageY
-        };
+        console.log('🎯 chartPoints.length:', chartPoints.length);
+        if (chartPoints.length === 0) return;
         
-        const x = evt.nativeEvent.locationX;
+        const x = event.x;
         const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
         const touchX = x - CHART_PADDING_HORIZONTAL;
-        const fractionalPos = (touchX / effectiveWidth) * (dataPoints.length - 1);
-        const clampedFractional = Math.max(0, Math.min(fractionalPos, dataPoints.length - 1));
+        
+        const fractionalPos = (touchX / effectiveWidth) * (chartPoints.length - 1);
+        const clampedFractional = Math.max(0, Math.min(fractionalPos, chartPoints.length - 1));
         const snappedIndex = Math.round(clampedFractional);
         
-        if (snappedIndex >= 0) {
+        console.log('🎯 Setting indices:', { snappedIndex, clampedFractional });
+        if (snappedIndex >= 0 && snappedIndex < chartPoints.length) {
           setSelectedPointIndex(snappedIndex);
           setFractionalPosition(clampedFractional);
         }
-      },
-      
-      onPanResponderMove: (evt) => {
-        const x = evt.nativeEvent.locationX;
+        console.log('🎯 onStart - EXIT');
+      })
+      .onUpdate((event) => {
+        if (chartPoints.length === 0) return;
+        
+        const x = event.x;
         const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
         const touchX = x - CHART_PADDING_HORIZONTAL;
-        const activeLength = lockedDataPoints ? lockedDataPoints.length : dataPoints.length;
-        const fractionalPos = (touchX / effectiveWidth) * (activeLength - 1);
-        const clampedFractional = Math.max(0, Math.min(fractionalPos, activeLength - 1));
+        
+        const fractionalPos = (touchX / effectiveWidth) * (chartPoints.length - 1);
+        const clampedFractional = Math.max(0, Math.min(fractionalPos, chartPoints.length - 1));
         const snappedIndex = Math.round(clampedFractional);
         
-        if (snappedIndex >= 0) {
+        if (snappedIndex >= 0 && snappedIndex < chartPoints.length) {
           setFractionalPosition(clampedFractional);
-          
-          if (snappedIndex !== selectedPointIndex) {
-            setSelectedPointIndex(snappedIndex);
-          }
+          setSelectedPointIndex(snappedIndex);
         }
-      },
-      
-      onPanResponderRelease: () => {
+      })
+      .onEnd(() => {
         onChartTouchEnd?.();
-        
         setIsGestureActive(false);
         setLockedDataPoints(null);
-        gestureStartRef.current = null;
         
         Animated.timing(metricsOpacity, {
           toValue: 0.6,
@@ -330,18 +380,16 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
             useNativeDriver: true,
           }).start();
         });
-      },
-      
-      onPanResponderTerminate: () => {
+      })
+      .onFinalize(() => {
         onChartTouchEnd?.();
         setIsGestureActive(false);
         setLockedDataPoints(null);
-        gestureStartRef.current = null;
         setSelectedPointIndex(null);
         setFractionalPosition(null);
-      },
-    })
-  ).current;
+      });
+  }, [dataPoints, chartPoints, screenWidth, onChartTouchStart, onChartTouchEnd, metricsOpacity]);
+  // Uses dataPoints and chartPoints directly from closure (rememos when they change)
 
   // Animate value changes
   useEffect(() => {
@@ -360,39 +408,6 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
       }),
     ]).start();
   }, [displayValue, performanceChange]);
-
-  // Animate dot appearance/disappearance
-  useEffect(() => {
-    if (fractionalPosition !== null) {
-      Animated.parallel([
-        Animated.spring(dotOpacity, {
-          toValue: 1,
-          useNativeDriver: true,
-          tension: 200,
-          friction: 10,
-        }),
-        Animated.spring(dotScale, {
-          toValue: 1,
-          useNativeDriver: true,
-          tension: 200,
-          friction: 10,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(dotOpacity, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(dotScale, {
-          toValue: 0.8,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [fractionalPosition]);
 
   // Listen to animated values
   useEffect(() => {
@@ -464,49 +479,46 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
       </Animated.View>
 
       {/* Chart */}
-      <Animated.View style={[styles.chartContainer, { opacity: chartOpacity }]}>
-        <View style={styles.svgContainer}>
-          <Svg width={screenWidth} height={CHART_HEIGHT}>
-            <Defs>
-              <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                <Stop offset="0%" stopColor="rgb(71, 85, 105)" stopOpacity={0.15} />
-                <Stop offset="100%" stopColor="rgb(71, 85, 105)" stopOpacity={0} />
-              </LinearGradient>
-            </Defs>
-            
-            <Path d={gradientPath} fill="url(#chartGradient)" />
-            <Path
-              d={linePath}
-              stroke="rgb(71, 85, 105)"
-              strokeWidth={2.5}
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </Svg>
+      <GestureDetector gesture={panGesture}>
+        <Animated.View style={[styles.chartContainer, { opacity: chartOpacity }]}>
+          <View style={styles.svgContainer}>
+            <Svg width={screenWidth} height={CHART_HEIGHT}>
+              <Defs>
+                <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
+                  <Stop offset="0%" stopColor="rgb(71, 85, 105)" stopOpacity={0.15} />
+                  <Stop offset="100%" stopColor="rgb(71, 85, 105)" stopOpacity={0} />
+                </LinearGradient>
+              </Defs>
+              
+              <Path d={gradientPath} fill="url(#chartGradient)" />
+              <Path
+                d={linePath}
+                stroke="rgb(71, 85, 105)"
+                strokeWidth={2.5}
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
 
-          {dotPosition && (
-            <Animated.View
-              style={[
-                styles.indicatorDot,
-                {
-                  left: dotPosition.x - 6,
-                  top: dotPosition.y - 6,
-                  opacity: dotOpacity,
-                  transform: [{ scale: dotScale }],
-                },
-              ]}
-              pointerEvents="none"
-            />
-          )}
-          
-          <View 
-            style={StyleSheet.absoluteFill}
-            onStartShouldSetResponder={() => true}
-            {...panResponder.panHandlers} 
-          />
-        </View>
-      </Animated.View>
+            {/* Dot indicator - FIX #3: Using React Native Animated (stable) */}
+            {dotPosition && (
+              <Animated.View
+                style={[
+                  styles.indicatorDot,
+                  {
+                    left: dotPosition.x - 6,
+                    top: dotPosition.y - 6,
+                    opacity: dotOpacity,
+                    transform: [{ scale: dotScale }],
+                  },
+                ]}
+                pointerEvents="none"
+              />
+            )}
+          </View>
+        </Animated.View>
+      </GestureDetector>
 
       {/* Time range selector */}
       <View style={styles.timeRangeContainer}>
