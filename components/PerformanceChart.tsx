@@ -56,7 +56,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   const fallbackWidth = Dimensions.get('window').width - (Spacing.lg * 2);
   const [chartContainerWidth, setChartContainerWidth] = useState(fallbackWidth);
   
-  const CHART_HEIGHT = 120;
+  const CHART_HEIGHT = 150; // Match web prototype (was 120)
   const CHART_PADDING_HORIZONTAL = 12;
   const CHART_PADDING_VERTICAL = 20;
 
@@ -505,15 +505,15 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
             <Svg width={chartContainerWidth} height={CHART_HEIGHT}>
               <Defs>
                 <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                  <Stop offset="0%" stopColor="rgb(71, 85, 105)" stopOpacity={0.15} />
-                  <Stop offset="100%" stopColor="rgb(71, 85, 105)" stopOpacity={0} />
+                  <Stop offset="0%" stopColor="rgb(100, 116, 139)" stopOpacity={0.15} />
+                  <Stop offset="100%" stopColor="rgb(100, 116, 139)" stopOpacity={0} />
                 </LinearGradient>
               </Defs>
               
               <Path d={gradientPath} fill="url(#chartGradient)" />
               <Path
                 d={linePath}
-                stroke="rgb(71, 85, 105)"
+                stroke="rgb(100, 116, 139)"
                 strokeWidth={2.5}
                 fill="none"
                 strokeLinecap="round"
@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   metricsContainer: {
-    marginBottom: Spacing.md,
+    marginBottom: 20, // Match web prototype mb-5 (was Spacing.md = 16px)
   },
   changeContainer: {
     flexDirection: 'row',
@@ -618,20 +618,22 @@ const styles = StyleSheet.create({
     color: Colors.mutedForeground,
   },
   chartContainer: {
-    height: 120,
-    marginBottom: Spacing.lg,
+    height: 150, // Match web prototype (was 120)
+    marginLeft: -Spacing.md, // Bleed to card edges (cancels card padding)
+    marginRight: -Spacing.md, // Bleed to card edges (cancels card padding)
+    marginBottom: 16, // Clean 16px gap to buttons (was Spacing.lg = 24px)
     overflow: 'hidden',
   },
   svgContainer: {
     position: 'relative',
-    height: 120,
+    height: 150, // Match web prototype (was 120)
   },
   timeRangeContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 4,
-    marginTop: Spacing.md,
+    // No marginTop - spacing comes from chartContainer marginBottom
     flexWrap: 'wrap',
   },
   timeRangeButton: {
@@ -660,7 +662,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   dotContainer: {
-    height: 120,
+    height: 150, // Match web prototype (was 120)
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
