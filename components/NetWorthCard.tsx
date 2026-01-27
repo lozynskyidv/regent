@@ -154,13 +154,13 @@ export default function NetWorthCard({ netWorth, currency, snapshots, onChartTou
     // Day 1 check: If we have fewer than 2 historical data points, show Day 1 state
     const isDay1 = sortedSnapshots.length < 2;
 
-    // Dynamic max points based on time range for better granularity
+    // Dynamic max points based on time range - optimal balance of detail vs. visual clarity
     const getMaxPoints = () => {
-      if (timeRange === '1M') return 30;
-      if (timeRange === '3M') return 45;
-      if (timeRange === '6M') return 60;
-      if (timeRange === '1Y') return 50;
-      return 100; // All - show more points for full history
+      if (timeRange === '1M') return 30;   // ~Daily granularity (30 points for 30 days)
+      if (timeRange === '3M') return 45;   // ~Every 2 days (45 points for 90 days)
+      if (timeRange === '6M') return 60;   // ~Every 3 days (60 points for 180 days)
+      if (timeRange === '1Y') return 52;   // ~Weekly granularity (52 weeks)
+      return 100; // All - sample for performance (could be years of data)
     };
     
     const maxPoints = getMaxPoints();
@@ -477,7 +477,7 @@ export default function NetWorthCard({ netWorth, currency, snapshots, onChartTou
         <Text style={styles.label}>NET WORTH</Text>
         
         <Text style={styles.mainValue}>
-          {formatCurrency(displayValue)}
+          {formatCurrency(selectedPointIndex !== null ? chartDisplayValue : displayValue)}
         </Text>
         
         {/* Show both absolute change and percentage together */}

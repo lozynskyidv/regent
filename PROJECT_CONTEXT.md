@@ -1,9 +1,33 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 27, 2026  
-**Version:** 0.9.5 (Merged Net Worth Card with Integrated Performance Chart)  
+**Version:** 0.9.6 (Privacy & UX Bug Fixes)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** Exclusive invite-only (replaced paid subscription)
+
+---
+
+## 🔐 LATEST: Privacy & UX Bug Fixes (v0.9.6 - January 27, 2026)
+
+**Critical privacy fix and chart scrubbing improvements**
+
+### **Privacy Fix (CRITICAL):**
+- 🔴 **Sign Out Data Leak:** User A signs out → User B signs in → User B sees User A's data
+- ✅ **Fixed:** Sign out now performs complete data wipe (auth, financial data, PIN, React state)
+- ✅ **Implementation:** Updated `signOut()` in DataContext to call `clearAllData()` and clear SecureStore
+- ✅ **Impact:** Prevents privacy violations when multiple users share the same device
+
+### **UX Bug Fixes:**
+- ✅ **Chart Scrubbing Value:** Main net worth number now updates when dragging on chart
+  - **Issue:** Only change metrics updated, main value stayed frozen
+  - **Fix:** Display `chartDisplayValue` during scrubbing instead of static `displayValue`
+- ✅ **Optimal Data Density:** Balanced sampling for smooth charts without overcrowding
+  - 1M: 30 points (~daily), 3M: 45 points (~every 2 days), 6M: 60 points (~every 3 days)
+  - 1Y: 52 points (~weekly), All: 100 points (sampled)
+
+### **Files Changed:**
+- `contexts/DataContext.tsx` - Complete data wipe on sign out
+- `components/NetWorthCard.tsx` - Fixed scrubbing value display, optimized data sampling
 
 ---
 

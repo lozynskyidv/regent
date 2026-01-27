@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.9.5 (Merged Net Worth Card with Integrated Performance Chart)  
+**Version:** 0.9.6 (Privacy & UX Bug Fixes)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -67,6 +67,27 @@ npx expo start --clear
 ---
 
 ## 🎯 Recent Changes (January 2026)
+
+### **🔐 Privacy & UX Bug Fixes** ✅ PRODUCTION READY (v0.9.6 - January 27, 2026)
+
+**Critical privacy fix and chart scrubbing improvements**
+
+**Privacy Fix:**
+- 🔴 **CRITICAL:** Sign out now clears ALL data (financial data + PIN)
+- **Issue:** User A signs out → User B signs in → User B sees User A's data
+- **Fix:** Complete data wipe on sign out (auth, financial data, PIN, React state)
+- **Impact:** Prevents data leakage when multiple users share the same device
+
+**UX Bug Fixes:**
+- ✅ **Chart Scrubbing:** Main net worth number now updates when dragging on chart
+- ✅ **Optimal Data Density:** Balanced data points (30-100) for smooth charts without overcrowding
+
+**Technical Changes:**
+- Updated `signOut()` to call `clearAllData()` and clear PIN from SecureStore
+- Fixed net worth display to show historical value during scrubbing: `selectedPointIndex !== null ? chartDisplayValue : displayValue`
+- Optimized data sampling: 1M=30pts, 3M=45pts, 6M=60pts, 1Y=52pts, All=100pts
+
+---
 
 ### **📊 Merged Net Worth Card with Integrated Performance** ✅ PRODUCTION READY (v0.9.5 - January 27, 2026)
 
