@@ -11,7 +11,6 @@ import NetWorthCard from '../components/NetWorthCard';
 import AssetsCard from '../components/AssetsCard';
 import LiabilitiesCard from '../components/LiabilitiesCard';
 import ShareInviteCard from '../components/ShareInviteCard';
-import { PerformanceChart } from '../components/PerformanceChart';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getSupabaseClient } from '../utils/supabase';
 
@@ -305,29 +304,17 @@ export default function HomeScreen() {
         ) : (
           /* ===== NORMAL STATE - Show all cards ===== */
           <>
-            {/* Net Worth Card */}
-            <View style={{ marginBottom: Spacing.md }}>
-              <NetWorthCard 
-                key={animationKey}
-                netWorth={netWorth} 
-                currency={primaryCurrency}
-                snapshots={snapshots}
-              />
-            </View>
-
-            {/* Additional spacing for breathing room between hero cards */}
-            <View style={{ height: Spacing.sm }} />
-
-            {/* Performance Chart - Position after Net Worth, before Share Invite */}
-            <PerformanceChart
-              snapshots={snapshots}
-              currentNetWorth={netWorth}
+            {/* Net Worth Card (with integrated performance chart) */}
+            <NetWorthCard 
+              key={animationKey}
+              netWorth={netWorth} 
               currency={primaryCurrency}
+              snapshots={snapshots}
               onChartTouchStart={() => setScrollEnabled(false)}
               onChartTouchEnd={() => setScrollEnabled(true)}
             />
 
-            {/* Share Invite Card - Positioned after Performance Chart */}
+            {/* Share Invite Card */}
             {supabaseUser?.id && (
               <ShareInviteCard userId={supabaseUser.id} />
             )}

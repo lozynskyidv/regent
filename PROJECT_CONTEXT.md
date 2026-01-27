@@ -1,27 +1,49 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 27, 2026  
-**Version:** 0.9.4 (Custom SVG Performance Chart)  
+**Version:** 0.9.5 (Merged Net Worth Card with Integrated Performance Chart)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** Exclusive invite-only (replaced paid subscription)
 
 ---
 
-## ✅ PERFORMANCE CHART: PRODUCTION READY (January 27, 2026)
+## ✅ NET WORTH CARD: PRODUCTION READY (January 27, 2026)
 
-**Custom SVG chart with instant touch response and pixel-perfect accuracy** 🎉
+**Merged Net Worth + Performance Chart into single hero card** 🎉
 
-All issues resolved:
-- ✅ Native crash fixed (runOnJS pattern for gesture callbacks)
-- ✅ Touch coordination fixed (gesture-handler Gesture.Pan API)
-- ✅ Instant dot appearance (0ms response, bypasses throttle on first tap)
-- ✅ Smooth 60fps tracking (throttled updates during drag)
-- ✅ Custom SVG with gradient fill (matches web prototype)
-- ✅ **Accurate boundary handling (onLayout measurement ensures dot stays within chart)**
+**Major UX Overhaul (v0.9.5):**
+- ✅ **Eliminated Redundancy:** Merged separate Net Worth and Performance Chart cards into one
+- ✅ **Unified Information:** All metrics (value, change, %, period) displayed together at top
+- ✅ **No Contradiction:** Everything synced to selected time range (no more YTD vs 1M confusion)
+- ✅ **Added Time Ranges:** 6M (6 months) and All (complete history)
+- ✅ **Removed YTD:** Eliminated confusing Year-to-Date option
+- ✅ **Haptic Feedback:** iOS tactile response on button taps and chart scrubbing
+- ✅ **Day 1 State:** Beautiful onboarding for new users (dot + message)
 
-**Technical Implementation:** Worklet-based gesture handling with runOnJS bridging, direct setValue for instant appearance, fractional position interpolation for smooth tracking, onLayout-based coordinate system matching.
+**Card Structure:**
+```
+NET WORTH
+£263,020 (animated count-up)
+↑ £89,987 (+52.0%)     ← Absolute + percentage together
+All time               ← Time period label
 
-See `PERFORMANCE_CHART_FIX.md` for complete details.
+[Interactive Chart]    ← Custom SVG with gradient fill
+
+1M | 3M | 6M | 1Y | All  ← 5 time range options
+```
+
+**Technical Implementation:**
+- Custom SVG with gradient fill (full control over rendering)
+- Gesture.Pan() with runOnJS for worklet-to-JS thread bridging
+- Haptic feedback via expo-haptics (Light impact for taps, Selection for scrubbing)
+- Direct setValue() for instant dot appearance (0ms response)
+- Fractional position interpolation for smooth 60fps tracking
+- Dynamic data sampling (30 points for 1M, 100 points for All)
+
+**Files Changed:**
+- `components/NetWorthCard.tsx` - Merged component (now includes chart)
+- `components/PerformanceChart.tsx` - Deleted (functionality moved to NetWorthCard)
+- `app/home.tsx` - Updated to use single merged component
 
 ---
 
@@ -36,7 +58,7 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Authentication** (Google OAuth + Email/Password - fully functional with Supabase)
 - **Auth screen** (Face ID/PIN onboarding, fully functional)
 - **Empty State Onboarding** (Beautiful hero card with NYC skyline for new users)
-- **Home Screen** (Net Worth with count-up animation + YTD % + PerformanceChart + ShareInviteCard + Assets + Liabilities + Pull-to-Refresh)
+- **Home Screen** (Merged Net Worth Card + ShareInviteCard + Assets + Liabilities + Pull-to-Refresh)
 - **Portfolio Tracking** (Live prices for stocks, ETFs, crypto, commodities via Twelve Data API)
 - **Smart Caching** (1 hour for stocks/ETFs, 30 min for crypto - optimized for 800 API calls/day free tier)
 - **Persistent Timestamps** (Accurate "Updated X ago" with hybrid relative/absolute time display)
@@ -50,29 +72,27 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
 - **Currency Switcher** (GBP/USD/EUR - **symbol-only, NO value conversion**)
 - **Settings Screen** (currency selection, sign out, GDPR-compliant delete account, test data generator)
 - **Cloud Backups** (encrypted with PIN, stored in Supabase)
-- **Net Worth Card (ENHANCED!)** (Hero card with contextual YTD %):
-  - ✅ Large prominent net worth display with count-up animation
-  - ✅ YTD percentage change (↑ 21.2% this year)
+- **Net Worth Card (MERGED!)** (Single hero card with integrated performance chart):
+  - ✅ Large prominent net worth display with count-up animation (0 → value)
+  - ✅ Unified metrics display (absolute + percentage together)
+  - ✅ Dynamic time period context (matches selected range)
   - ✅ Color-coded feedback (green for gains, red for losses)
-  - ✅ Calculates from earliest snapshot of current calendar year
-  - ✅ Graceful handling of empty state (Day 1 users)
-- **Performance Chart** (Custom SVG with instant touch response):
-  - ✅ Custom SVG with gradient fill (full control, matches web prototype)
+  - ✅ Custom SVG chart with gradient fill (full control, matches web prototype)
   - ✅ Smooth bezier curves (cubic interpolation)
-  - ✅ BitBox-style layout (value + change + percentage + time period)
   - ✅ **Instant dot appearance** (0ms response on tap, bypasses throttle)
   - ✅ **Smooth 60fps tracking** (throttled updates during drag)
+  - ✅ **Haptic feedback** (iOS tactile response on interactions)
   - ✅ Interactive scrubbing (tap + drag to see historical values)
-  - ✅ Time range selector (1M, 3M, YTD, 1Y with fade transitions)
-  - ✅ High-resolution data (30-50 points per time range)
-  - ✅ Precise date labels (day + month for clarity)
-  - ✅ Day 1 empty state (pixel-perfect match to web prototype)
+  - ✅ Time range selector (1M, 3M, 6M, 1Y, All with fade transitions)
+  - ✅ High-resolution data (30-100 points per time range)
+  - ✅ Precise date labels (day + month for 1M-1Y, month + year for All)
+  - ✅ Day 1 empty state (dot + "Performance tracking begins today")
   - ✅ Historical data support (2+ years of snapshots)
   - ✅ Test data generator (Settings → Generate Performance Data)
   - ✅ ScrollView conflict resolved (dynamic scroll disabling)
-  - ✅ Animated metrics (smooth number counting with spring physics)
+  - ✅ No redundancy or contradictions (everything in sync)
   
-  **Technical:** Gesture.Pan() with runOnJS for thread coordination, direct setValue for instant appearance, fractional position interpolation for smooth movement, data locking during gestures.
+  **Technical:** Gesture.Pan() with runOnJS for thread coordination, direct setValue for instant appearance, fractional position interpolation for smooth movement, expo-haptics for tactile feedback, data locking during gestures.
 - **ShareInviteCard** (Repositioned after PerformanceChart):
   - ✅ Moved from before PerformanceChart to after PerformanceChart (better UX flow)
   - ✅ Immediate appearance (removed 3-second loading delay, shows loading state instead)

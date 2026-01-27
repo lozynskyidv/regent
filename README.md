@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.9.4 (Custom SVG Performance Chart)  
+**Version:** 0.9.5 (Merged Net Worth Card with Integrated Performance Chart)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** Exclusive invite-only (replaced paid subscription model)
@@ -51,23 +51,63 @@ npx expo start --clear
 ✅ **Viral Growth:** Each user gets 5 invite codes to share  
 ✅ **Authentication:** Google OAuth, Email/Password, Face ID/PIN, Supabase Auth  
 ✅ **Empty State Onboarding:** Beautiful hero card for new users with NYC skyline  
-✅ **Home Screen:** Net Worth (with count-up animation), Assets, Liabilities cards + Invite Share Card  
+✅ **Net Worth Card (Merged):** Hero card with integrated performance chart, count-up animation, interactive scrubbing  
+✅ **Time Ranges:** 1M, 3M, 6M, 1Y, All (dynamic data sampling, 30-100 points)  
+✅ **Haptic Feedback:** iOS tactile feedback on time range switches and chart scrubbing  
 ✅ **Portfolio Tracking:** Live prices for stocks, ETFs, crypto, commodities via Twelve Data API  
 ✅ **Pull-to-Refresh:** User-triggered price updates with smart caching + timestamp tracking  
-✅ **Animations:** Smooth net worth count-up (0 → value) on load/refresh  
+✅ **Animations:** Smooth net worth count-up (0 → value) on load/refresh, spring physics  
 ✅ **CRUD:** Add/Edit/Delete assets & liabilities  
 ✅ **Detail Screens:** Full lists with swipe gestures  
 ✅ **Modals:** 2-step flow (type picker → specific form)  
 ✅ **Settings:** Currency switcher, Sign Out, GDPR-compliant Delete Account, Test Data Generator  
-✅ **Charts:** Horizontal bar charts (category breakdown)  
-✅ **Performance Chart:** Interactive line chart with scrubbing gesture, animated metrics, time ranges  
+✅ **Charts:** Horizontal bar charts (category breakdown), interactive performance chart  
 ✅ **Data:** AsyncStorage persistence (auto-save), encrypted cloud backups, historical snapshots
 
 ---
 
 ## 🎯 Recent Changes (January 2026)
 
-### **📊 Custom SVG Performance Chart** ✅ PRODUCTION READY (v0.9.4 - January 27, 2026)
+### **📊 Merged Net Worth Card with Integrated Performance** ✅ PRODUCTION READY (v0.9.5 - January 27, 2026)
+
+**Single hero card combining net worth display with interactive performance chart**
+
+**Major UX Improvement:**
+- ✅ **Eliminated Redundancy:** Removed separate Net Worth and Performance Chart cards
+- ✅ **Unified Metrics:** All information (value, change, percentage, period) in one place
+- ✅ **No Contradiction:** Everything synced to selected time range (no YTD vs 1M confusion)
+- ✅ **Added Time Ranges:** 6M (6 months) and All (complete history)
+- ✅ **Removed YTD:** Eliminated confusing Year-to-Date option
+- ✅ **Haptic Feedback:** iOS tactile response on interactions
+
+**New Card Structure:**
+```
+NET WORTH
+£263,020
+↑ £89,987 (+52.0%)    ← Both absolute and percentage together
+All time              ← Time period label
+
+[Interactive Chart]   ← Custom SVG with gradient fill
+
+1M | 3M | 6M | 1Y | All  ← 5 time range options
+```
+
+**Benefits:**
+- Reduces visual clutter (2 cards → 1 hero card)
+- Increases information density without complexity
+- Matches modern fintech UX patterns (Robinhood, Coinbase)
+- Better visual hierarchy (clear focal point)
+- Faster comprehension (everything in one glance)
+
+**Technical Implementation:**
+- Merged `NetWorthCard.tsx` and `PerformanceChart.tsx`
+- Deleted old `PerformanceChart.tsx` component
+- Added `expo-haptics` for iOS tactile feedback
+- Updated home screen to use single merged component
+
+---
+
+### **📊 Custom SVG Performance Chart** ✅ COMPLETE (v0.9.4 - January 27, 2026)
 
 **Interactive chart with instant touch response and smooth tracking**
 
@@ -402,14 +442,14 @@ NET WORTH
 
 ---
 
-### 3. Performance Chart
-**Goal:** Net worth over time visualization  
-**What to build:**
-- Historical snapshots table in Supabase
-- Line chart component (react-native-chart-kit)
-- Time range selector (1M, 3M, 6M, 1Y, All)
-
-**Current state:** No historical tracking
+### 3. Performance Chart ✅ COMPLETE
+**Status:** Fully implemented and merged into Net Worth Card  
+**Features:**
+- ✅ Historical snapshots stored in AsyncStorage
+- ✅ Custom SVG line chart with gradient fill
+- ✅ Time range selector (1M, 3M, 6M, 1Y, All)
+- ✅ Interactive scrubbing with haptic feedback
+- ✅ Dynamic data sampling (30-100 points)
 
 ---
 
