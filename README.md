@@ -103,62 +103,23 @@ npx expo start --clear
 </Svg>
 ```
 
-**CRITICAL UNSOLVED BUG:**
+**CRITICAL BUGS - ALL FIXED:** ✅
 
-⚠️ **Touch Event Fall-Through - Chart Morphing Issue**
+### ✅ **Touch Event Fall-Through** (FIXED - January 27, 2026)
+**Solution:** Migrated from `PanResponder` to `react-native-gesture-handler`'s `Gesture.Pan()` API with `TouchableOpacity` from gesture-handler library. This ensures proper touch coordination between gestures and buttons.
 
-**Symptom:** When tapping on the chart line (any time range except 1M), the entire chart shape changes dramatically while showing scrubbing data for a specific date.
+### ✅ **Native Crash on Chart Tap** (FIXED - January 27, 2026)
+**Problem:** App crashed instantly when tapping chart (no JS error logs, native bridge crash)
 
-**Example:**
-- View 3M chart showing "Last 3 months" with gradual upward trend
-- Tap on chart line
-- Label correctly changes to specific date (e.g., "13 Dec")
-- BUT: Entire chart line morphs to completely different shape (different data)
+**Root Cause:** `Gesture.Pan()` callbacks are worklets (run on UI thread), but code was directly calling React setState and callbacks (JS thread operations) without proper bridging.
 
-**Root Cause (Confirmed):**
-1. Touch events fall through transparent overlay to time range buttons below
-2. `handleTimeRangeChange` is called (changes `timeRange` state)
-3. `chartData` useMemo recalculates with different time period data
-4. Chart displays NEW data even though user is trying to scrub CURRENT data
+**Solution:** Wrapped all JavaScript operations with `runOnJS()` from react-native-reanimated:
+- Added helper functions (`handleGestureStart`, `handleGestureUpdate`, etc.)
+- Wrapped all setState calls with `runOnJS(functionName)(args)`
+- Added explicit `'worklet'` annotations
+- Implemented throttling (16ms/~60fps) to prevent JS thread flooding
 
-**What We've Tried (All Failed):**
-
-1. **Negative Margin Removal** - Simplified layout, removed negative margins
-   - Result: Issue persisted
-
-2. **Transparent Overlay with PanResponder** - `StyleSheet.absoluteFill` over SVG
-   - Result: Touches still fell through
-
-3. **Multi-Layer Defense:**
-   - Block buttons during gesture (`if (isGestureActive) return`)
-   - Memoize dataPoints to prevent reference changes
-   - Add `onStartShouldSetResponder={() => true}` to overlay
-   - Result: Issue persisted
-
-4. **SVG pointerEvents="none"** - Make SVG transparent to touches
-   - Result: Issue persisted
-
-5. **Data Locking Mechanism** - Freeze data during gesture with `lockedDataPoints`
-   - Result: Issue persisted
-
-**Technical Details:**
-- The button blocking (`if (isGestureActive)`) should prevent this theoretically
-- But touches are reaching buttons BEFORE PanResponder can set `isGestureActive`
-- React Native's touch event system may prioritize TouchableOpacity over PanResponder
-- The z-index/layering of transparent overlay may not be working as expected
-
-**Current State:** UNRESOLVED after 6+ hours of debugging
-- Chart is functional for 1M time range (already selected, so button press has no effect)
-- All other time ranges (3M, YTD, 1Y) exhibit morphing behavior on tap
-- Code is clean and maintainable, but interaction is broken
-
-**Potential Next Steps:**
-- Consider wrapping entire chart in a parent View with PanResponder
-- Explore react-native-gesture-handler for more reliable touch capture
-- Add explicit z-index styling (though React Native doesn't officially support it)
-- Consider different component hierarchy/structure
-
-**Impact:** Blocks production readiness. Users cannot interact with historical data without triggering accidental time range changes.
+**Result:** Chart now works perfectly with smooth interactions, no crashes, and instant dot response.
 
 ---
 

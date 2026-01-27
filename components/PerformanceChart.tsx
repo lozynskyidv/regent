@@ -3,9 +3,10 @@
  * Custom SVG implementation with gradient fill and precise coordinate control
  */
 
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, Dimensions, Platform, UIManager, Animated } from 'react-native';
 import { Gesture, GestureDetector, TouchableOpacity } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated';
 import Svg, { Path, Defs, LinearGradient, Stop, Circle } from 'react-native-svg';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { NetWorthSnapshot, Currency } from '../types';
@@ -43,10 +44,13 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   const [displayedChange, setDisplayedChange] = useState<number>(0);
   const animatedValue = useRef(new Animated.Value(currentNetWorth)).current;
   const animatedChange = useRef(new Animated.Value(0)).current;
-  const gestureStartRef = useRef<{ x: number; y: number } | null>(null);
   
   const [isGestureActive, setIsGestureActive] = useState(false);
   const [lockedDataPoints, setLockedDataPoints] = useState<number[] | null>(null);
+  
+  // Throttle state to prevent flooding JS thread with updates
+  const lastUpdateTime = useRef(0);
+  const UPDATE_THROTTLE_MS = 16; // ~60fps max
   
   const screenWidth = Dimensions.get('window').width - (Spacing.lg * 2);
   const CHART_HEIGHT = 120;
@@ -244,6 +248,57 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
     return { linePath, gradientPath, chartPoints: calculatedPoints };
   }, [activeDataPoints, screenWidth]);
 
+  // Helper functions for gesture callbacks (must be defined in JS scope for runOnJS)
+  const handleGestureStart = useCallback(() => {
+    onChartTouchStart?.();
+    setLockedDataPoints(dataPoints);
+    setIsGestureActive(true);
+    lastUpdateTime.current = 0; // Reset throttle
+  }, [dataPoints, onChartTouchStart]);
+
+  const handleGestureUpdate = useCallback((snappedIndex: number, clampedFractional: number, timestamp: number) => {
+    // Throttle updates to prevent flooding JS thread
+    const timeSinceLastUpdate = timestamp - lastUpdateTime.current;
+    if (timeSinceLastUpdate < UPDATE_THROTTLE_MS) {
+      return; // Skip this update
+    }
+    
+    lastUpdateTime.current = timestamp;
+    setSelectedPointIndex(snappedIndex);
+    setFractionalPosition(clampedFractional);
+  }, []);
+
+  const handleGestureEnd = useCallback(() => {
+    console.log('🎯 handleGestureEnd');
+    onChartTouchEnd?.();
+    setIsGestureActive(false);
+    setLockedDataPoints(null);
+    
+    // Fade out metrics, reset selection, fade back in
+    Animated.timing(metricsOpacity, {
+      toValue: 0.6,
+      duration: 150,
+      useNativeDriver: true,
+    }).start(() => {
+      setSelectedPointIndex(null);
+      setFractionalPosition(null);
+      Animated.timing(metricsOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    });
+  }, [onChartTouchEnd, metricsOpacity]);
+
+  const handleGestureFinalize = useCallback(() => {
+    console.log('🎯 handleGestureFinalize');
+    onChartTouchEnd?.();
+    setIsGestureActive(false);
+    setLockedDataPoints(null);
+    setSelectedPointIndex(null);
+    setFractionalPosition(null);
+  }, [onChartTouchEnd]);
+
   // Update dot position when fractional position changes
   useEffect(() => {
     console.log('💎 useEffect ENTRY - fractionalPosition:', fractionalPosition);
@@ -317,18 +372,16 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
     }
   }, [fractionalPosition, chartPoints]); // chartPoints added to deps
 
-  // Pan gesture - NO refs in worklets (prevents native crashes)
+  // Pan gesture with runOnJS for all JS thread operations
   const panGesture = useMemo(() => {
     return Gesture.Pan()
       .onStart((event) => {
-        console.log('🎯 Gesture onStart - ENTRY');
-        onChartTouchStart?.();
+        'worklet'; // Explicit worklet annotation
         
-        // Lock current data
-        setLockedDataPoints(dataPoints);
-        setIsGestureActive(true);
+        // Start gesture on JS thread
+        runOnJS(handleGestureStart)();
         
-        console.log('🎯 chartPoints.length:', chartPoints.length);
+        // Perform calculations on UI thread (faster)
         if (chartPoints.length === 0) return;
         
         const x = event.x;
@@ -339,16 +392,17 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
         const clampedFractional = Math.max(0, Math.min(fractionalPos, chartPoints.length - 1));
         const snappedIndex = Math.round(clampedFractional);
         
-        console.log('🎯 Setting indices:', { snappedIndex, clampedFractional });
+        // Update state on JS thread (with timestamp for throttling)
         if (snappedIndex >= 0 && snappedIndex < chartPoints.length) {
-          setSelectedPointIndex(snappedIndex);
-          setFractionalPosition(clampedFractional);
+          runOnJS(handleGestureUpdate)(snappedIndex, clampedFractional, Date.now());
         }
-        console.log('🎯 onStart - EXIT');
       })
       .onUpdate((event) => {
+        'worklet'; // Explicit worklet annotation
+        
         if (chartPoints.length === 0) return;
         
+        // Perform calculations on UI thread (faster)
         const x = event.x;
         const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
         const touchX = x - CHART_PADDING_HORIZONTAL;
@@ -357,39 +411,25 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
         const clampedFractional = Math.max(0, Math.min(fractionalPos, chartPoints.length - 1));
         const snappedIndex = Math.round(clampedFractional);
         
+        // Update state on JS thread (with timestamp for throttling)
         if (snappedIndex >= 0 && snappedIndex < chartPoints.length) {
-          setFractionalPosition(clampedFractional);
-          setSelectedPointIndex(snappedIndex);
+          runOnJS(handleGestureUpdate)(snappedIndex, clampedFractional, Date.now());
         }
       })
       .onEnd(() => {
-        onChartTouchEnd?.();
-        setIsGestureActive(false);
-        setLockedDataPoints(null);
+        'worklet'; // Explicit worklet annotation
         
-        Animated.timing(metricsOpacity, {
-          toValue: 0.6,
-          duration: 150,
-          useNativeDriver: true,
-        }).start(() => {
-          setSelectedPointIndex(null);
-          setFractionalPosition(null);
-          Animated.timing(metricsOpacity, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }).start();
-        });
+        // End gesture on JS thread (includes animation sequence)
+        runOnJS(handleGestureEnd)();
       })
       .onFinalize(() => {
-        onChartTouchEnd?.();
-        setIsGestureActive(false);
-        setLockedDataPoints(null);
-        setSelectedPointIndex(null);
-        setFractionalPosition(null);
+        'worklet'; // Explicit worklet annotation
+        
+        // Finalize gesture on JS thread
+        runOnJS(handleGestureFinalize)();
       });
-  }, [dataPoints, chartPoints, screenWidth, onChartTouchStart, onChartTouchEnd, metricsOpacity]);
-  // Uses dataPoints and chartPoints directly from closure (rememos when they change)
+  }, [chartPoints, screenWidth, handleGestureStart, handleGestureUpdate, handleGestureEnd, handleGestureFinalize]);
+  // All JS operations now properly bridged via runOnJS
 
   // Animate value changes
   useEffect(() => {
