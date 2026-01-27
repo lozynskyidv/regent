@@ -100,8 +100,9 @@ Gesture.Pan()
 - **Instant Appearance:** Direct setValue() for dot opacity/scale (no animation delay)
 - **Smooth Tracking:** Fractional position interpolation provides smooth movement
 - **Performance:** Calculations on UI thread, state updates throttled to 60fps
+- **Accurate Boundaries:** onLayout measurement ensures dot stays within chart area
 
-**Result:** Professional-grade interactive chart with instant response matching native iOS controls.
+**Result:** Professional-grade interactive chart with instant response and pixel-perfect accuracy.
 
 ---
 

@@ -9,7 +9,7 @@
 
 ## ✅ PERFORMANCE CHART: PRODUCTION READY (January 27, 2026)
 
-**Custom SVG chart with instant touch response** 🎉
+**Custom SVG chart with instant touch response and pixel-perfect accuracy** 🎉
 
 All issues resolved:
 - ✅ Native crash fixed (runOnJS pattern for gesture callbacks)
@@ -17,8 +17,9 @@ All issues resolved:
 - ✅ Instant dot appearance (0ms response, bypasses throttle on first tap)
 - ✅ Smooth 60fps tracking (throttled updates during drag)
 - ✅ Custom SVG with gradient fill (matches web prototype)
+- ✅ **Accurate boundary handling (onLayout measurement ensures dot stays within chart)**
 
-**Technical Implementation:** Worklet-based gesture handling with runOnJS bridging, direct setValue for instant appearance, fractional position interpolation for smooth tracking.
+**Technical Implementation:** Worklet-based gesture handling with runOnJS bridging, direct setValue for instant appearance, fractional position interpolation for smooth tracking, onLayout-based coordinate system matching.
 
 See `PERFORMANCE_CHART_FIX.md` for complete details.
 

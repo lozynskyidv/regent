@@ -51,7 +51,11 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   const UPDATE_THROTTLE_MS = 16; // ~60fps max
   const isFirstUpdate = useRef(true); // Skip throttle on first tap
   
-  const screenWidth = Dimensions.get('window').width - (Spacing.lg * 2);
+  // FIX: Use actual measured width instead of calculated width
+  // event.x is relative to chartContainer, so we need its actual rendered width
+  const fallbackWidth = Dimensions.get('window').width - (Spacing.lg * 2);
+  const [chartContainerWidth, setChartContainerWidth] = useState(fallbackWidth);
+  
   const CHART_HEIGHT = 120;
   const CHART_PADDING_HORIZONTAL = 12;
   const CHART_PADDING_VERTICAL = 20;
@@ -209,7 +213,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
     const points = activeDataPoints;
     if (points.length === 0) return { linePath: '', gradientPath: '', chartPoints: [] };
 
-    const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
+    const effectiveWidth = chartContainerWidth - (2 * CHART_PADDING_HORIZONTAL);
     const effectiveHeight = CHART_HEIGHT - (2 * CHART_PADDING_VERTICAL);
 
     // Find min/max for scaling
@@ -245,7 +249,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
     const gradientPath = `${linePath} L ${calculatedPoints[calculatedPoints.length - 1].x},${CHART_HEIGHT} L ${calculatedPoints[0].x},${CHART_HEIGHT} Z`;
 
     return { linePath, gradientPath, chartPoints: calculatedPoints };
-  }, [activeDataPoints, screenWidth]);
+  }, [activeDataPoints, chartContainerWidth]);
 
   // Helper functions for gesture callbacks (must be defined in JS scope for runOnJS)
   const handleGestureStart = useCallback((snappedIndex: number, clampedFractional: number) => {
@@ -352,7 +356,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
         if (chartPoints.length === 0) return;
         
         const x = event.x;
-        const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
+        const effectiveWidth = chartContainerWidth - (2 * CHART_PADDING_HORIZONTAL);
         const touchX = x - CHART_PADDING_HORIZONTAL;
         
         // Clamp touchX to valid chart boundaries (prevent dot going outside)
@@ -374,7 +378,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
         
         // Perform calculations on UI thread (faster)
         const x = event.x;
-        const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
+        const effectiveWidth = chartContainerWidth - (2 * CHART_PADDING_HORIZONTAL);
         const touchX = x - CHART_PADDING_HORIZONTAL;
         
         // Clamp touchX to valid chart boundaries (prevent dot going outside)
@@ -401,7 +405,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
         // Finalize gesture on JS thread
         runOnJS(handleGestureFinalize)();
       });
-  }, [chartPoints, screenWidth, handleGestureStart, handleGestureUpdate, handleGestureEnd, handleGestureFinalize]);
+  }, [chartPoints, chartContainerWidth, handleGestureStart, handleGestureUpdate, handleGestureEnd, handleGestureFinalize]);
   // All JS operations now properly bridged via runOnJS
 
   // Animate value changes
@@ -493,9 +497,12 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
 
       {/* Chart */}
       <GestureDetector gesture={panGesture}>
-        <Animated.View style={[styles.chartContainer, { opacity: chartOpacity }]}>
+        <Animated.View 
+          style={[styles.chartContainer, { opacity: chartOpacity }]}
+          onLayout={(e) => setChartContainerWidth(e.nativeEvent.layout.width)}
+        >
           <View style={styles.svgContainer}>
-            <Svg width={screenWidth} height={CHART_HEIGHT}>
+            <Svg width={chartContainerWidth} height={CHART_HEIGHT}>
               <Defs>
                 <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
                   <Stop offset="0%" stopColor="rgb(71, 85, 105)" stopOpacity={0.15} />

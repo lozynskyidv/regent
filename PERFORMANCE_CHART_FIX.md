@@ -178,6 +178,96 @@ The smoothness comes from **fractional position interpolation** (dot following f
 
 ---
 
-**Status:** ✅ **FULLY FIXED** - Chart now works perfectly with instant dot response  
+## ✅ Issue #3: Dot Appearing Outside Chart Boundaries (January 27, 2026)
+
+### **Problem Summary**
+After fixing the crash and lag issues, users noticed the dot could appear slightly outside the chart boundaries, particularly at the edges. The dot would show data "beyond" the chart (e.g., appearing at position "12 out of 10").
+
+---
+
+## 🔍 Root Cause #3
+
+**Coordinate System Mismatch:**
+
+The issue was caused by a dimensional mismatch between the gesture detection area and the SVG rendering area:
+
+1. **screenWidth Calculation**: Originally calculated as `Dimensions.get('window').width - (Spacing.lg * 2)`
+   - This accounts for HOME screen margins but not CARD padding
+   - Example: `390px - 48px = 342px`
+
+2. **Actual Container Hierarchy**:
+   - Window: 390px
+   - Card: 390px (with 16px padding on each side from `Spacing.md`)
+   - Card content area: 390px - 32px = 358px
+   - chartContainer: Inherits parent width = **358px**
+   - SVG: Set to `screenWidth` = **342px**
+   - **Mismatch: 358px vs 342px = 16px difference!**
+
+3. **The Problem**: `event.x` from `GestureDetector` is relative to `chartContainer` (358px), but calculations used `screenWidth` (342px), causing touches near the edge to map beyond the visual chart boundaries.
+
+**Visual Representation:**
+```
+|←─ chartContainer (358px) ─→|
+  |←─ SVG (342px) ─→|
+     |←chart line (318px)→|
+     12px         330px  342px  358px
+     ↑              ↑      ↑      ↑
+   first         last    SVG   container
+   point        point   end     end
+                        
+User drags here ────────────→ │
+Dot appears outside chart! ───┘
+```
+
+---
+
+## 🛠️ The Fix #3
+
+### **Solution: Use onLayout to Measure Actual Width**
+
+Instead of calculating width with assumptions about margins/padding, we now **measure the actual rendered width** of the container that receives gesture events.
+
+### **Changes Made:**
+
+1. **Replaced hardcoded `screenWidth`** (lines 54-57):
+   ```typescript
+   // BEFORE:
+   const screenWidth = Dimensions.get('window').width - (Spacing.lg * 2);
+   
+   // AFTER:
+   const fallbackWidth = Dimensions.get('window').width - (Spacing.lg * 2);
+   const [chartContainerWidth, setChartContainerWidth] = useState(fallbackWidth);
+   ```
+
+2. **Added onLayout handler** (lines 500-502):
+   ```typescript
+   <Animated.View 
+     style={[styles.chartContainer, { opacity: chartOpacity }]}
+     onLayout={(e) => setChartContainerWidth(e.nativeEvent.layout.width)}
+   >
+   ```
+
+3. **Updated all references** throughout the file:
+   - SVG width: `<Svg width={chartContainerWidth}>`
+   - Chart calculations: `effectiveWidth = chartContainerWidth - (2 * CHART_PADDING_HORIZONTAL)`
+   - useMemo dependencies: Updated to use `chartContainerWidth`
+   - panGesture dependencies: Updated to use `chartContainerWidth`
+
+### **Why This Works:**
+
+- ✅ **Measures actual dimensions**: `onLayout` gives us the real rendered width
+- ✅ **Matches coordinate space**: `event.x` is relative to `chartContainer`, which we now measure directly
+- ✅ **Self-correcting**: Automatically adapts to any padding, margins, or screen size changes
+- ✅ **Future-proof**: No hardcoded assumptions that can break with design changes
+- ✅ **Standard pattern**: This is the React Native recommended approach for dimension-dependent calculations
+
+---
+
+**Status:** ✅ **FULLY FIXED** - All chart issues resolved (crash, lag, boundaries)
 **Date:** January 27, 2026  
-**Files Modified:** `components/PerformanceChart.tsx` (lines 6, 8, 30-38, 248-286, 302-329, 358-399)
+**Files Modified:** `components/PerformanceChart.tsx`
+
+**Complete Fix History:**
+- Issue #1: Native crash (runOnJS pattern)
+- Issue #2: Dot lag (instant setValue + throttle bypass)
+- Issue #3: Boundary overflow (onLayout measurement)
