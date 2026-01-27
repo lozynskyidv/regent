@@ -67,59 +67,41 @@ npx expo start --clear
 
 ## 🎯 Recent Changes (January 2026)
 
-### **📊 Custom SVG Performance Chart** ⚠️ IN PROGRESS (v0.9.4 - January 27, 2026)
+### **📊 Custom SVG Performance Chart** ✅ PRODUCTION READY (v0.9.4 - January 27, 2026)
 
-**What We Changed:**
+**Interactive chart with instant touch response and smooth tracking**
 
-**Migrated from react-native-chart-kit to Custom SVG Implementation**
+**Key Features:**
+- ✅ **Custom SVG Implementation:** Full control over rendering, animations, and interactions
+- ✅ **Gradient Fill:** Beautiful gradient under line (matches web prototype)
+- ✅ **Instant Dot Response:** 0ms delay on tap, bypasses throttle for immediate feedback
+- ✅ **Smooth 60fps Tracking:** Throttled updates during drag for optimal performance
+- ✅ **Bezier Curves:** Smooth cubic interpolation for professional appearance
+- ✅ **Fractional Position Interpolation:** Smooth movement between data points
+- ✅ **Gesture Coordination:** Proper touch handling with react-native-gesture-handler
 
-**Why We Made the Change:**
-- ❌ `react-native-chart-kit` had opaque coordinate system causing dot positioning bugs
-- ❌ No gradient fill support (design requirement from web prototype)
-- ❌ Library limitations prevented precise coordinate control
-- ✅ Custom SVG gives full control over rendering, animations, and interactions
-
-**What's New:**
-- ✅ **Gradient Fill:** Beautiful gradient under line (15% opacity → 0%, matches web prototype)
-- ✅ **Custom Bezier Curves:** Smooth cubic interpolation for professional appearance
-- ✅ **Perfect Coordinate Control:** We calculate every X,Y position explicitly
-- ✅ **Dot Interpolation:** Smooth movement between data points with fractional positioning
-- ✅ **Data Freeze During Gesture:** Prevents race conditions and coordinate mismatches
-- ✅ **Spring Animations:** Natural physics for dot appearance/disappearance
-- ✅ **Precise Positioning:** Dot follows finger accurately on both X and Y axes
-
-**Implementation Highlights:**
+**How It Works:**
 ```typescript
-// Custom SVG with gradient definition
-<Svg width={screenWidth} height={CHART_HEIGHT}>
-  <Defs>
-    <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-      <Stop offset="0%" stopColor="rgb(71, 85, 105)" stopOpacity={0.15} />
-      <Stop offset="100%" stopColor="rgb(71, 85, 105)" stopOpacity={0} />
-    </LinearGradient>
-  </Defs>
-  <Path d={gradientPath} fill="url(#chartGradient)" />
-  <Path d={linePath} stroke="rgb(71, 85, 105)" strokeWidth={2.5} />
-</Svg>
+// Worklet-based gesture handling
+Gesture.Pan()
+  .onStart((event) => {
+    // Calculate position on UI thread (fast)
+    // Set position via runOnJS (bypasses throttle for instant response)
+    runOnJS(handleGestureStart)(snappedIndex, clampedFractional);
+  })
+  .onUpdate((event) => {
+    // Throttled updates at 60fps during drag
+    runOnJS(handleGestureUpdate)(snappedIndex, clampedFractional, timestamp);
+  })
 ```
 
-**CRITICAL BUGS - ALL FIXED:** ✅
+**Technical Implementation:**
+- **Thread Coordination:** Gesture.Pan() callbacks are worklets (UI thread), bridged to JS thread via runOnJS
+- **Instant Appearance:** Direct setValue() for dot opacity/scale (no animation delay)
+- **Smooth Tracking:** Fractional position interpolation provides smooth movement
+- **Performance:** Calculations on UI thread, state updates throttled to 60fps
 
-### ✅ **Touch Event Fall-Through** (FIXED - January 27, 2026)
-**Solution:** Migrated from `PanResponder` to `react-native-gesture-handler`'s `Gesture.Pan()` API with `TouchableOpacity` from gesture-handler library. This ensures proper touch coordination between gestures and buttons.
-
-### ✅ **Native Crash on Chart Tap** (FIXED - January 27, 2026)
-**Problem:** App crashed instantly when tapping chart (no JS error logs, native bridge crash)
-
-**Root Cause:** `Gesture.Pan()` callbacks are worklets (run on UI thread), but code was directly calling React setState and callbacks (JS thread operations) without proper bridging.
-
-**Solution:** Wrapped all JavaScript operations with `runOnJS()` from react-native-reanimated:
-- Added helper functions (`handleGestureStart`, `handleGestureUpdate`, etc.)
-- Wrapped all setState calls with `runOnJS(functionName)(args)`
-- Added explicit `'worklet'` annotations
-- Implemented throttling (16ms/~60fps) to prevent JS thread flooding
-
-**Result:** Chart now works perfectly with smooth interactions, no crashes, and instant dot response.
+**Result:** Professional-grade interactive chart with instant response matching native iOS controls.
 
 ---
 
@@ -220,10 +202,7 @@ NET WORTH
 - 10-point sampling for readability
 - `generateTestSnapshots.ts` utility for test data
 
-**Known Issues:**
-- ⚠️ ScrollView conflict when dragging on chart (gesture occasionally scrolls page)
-- Next: Upgrade to `react-native-gesture-handler` for better gesture isolation
-- Future: Add gradient fill (requires custom SVG like web-prototype)
+**Status:** ✅ All issues resolved - chart is production ready with instant touch response
 
 ---
 
@@ -374,9 +353,8 @@ NET WORTH
 ## ⚠️ Known Issues
 
 ### **Issue 1: Face ID Screen Flickering** 🟡 MINOR
-**Symptom:** Face ID enable screen flickers on new account creation
-
-**Severity:** Low (happens only on first sign-up)
+**Symptom:** Face ID enable screen may flicker on new account creation  
+**Severity:** Low (cosmetic, happens only on first sign-up)
 
 ---
 
@@ -491,10 +469,9 @@ web-prototype/        # Reference only (NOT for production)
 
 ## 🐛 Known Issues
 
-**Performance Chart Dot Positioning (CRITICAL):** Dot indicator implemented but broken - tapping right edge shows dot in middle due to coordinate system mismatch between touch detection and rendering. Multiple padding adjustments failed. Needs investigation into react-native-chart-kit's internal coordinate mapping.  
+**Performance Chart:** ✅ ALL RESOLVED - Custom SVG implementation with instant touch response  
 **Face ID in Expo Go:** Shows passcode (Expo Go limitation, works in standalone build)  
-**Currency:** Symbol-only change (no conversion yet)  
-**Performance Chart Gradient:** Missing gradient fill under line (web-prototype has it, requires custom SVG)
+**Currency:** Symbol-only change (no conversion yet)
 
 ---
 
