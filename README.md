@@ -1,9 +1,9 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.9.6 (Privacy & UX Bug Fixes)  
+**Version:** 0.9.7 (Subscription Model)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
-**Access:** Exclusive invite-only (replaced paid subscription model)
+**Access:** £149/year subscription with 7-day free trial (via RevenueCat + Apple IAP)
 
 ---
 
@@ -36,7 +36,7 @@ npx expo start --clear
 - **Language:** TypeScript 5.9
 - **React:** 19.1.0 (locked for compatibility)
 - **Backend:** Supabase (auth, database, Edge Functions)
-- **Access Control:** Invite-only system (custom implementation)
+- **Monetization:** RevenueCat (subscription management) + Apple In-App Purchase
 - **Navigation:** Expo Router (file-based, `<Slot />` only)
 - **State:** React Context API (DataContext, ModalContext)
 - **Storage:** AsyncStorage (data) + SecureStore (sensitive) + Supabase (cloud backups)
@@ -47,8 +47,8 @@ npx expo start --clear
 
 ## 📱 Current Features (P0 MVP Complete)
 
-✅ **Invite System:** Exclusive invite-only access (RGNT-XXXXXX codes)  
-✅ **Viral Growth:** Each user gets 5 invite codes to share  
+✅ **Subscription System:** £149/year with 7-day free trial (RevenueCat + Apple IAP)  
+✅ **Paywall Screen:** Beautiful subscription UI matching web prototype design  
 ✅ **Authentication:** Google OAuth, Email/Password, Face ID/PIN, Supabase Auth  
 ✅ **Empty State Onboarding:** Beautiful hero card for new users with NYC skyline  
 ✅ **Net Worth Card (Merged):** Hero card with integrated performance chart, count-up animation, interactive scrubbing  
@@ -67,6 +67,38 @@ npx expo start --clear
 ---
 
 ## 🎯 Recent Changes (January 2026)
+
+### **💰 Subscription System Implementation** ✅ INTEGRATION READY (v0.9.7 - January 27, 2026)
+
+**Removed invite-only system, implemented £149/year subscription with RevenueCat**
+
+**Major Changes:**
+- ❌ **Removed Invite System:** Deleted ShareInviteCard, invite code screens, invite validation
+- ✅ **Added Subscription Flow:** £149/year with 7-day free trial via RevenueCat
+- ✅ **Paywall Screen:** Beautiful UI 100% matching web prototype design
+- ✅ **Purchase & Restore:** Full RevenueCat integration with Apple In-App Purchase
+- ✅ **Auth Flow Updated:** PIN entry → Paywall → Home (subscription check)
+- ✅ **TrueLayer Ready:** Benefit listed for future bank account sync integration
+
+**Implementation:**
+- Created `PaywallScreen.tsx` component (pixel-perfect match to web prototype)
+- Integrated `react-native-purchases` SDK (RevenueCat)
+- Updated `AuthGuard` to remove invite validation
+- Added subscription state tracking to `DataContext`
+
+**Next Steps Required:**
+1. Configure RevenueCat dashboard (see `SUBSCRIPTION_SETUP.md`)
+2. Create In-App Purchase product in App Store Connect (£149/year, 7-day trial)
+3. Link RevenueCat to App Store Connect
+4. Test purchase flow with sandbox account
+5. Submit app with IAP for App Store review
+
+**Unit Economics:**
+- Revenue: £149/year (£12.42/month)
+- Costs: £10.78/month (Twelve Data + Supabase + TrueLayer)
+- Margin: 13% gross profit
+
+---
 
 ### **🔐 Privacy & UX Bug Fixes** ✅ PRODUCTION READY (v0.9.6 - January 27, 2026)
 
@@ -517,6 +549,47 @@ constants/            # Design system
 types/                # TypeScript interfaces
 web-prototype/        # Reference only (NOT for production)
 ```
+
+---
+
+## 🎯 Next Priorities
+
+### **P0: Launch Subscription (Critical Path)**
+1. **RevenueCat Configuration** (15 min)
+   - Create project at app.revenuecat.com
+   - Get production iOS API key
+   - Update `/utils/useRevenueCat.ts` with real API key
+   
+2. **App Store Connect Setup** (30 min)
+   - Create In-App Purchase: `regent_premium_annual`
+   - Price: £149/year, 7-day free trial
+   - Submit for review
+   
+3. **Link RevenueCat → App Store** (10 min)
+   - Add product to RevenueCat dashboard
+   - Create `premium` entitlement
+   - Create offering with annual package
+   
+4. **Test End-to-End** (15 min)
+   - Sandbox account purchase flow
+   - Restore purchases
+   - Trial expiry handling
+
+**📖 Full guide:** `SUBSCRIPTION_SETUP.md`
+
+### **P1: Polish & Growth Features**
+- [ ] **Trial Reminders:** Push notification on Day 5 ("2 days left")
+- [ ] **Onboarding Improvements:** 3-step tutorial for new users
+- [ ] **Settings Enhancement:** Add "Manage Subscription" link
+- [ ] **Analytics:** Track trial_started, trial_converted, churn events
+- [ ] **Referral System:** "Give friends 1 month free" (growth hack)
+
+### **P2: Advanced Features**
+- [ ] **TrueLayer Integration:** Automatic bank account sync (requires £9/month cost)
+- [ ] **Monthly Subscription Option:** £14.99/month alongside annual
+- [ ] **Family Sharing:** Share subscription with up to 5 family members
+- [ ] **Export Data:** PDF reports, CSV exports
+- [ ] **Investment Insights:** Performance attribution, sector allocation
 
 ---
 

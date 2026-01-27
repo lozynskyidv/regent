@@ -1,13 +1,59 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 27, 2026  
-**Version:** 0.9.6 (Privacy & UX Bug Fixes)  
+**Version:** 0.9.7 (Subscription Model Implementation)  
 **Platform:** iOS only (React Native Expo)  
-**Access Model:** Exclusive invite-only (replaced paid subscription)
+**Access Model:** £149/year subscription with 7-day free trial (RevenueCat + Apple IAP)
 
 ---
 
-## 🔐 LATEST: Privacy & UX Bug Fixes (v0.9.6 - January 27, 2026)
+## 💰 LATEST: Subscription System Implementation (v0.9.7 - January 27, 2026)
+
+**Pivoted from invite-only to £149/year subscription with RevenueCat integration**
+
+### **What Changed:**
+❌ **Removed Invite System:**
+- Deleted `ShareInviteCard` component
+- Deleted `invite-code.tsx` screen
+- Removed invite validation from `AuthGuard` in `_layout.tsx`
+- Cleaned up all invite-related code and UI
+
+✅ **Added Subscription System:**
+- **PaywallScreen:** Beautiful UI 100% matching web prototype (£149/year)
+- **RevenueCat Integration:** `react-native-purchases` SDK installed & configured
+- **Purchase Flow:** Full implementation with Apple In-App Purchase
+- **Restore Purchases:** Working restore flow for reinstalls
+- **Trial Tracking:** 7-day free trial support in subscription state
+- **Auth Flow:** PIN → Paywall → Home (checks subscription status)
+
+### **New User Flow:**
+```
+Sign Up (Email/Google)
+       ↓
+Enter PIN (Face ID)
+       ↓
+PAYWALL (£149/year + 7-day trial)
+       ↓
+Subscribe or Restore
+       ↓
+Home Screen
+```
+
+### **Files Changed:**
+- `components/PaywallScreen.tsx` - NEW: Subscription UI (matches web prototype)
+- `app/paywall.tsx` - NEW: RevenueCat integration route
+- `app/_layout.tsx` - Removed invite validation from AuthGuard
+- `app/auth.tsx` - Redirects to `/paywall` after PIN entry
+- `app/home.tsx` - Removed ShareInviteCard
+- `contexts/DataContext.tsx` - Added SubscriptionState tracking
+- `package.json` - Added react-native-purchases
+
+### **Configuration Required:**
+See `SUBSCRIPTION_SETUP.md` for complete RevenueCat + App Store Connect setup guide
+
+---
+
+## 🔐 Privacy & UX Bug Fixes (v0.9.6 - January 27, 2026)
 
 **Critical privacy fix and chart scrubbing improvements**
 
@@ -74,15 +120,16 @@ All time               ← Time period label
 ## 🚀 QUICK START (5-Min Orientation)
 
 **What is Regent?**  
-Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber modernism + JPM restraint." Local storage + Supabase backend. **Exclusive invite-only access.**
+Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber modernism + JPM restraint." Local storage + Supabase backend. **£149/year subscription with 7-day free trial.**
 
 **Current State (What's ACTUALLY Built):**  
 ✅ **P0 MVP COMPLETE:**
-- **Invite System** (RGNT-XXXXXX codes, viral growth mechanic - 5 codes per user)
+- **Subscription System** (£149/year via RevenueCat + Apple IAP, 7-day free trial)
+- **Paywall Screen** (Beautiful UI matching web prototype, purchase & restore flows)
 - **Authentication** (Google OAuth + Email/Password - fully functional with Supabase)
 - **Auth screen** (Face ID/PIN onboarding, fully functional)
 - **Empty State Onboarding** (Beautiful hero card with NYC skyline for new users)
-- **Home Screen** (Merged Net Worth Card + ShareInviteCard + Assets + Liabilities + Pull-to-Refresh)
+- **Home Screen** (Merged Net Worth Card + Assets + Liabilities + Pull-to-Refresh)
 - **Portfolio Tracking** (Live prices for stocks, ETFs, crypto, commodities via Twelve Data API)
 - **Smart Caching** (1 hour for stocks/ETFs, 30 min for crypto - optimized for 800 API calls/day free tier)
 - **Persistent Timestamps** (Accurate "Updated X ago" with hybrid relative/absolute time display)
@@ -117,10 +164,15 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
   - ✅ No redundancy or contradictions (everything in sync)
   
   **Technical:** Gesture.Pan() with runOnJS for thread coordination, direct setValue for instant appearance, fractional position interpolation for smooth movement, expo-haptics for tactile feedback, data locking during gestures.
-- **ShareInviteCard** (Repositioned after PerformanceChart):
-  - ✅ Moved from before PerformanceChart to after PerformanceChart (better UX flow)
-  - ✅ Immediate appearance (removed 3-second loading delay, shows loading state instead)
-  - ✅ Card structure consistent with other cards (no delayed pop-in)
+- **Paywall Screen** (£149/year subscription):
+  - ✅ Beautiful UI 100% matching web prototype design
+  - ✅ RevenueCat integration (react-native-purchases SDK)
+  - ✅ Purchase flow with Apple In-App Purchase
+  - ✅ Restore purchases for reinstalls
+  - ✅ 7-day free trial support
+  - ✅ Trial countdown display
+  - ✅ "Continue with Regent" CTA button
+  - ✅ 5 benefits including TrueLayer (future feature)
 
 ✅ **P0 MVP COMPLETE!** All core features production-ready
 

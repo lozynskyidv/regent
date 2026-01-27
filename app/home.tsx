@@ -10,7 +10,6 @@ import { useModals } from '../contexts/ModalContext';
 import NetWorthCard from '../components/NetWorthCard';
 import AssetsCard from '../components/AssetsCard';
 import LiabilitiesCard from '../components/LiabilitiesCard';
-import ShareInviteCard from '../components/ShareInviteCard';
 import { LinearGradient } from 'expo-linear-gradient';
 import { getSupabaseClient } from '../utils/supabase';
 
@@ -313,11 +312,6 @@ export default function HomeScreen() {
               onChartTouchStart={() => setScrollEnabled(false)}
               onChartTouchEnd={() => setScrollEnabled(true)}
             />
-
-            {/* Share Invite Card */}
-            {supabaseUser?.id && (
-              <ShareInviteCard userId={supabaseUser.id} />
-            )}
 
             {/* Assets Card */}
             <AssetsCard

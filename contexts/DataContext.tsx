@@ -39,6 +39,14 @@ import * as SecureStore from 'expo-secure-store';
 // TYPES
 // ============================================
 
+export interface SubscriptionState {
+  status: 'trial' | 'active' | 'expired' | 'none';
+  trialStartDate: string | null;
+  trialEndDate: string | null;
+  subscriptionEndDate: string | null;
+  daysRemaining?: number;
+}
+
 interface DataContextType {
   // Data
   assets: Asset[];
@@ -55,6 +63,7 @@ interface DataContextType {
   
   // Subscription
   hasStartedTrial: boolean;
+  subscriptionState: SubscriptionState | null;
   
   // Computed
   netWorth: number;
@@ -122,8 +131,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [isAuthProcessing, setIsAuthProcessing] = useState(false); // Global auth lock
   const [accessToken, setAccessToken] = useState<string | null>(null); // Store access token for reliable deletion
   
-  // Subscription state
+  // Subscription state (£49/year with 7-day trial)
   const [hasStartedTrial, setHasStartedTrial] = useState(false);
+  const [subscriptionState, setSubscriptionState] = useState<SubscriptionState | null>(null);
 
   // Check Supabase auth session on mount and register auth listener
   useEffect(() => {
@@ -1126,6 +1136,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     
     // Subscription
     hasStartedTrial,
+    subscriptionState,
     
     // Computed
     netWorth,

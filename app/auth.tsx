@@ -128,7 +128,9 @@ export default function AuthScreen() {
 
       if (result.success) {
         console.log('✅ Biometric auth successful');
-        router.replace('/home');
+        // TODO: Check subscription status and navigate accordingly
+        // For now, always show paywall (RevenueCat integration pending)
+        router.replace('/paywall');
       } else {
         console.log('❌ Biometric auth failed/cancelled');
         // User will use PIN instead (already showing)
@@ -231,9 +233,11 @@ export default function AuthScreen() {
 
       console.log('✅ PIN created successfully');
       
-      // Navigate to home
+      // Navigate to paywall (subscription flow)
       setTimeout(() => {
-        router.replace('/home');
+        // TODO: Check subscription status and navigate accordingly
+        // For now, always show paywall (RevenueCat integration pending)
+        router.replace('/paywall');
       }, 300);
     } catch (err) {
       console.error('❌ Error setting up PIN:', err);
@@ -257,7 +261,9 @@ export default function AuthScreen() {
       if (isValid) {
         console.log('✅ PIN validated successfully');
         setTimeout(() => {
-          router.replace('/home');
+          // TODO: Check subscription status and navigate accordingly
+          // For now, always show paywall (RevenueCat integration pending)
+          router.replace('/paywall');
         }, 300);
       } else {
         setError('Incorrect PIN. Try again.');
