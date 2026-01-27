@@ -49,6 +49,7 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   // Throttle state to prevent flooding JS thread with updates
   const lastUpdateTime = useRef(0);
   const UPDATE_THROTTLE_MS = 16; // ~60fps max
+  const isFirstUpdate = useRef(true); // Skip throttle on first tap
   
   const screenWidth = Dimensions.get('window').width - (Spacing.lg * 2);
   const CHART_HEIGHT = 120;
@@ -247,15 +248,26 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   }, [activeDataPoints, screenWidth]);
 
   // Helper functions for gesture callbacks (must be defined in JS scope for runOnJS)
-  const handleGestureStart = useCallback(() => {
+  const handleGestureStart = useCallback((snappedIndex: number, clampedFractional: number) => {
     onChartTouchStart?.();
     setLockedDataPoints(dataPoints);
     setIsGestureActive(true);
-    lastUpdateTime.current = 0; // Reset throttle
+    isFirstUpdate.current = true; // Bypass throttle for first update
+    lastUpdateTime.current = Date.now();
+    
+    // Set initial position immediately (no throttle delay)
+    setSelectedPointIndex(snappedIndex);
+    setFractionalPosition(clampedFractional);
   }, [dataPoints, onChartTouchStart]);
 
   const handleGestureUpdate = useCallback((snappedIndex: number, clampedFractional: number, timestamp: number) => {
-    // Throttle updates to prevent flooding JS thread
+    // Skip throttle on first update for instant response
+    if (isFirstUpdate.current) {
+      isFirstUpdate.current = false;
+      return; // Position already set in handleGestureStart
+    }
+    
+    // Throttle subsequent updates to prevent flooding JS thread
     const timeSinceLastUpdate = timestamp - lastUpdateTime.current;
     if (timeSinceLastUpdate < UPDATE_THROTTLE_MS) {
       return; // Skip this update
@@ -267,10 +279,10 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   }, []);
 
   const handleGestureEnd = useCallback(() => {
-    console.log('🎯 handleGestureEnd');
     onChartTouchEnd?.();
     setIsGestureActive(false);
     setLockedDataPoints(null);
+    isFirstUpdate.current = true; // Reset for next gesture
     
     // Fade out metrics, reset selection, fade back in
     Animated.timing(metricsOpacity, {
@@ -289,12 +301,12 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
   }, [onChartTouchEnd, metricsOpacity]);
 
   const handleGestureFinalize = useCallback(() => {
-    console.log('🎯 handleGestureFinalize');
     onChartTouchEnd?.();
     setIsGestureActive(false);
     setLockedDataPoints(null);
     setSelectedPointIndex(null);
     setFractionalPosition(null);
+    isFirstUpdate.current = true; // Reset for next gesture
   }, [onChartTouchEnd]);
 
   // Update dot position when fractional position changes
@@ -336,9 +348,6 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
       .onStart((event) => {
         'worklet'; // Explicit worklet annotation
         
-        // Start gesture on JS thread
-        runOnJS(handleGestureStart)();
-        
         // Perform calculations on UI thread (faster)
         if (chartPoints.length === 0) return;
         
@@ -350,9 +359,9 @@ export function PerformanceChart({ snapshots, currentNetWorth, currency, onChart
         const clampedFractional = Math.max(0, Math.min(fractionalPos, chartPoints.length - 1));
         const snappedIndex = Math.round(clampedFractional);
         
-        // Update state on JS thread (with timestamp for throttling)
+        // Start gesture and set initial position immediately (bypasses throttle)
         if (snappedIndex >= 0 && snappedIndex < chartPoints.length) {
-          runOnJS(handleGestureUpdate)(snappedIndex, clampedFractional, Date.now());
+          runOnJS(handleGestureStart)(snappedIndex, clampedFractional);
         }
       })
       .onUpdate((event) => {
