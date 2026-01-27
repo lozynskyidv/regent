@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.mutedForeground,
     fontWeight: '500',
-    marginBottom: 12,
+    marginBottom: 8, // Match web prototype mb-2 (was 12px)
   },
   currentValue: {
     fontSize: 32,
@@ -603,10 +603,10 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   changeAmount: {
-    fontSize: 17,
+    fontSize: 20, // Match web prototype 1.25rem (was 17px)
     fontWeight: '500',
-    letterSpacing: -0.17,
-    lineHeight: 24,
+    letterSpacing: -0.2, // Adjusted for new size (-0.01em)
+    lineHeight: 28, // Adjusted proportionally
   },
   changePercent: {
     fontSize: 15,
