@@ -46,9 +46,12 @@ export default function HomeScreen() {
       }, 7000); // 7 seconds
       
       // Cleanup timer if component unmounts
-      return () => clearTimeout(timer);
+      return () => {
+        console.log('🧹 Cleaning up paywall timer');
+        clearTimeout(timer);
+      };
     }
-  }, [assets.length, liabilities.length, hasSeenPaywall, paywallTimerStarted]);
+  }, [assets.length, liabilities.length, hasSeenPaywall]); // Removed paywallTimerStarted to prevent clearing timer
 
   // Refresh portfolio prices (pull-to-refresh)
   const refreshPortfolioPrices = async () => {
