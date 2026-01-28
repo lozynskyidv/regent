@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.9.8 (UI/UX Polish)  
+**Version:** 0.9.9 (Paywall Timing)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** £49/year subscription with 7-day free trial (via RevenueCat + Apple IAP)
@@ -67,6 +67,26 @@ npx expo start --clear
 ---
 
 ## 🎯 Recent Changes (January 2026)
+
+### **🎯 Paywall Timing - Show After First Asset** ✅ PRODUCTION READY (v0.9.9 - January 28, 2026)
+
+**Improved onboarding flow: Users experience the app before seeing paywall**
+
+**What Changed:**
+- ✅ **Delayed Paywall:** Appears after user adds their first asset (not immediately after PIN)
+- ✅ **Better Conversion:** Users try the app before being asked to subscribe
+- ✅ **Updated Flow:** Sign up → PIN → Home (empty state) → Add first asset → Paywall
+- ✅ **State Management:** Added `hasSeenPaywall` flag to prevent showing paywall multiple times
+
+**Technical Changes:**
+- Modified `app/auth.tsx` to navigate to `/home` instead of `/paywall`
+- Updated `contexts/DataContext.tsx` to trigger paywall in `addAsset()` function
+- Added `hasSeenPaywall` persistence to `utils/storage.ts`
+
+**Hot Reload Note:**
+- Full app reload required after navigation changes (press `r` in Expo terminal)
+
+---
 
 ### **🎨 UI/UX Refinements - Design System Alignment** ✅ PRODUCTION READY (v0.9.8 - January 28, 2026)
 

@@ -1,13 +1,48 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 28, 2026  
-**Version:** 0.9.8 (UI/UX Polish)  
+**Version:** 0.9.9 (Paywall Timing)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** £49/year subscription with 7-day free trial (RevenueCat + Apple IAP)
 
 ---
 
-## 🎨 LATEST: UI/UX Refinements - Design System Alignment (v0.9.8 - January 28, 2026)
+## 🎯 LATEST: Paywall Timing - Show After First Asset (v0.9.9 - January 28, 2026)
+
+**Improved onboarding flow to let users experience the app before seeing paywall**
+
+### **What Changed:**
+
+✅ **Delayed Paywall Trigger:**
+- Paywall now appears **after user adds their first asset** (not immediately after PIN entry)
+- Users experience the app with empty state before being asked to subscribe
+- Better freemium conversion pattern (try before buy)
+
+✅ **Updated Auth Flow:**
+- Sign up → PIN entry → **Home screen (empty state)** ✅
+- User taps "Add Your First Asset" → Fills in details → Saves
+- **Paywall appears** → User can start trial or subscribe
+- Better conversion rates through product experience first
+
+✅ **State Management:**
+- Added `hasSeenPaywall` flag to subscription state (persisted in AsyncStorage)
+- Prevents showing paywall multiple times
+- Tracks if user has already seen the paywall offer
+
+### **Technical Implementation:**
+- Modified `app/auth.tsx` to navigate to `/home` instead of `/paywall`
+- Updated `contexts/DataContext.tsx` to trigger paywall in `addAsset()` function
+- Added `hasSeenPaywall` to `SubscriptionState` interface in `utils/storage.ts`
+- Updated `app/_layout.tsx` AuthGuard comments to reflect new flow
+
+### **Hot Reload Note:**
+⚠️ After these changes, full app reload required (not just hot reload)
+- Press `r` in Expo terminal to reload
+- Or restart dev server if hot reload doesn't pick up navigation changes
+
+---
+
+## 🎨 UI/UX Refinements - Design System Alignment (v0.9.8 - January 28, 2026)
 
 **Comprehensive visual polish to match paywall's refined design-sense across entire app**
 
