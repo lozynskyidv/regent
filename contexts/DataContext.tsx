@@ -63,6 +63,7 @@ interface DataContextType {
   
   // Subscription
   hasStartedTrial: boolean;
+  hasSeenPaywall: boolean;
   subscriptionState: SubscriptionState | null;
   
   // Computed
@@ -133,6 +134,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   
   // Subscription state (£49/year with 7-day trial)
   const [hasStartedTrial, setHasStartedTrial] = useState(false);
+  const [hasSeenPaywall, setHasSeenPaywall] = useState(false);
   const [subscriptionState, setSubscriptionState] = useState<SubscriptionState | null>(null);
 
   // Check Supabase auth session on mount and register auth listener
@@ -231,6 +233,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setUserState(loadedUser);
       setPrimaryCurrency(preferences.primaryCurrency);
       setHasStartedTrial(subscription.hasStartedTrial);
+      setHasSeenPaywall(subscription.hasSeenPaywall);
       setLastDataSync(lastSync);
       setSnapshots(loadedSnapshots);
       
@@ -326,6 +329,21 @@ export function DataProvider({ children }: { children: ReactNode }) {
       await saveLastDataSync(now);
       
       console.log('✅ Asset added to context:', newAsset.name);
+      
+      // 🎯 TRIGGER PAYWALL: Show paywall after first asset is added
+      const isFirstAsset = assets.length === 0 && liabilities.length === 0;
+      if (isFirstAsset && !hasSeenPaywall) {
+        console.log('🎯 First asset added - showing paywall');
+        setHasSeenPaywall(true);
+        await saveSubscription({ 
+          hasStartedTrial, 
+          hasSeenPaywall: true 
+        });
+        // Navigate to paywall after a short delay
+        setTimeout(() => {
+          router.push('/paywall');
+        }, 500);
+      }
     } catch (err) {
       console.error('❌ Error adding asset:', err);
       throw err;
@@ -1136,6 +1154,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     
     // Subscription
     hasStartedTrial,
+    hasSeenPaywall,
     subscriptionState,
     
     // Computed

@@ -8,10 +8,12 @@ import { ModalProvider } from '../contexts/ModalContext';
  * Auth guard component
  * Redirects user based on authentication state
  * 
- * AUTH FLOW (£49/year subscription):
+ * AUTH FLOW (£49/year subscription - Option 1: Paywall after first asset):
  * 1. Not authenticated → Sign-up screen (/)
  * 2. Authenticated + no PIN → Auth screen (/auth)
- * 3. Authenticated + has PIN → Paywall (if trial expired) or Home (/home)
+ * 3. Authenticated + has PIN → Home screen (/home)
+ * 4. User adds first asset → Paywall appears (/paywall)
+ * 5. User subscribes → Continue using app
  */
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useData();

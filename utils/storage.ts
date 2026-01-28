@@ -241,6 +241,7 @@ export async function loadPreferences(): Promise<Preferences> {
 export interface SubscriptionState {
   hasStartedTrial: boolean;
   trialStartDate?: string;
+  hasSeenPaywall: boolean; // Track if paywall has been shown
 }
 
 export async function saveSubscription(subscription: SubscriptionState): Promise<void> {
@@ -259,16 +260,26 @@ export async function loadSubscription(): Promise<SubscriptionState> {
     const jsonValue = await AsyncStorage.getItem(STORAGE_KEYS.SUBSCRIPTION);
     if (jsonValue === null) {
       // Default: user hasn't started trial yet
-      const defaultState: SubscriptionState = { hasStartedTrial: false };
+      const defaultState: SubscriptionState = { 
+        hasStartedTrial: false,
+        hasSeenPaywall: false 
+      };
       console.log('📭 No subscription found, using defaults');
       return defaultState;
     }
     const subscription = JSON.parse(jsonValue) as SubscriptionState;
+    // Ensure hasSeenPaywall exists (for backward compatibility)
+    if (subscription.hasSeenPaywall === undefined) {
+      subscription.hasSeenPaywall = false;
+    }
     console.log('✅ Subscription loaded:', subscription);
     return subscription;
   } catch (error) {
     console.error('❌ Error loading subscription:', error);
-    return { hasStartedTrial: false };
+    return { 
+      hasStartedTrial: false,
+      hasSeenPaywall: false 
+    };
   }
 }
 
