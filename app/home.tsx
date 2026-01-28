@@ -27,6 +27,14 @@ export default function HomeScreen() {
   useEffect(() => {
     const hasData = assets.length > 0 || liabilities.length > 0;
     
+    console.log('🎯 Paywall check:', {
+      hasData,
+      assetsCount: assets.length,
+      liabilitiesCount: liabilities.length,
+      hasSeenPaywall,
+      paywallTimerStarted
+    });
+    
     // Only trigger once: when user has data AND hasn't seen paywall yet
     if (hasData && !hasSeenPaywall && !paywallTimerStarted) {
       console.log('🎯 User has data - starting 7-second paywall timer...');
