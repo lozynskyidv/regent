@@ -13,9 +13,14 @@ import { useRevenueCat } from '../utils/useRevenueCat';
 
 export default function Paywall() {
   const router = useRouter();
-  const { subscriptionState, supabaseUser } = useData();
+  const { subscriptionState, supabaseUser, markPaywallSeen } = useData();
   const { isPremium, isInTrial, trialEndDate, packages, purchasePackage, restorePurchases, logIn } = useRevenueCat();
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Mark paywall as seen on mount (prevents showing again)
+  useEffect(() => {
+    markPaywallSeen();
+  }, []);
 
   // Identify user to RevenueCat on mount
   useEffect(() => {

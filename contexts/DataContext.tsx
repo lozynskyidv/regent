@@ -89,6 +89,7 @@ interface DataContextType {
   
   // Actions - Subscription
   startTrial: () => Promise<void>;
+  markPaywallSeen: () => Promise<void>;
   
   // Actions - Timestamp
   updateLastDataSync: () => Promise<void>;
@@ -330,20 +331,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       
       console.log('✅ Asset added to context:', newAsset.name);
       
-      // 🎯 TRIGGER PAYWALL: Show paywall after first asset is added
-      const isFirstAsset = assets.length === 0 && liabilities.length === 0;
-      if (isFirstAsset && !hasSeenPaywall) {
-        console.log('🎯 First asset added - showing paywall');
-        setHasSeenPaywall(true);
-        await saveSubscription({ 
-          hasStartedTrial, 
-          hasSeenPaywall: true 
-        });
-        // Navigate to paywall after a short delay
-        setTimeout(() => {
-          router.push('/paywall');
-        }, 500);
-      }
+      // Note: Paywall trigger moved to home screen (7-second delay after aha moment)
     } catch (err) {
       console.error('❌ Error adding asset:', err);
       throw err;
@@ -515,14 +503,33 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const subscription: StorageSubscriptionState = {
         hasStartedTrial: true,
         trialStartDate: new Date().toISOString(),
+        hasSeenPaywall: true, // If starting trial, they've seen the paywall
       };
       
       await saveSubscription(subscription);
       setHasStartedTrial(true);
+      setHasSeenPaywall(true);
       
       console.log('✅ Trial started successfully');
     } catch (err) {
       console.error('❌ Error starting trial:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Mark paywall as seen (prevents showing again)
+   */
+  const markPaywallSeen = async () => {
+    try {
+      setHasSeenPaywall(true);
+      await saveSubscription({ 
+        hasStartedTrial, 
+        hasSeenPaywall: true 
+      });
+      console.log('✅ Paywall marked as seen');
+    } catch (err) {
+      console.error('❌ Error marking paywall as seen:', err);
       throw err;
     }
   };
@@ -1172,6 +1179,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setUser,
     setCurrency,
     startTrial,
+    markPaywallSeen,
     updateLastDataSync,
     generateTestData,
     signOut,

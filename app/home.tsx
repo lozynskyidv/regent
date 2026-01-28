@@ -15,12 +15,32 @@ import { getSupabaseClient } from '../utils/supabase';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, supabaseUser, assets, liabilities, netWorth, primaryCurrency, isLoading, updateAsset, lastDataSync, updateLastDataSync, snapshots } = useData();
+  const { user, supabaseUser, assets, liabilities, netWorth, primaryCurrency, isLoading, updateAsset, lastDataSync, updateLastDataSync, snapshots, hasSeenPaywall } = useData();
   const { openAddAssetFlow, openAddLiabilityFlow } = useModals();
   
   const [refreshing, setRefreshing] = useState(false);
   const [animationKey, setAnimationKey] = useState(0);
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const [paywallTimerStarted, setPaywallTimerStarted] = useState(false);
+
+  // 🎯 TRIGGER PAYWALL: Show after 7 seconds of viewing data (aha moment)
+  useEffect(() => {
+    const hasData = assets.length > 0 || liabilities.length > 0;
+    
+    // Only trigger once: when user has data AND hasn't seen paywall yet
+    if (hasData && !hasSeenPaywall && !paywallTimerStarted) {
+      console.log('🎯 User has data - starting 7-second paywall timer...');
+      setPaywallTimerStarted(true);
+      
+      const timer = setTimeout(() => {
+        console.log('⏰ 7 seconds elapsed - showing paywall');
+        router.push('/paywall');
+      }, 7000); // 7 seconds
+      
+      // Cleanup timer if component unmounts
+      return () => clearTimeout(timer);
+    }
+  }, [assets.length, liabilities.length, hasSeenPaywall, paywallTimerStarted]);
 
   // Refresh portfolio prices (pull-to-refresh)
   const refreshPortfolioPrices = async () => {
