@@ -1,6 +1,6 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.9.9 (Paywall Timing)  
+**Version:** 0.9.9 (Paywall Timing - Aha Moment)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
 **Access:** £49/year subscription with 7-day free trial (via RevenueCat + Apple IAP)
@@ -68,23 +68,28 @@ npx expo start --clear
 
 ## 🎯 Recent Changes (January 2026)
 
-### **🎯 Paywall Timing - Show After First Asset** ✅ PRODUCTION READY (v0.9.9 - January 28, 2026)
+### **🎯 Paywall Timing - 7-Second "Aha Moment"** ✅ PRODUCTION READY (v0.9.9 - January 28, 2026)
 
-**Improved onboarding flow: Users experience the app before seeing paywall**
+**Improved onboarding: Users see their data for 7 seconds before paywall appears**
 
 **What Changed:**
-- ✅ **Delayed Paywall:** Appears after user adds their first asset (not immediately after PIN)
-- ✅ **Better Conversion:** Users try the app before being asked to subscribe
-- ✅ **Updated Flow:** Sign up → PIN → Home (empty state) → Add first asset → Paywall
-- ✅ **State Management:** Added `hasSeenPaywall` flag to prevent showing paywall multiple times
+- ✅ **7-Second Delay:** Paywall appears 7 seconds after user sees their net worth (aha moment!)
+- ✅ **Better UX:** Users experience product value before being asked to subscribe
+- ✅ **Updated Flow:** Sign up → PIN → Home → Add first asset → **See data for 7 seconds** → Paywall
+- ✅ **State Management:** Added `markPaywallSeen()` function and timer tracking
 
 **Technical Changes:**
-- Modified `app/auth.tsx` to navigate to `/home` instead of `/paywall`
-- Updated `contexts/DataContext.tsx` to trigger paywall in `addAsset()` function
-- Added `hasSeenPaywall` persistence to `utils/storage.ts`
+- Moved paywall trigger from `DataContext.addAsset()` to `app/home.tsx`
+- Added `useEffect` hook with 7-second timer in home screen
+- Fixed timer bug: Removed state from dependency array to prevent premature cleanup
+- Added comprehensive debug logging
 
-**Hot Reload Note:**
-- Full app reload required after navigation changes (press `r` in Expo terminal)
+**User Flow:**
+1. User adds first asset and modal closes
+2. User sees their net worth card populated with real data (aha moment! 🎉)
+3. 7-second timer counts down silently
+4. Paywall appears with subscription offer
+5. User starts trial or subscribes
 
 ---
 

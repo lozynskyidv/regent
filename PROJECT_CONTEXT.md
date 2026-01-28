@@ -1,44 +1,52 @@
 # PROJECT CONTEXT - Regent iOS App
 
 **Last Updated:** January 28, 2026  
-**Version:** 0.9.9 (Paywall Timing)  
+**Version:** 0.9.9 (Paywall Timing - Aha Moment)  
 **Platform:** iOS only (React Native Expo)  
 **Access Model:** £49/year subscription with 7-day free trial (RevenueCat + Apple IAP)
 
 ---
 
-## 🎯 LATEST: Paywall Timing - Show After First Asset (v0.9.9 - January 28, 2026)
+## 🎯 LATEST: Paywall Timing - 7-Second "Aha Moment" Delay (v0.9.9 - January 28, 2026)
 
-**Improved onboarding flow to let users experience the app before seeing paywall**
+**Improved onboarding: Users see their data for 7 seconds before paywall appears**
 
 ### **What Changed:**
 
-✅ **Delayed Paywall Trigger:**
-- Paywall now appears **after user adds their first asset** (not immediately after PIN entry)
-- Users experience the app with empty state before being asked to subscribe
-- Better freemium conversion pattern (try before buy)
+✅ **7-Second Aha Moment:**
+- Paywall appears **7 seconds after user sees their data** (not immediately)
+- Users experience the value of seeing their net worth before being asked to subscribe
+- "Try before buy" pattern improves conversion rates
 
-✅ **Updated Auth Flow:**
-- Sign up → PIN entry → **Home screen (empty state)** ✅
-- User taps "Add Your First Asset" → Fills in details → Saves
-- **Paywall appears** → User can start trial or subscribe
-- Better conversion rates through product experience first
+✅ **Updated User Flow:**
+1. Sign up → PIN entry → **Home screen (empty state)** ✅
+2. User taps "Add Your First Asset" → Fills in details → Saves
+3. Modal closes → **User sees net worth card with their data** (aha moment! 🎉)
+4. **7-second timer starts** → User explores their dashboard
+5. **Paywall appears** → User can start trial or subscribe
 
 ✅ **State Management:**
 - Added `hasSeenPaywall` flag to subscription state (persisted in AsyncStorage)
-- Prevents showing paywall multiple times
-- Tracks if user has already seen the paywall offer
+- Added `markPaywallSeen()` function in DataContext
+- Paywall marks itself as seen on mount (prevents showing multiple times)
+- Timer tracked with local state to prevent re-triggering
 
 ### **Technical Implementation:**
-- Modified `app/auth.tsx` to navigate to `/home` instead of `/paywall`
-- Updated `contexts/DataContext.tsx` to trigger paywall in `addAsset()` function
-- Added `hasSeenPaywall` to `SubscriptionState` interface in `utils/storage.ts`
-- Updated `app/_layout.tsx` AuthGuard comments to reflect new flow
+- Moved paywall trigger from `DataContext.addAsset()` to `app/home.tsx`
+- Added `useEffect` hook in home screen that starts 7-second timer when data exists
+- Fixed timer bug: Removed `paywallTimerStarted` from dependency array to prevent premature cleanup
+- Added comprehensive debug logging for troubleshooting
 
-### **Hot Reload Note:**
-⚠️ After these changes, full app reload required (not just hot reload)
-- Press `r` in Expo terminal to reload
-- Or restart dev server if hot reload doesn't pick up navigation changes
+### **Bug Fixes:**
+- ✅ Fixed timer being cleared by `useEffect` re-run (dependency array issue)
+- ✅ Fixed `hasSeenPaywall` not being marked in paywall screen
+- ✅ Fixed timer starting but never firing
+
+### **Key Insights:**
+- 7 seconds is optimal for users to appreciate what they created
+- Timer cleanup properly handled on component unmount
+- Less aggressive, more respectful of user experience
+- Aligns with modern freemium best practices
 
 ---
 
