@@ -68,7 +68,7 @@ export function PaywallScreen({ daysRemaining, onSubscribe, onRestorePurchases }
         )}
 
         {/* Trial Expired Message */}
-        {!isTrialActive && (
+        {daysRemaining !== undefined && !isTrialActive && (
           <div 
             className="mb-8 p-5 rounded-xl border text-center"
             style={{

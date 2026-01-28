@@ -1,7 +1,7 @@
 /**
  * Paywall Screen Component
  * Shows subscription offer with 7-day free trial at £49/year
- * Displays during trial and after trial expires
+ * Matches web prototype design exactly
  */
 
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
@@ -10,19 +10,39 @@ import { Check } from 'lucide-react-native';
 import { Colors, Spacing, BorderRadius } from '../constants';
 
 interface PaywallScreenProps {
-  daysRemaining?: number;
+  trialEndDate?: string; // ISO date string for when trial ends
   onSubscribe: () => void;
   onRestorePurchases: () => void;
   isProcessing?: boolean;
 }
 
 export default function PaywallScreen({ 
-  daysRemaining, 
+  trialEndDate,
   onSubscribe, 
   onRestorePurchases,
   isProcessing = false 
 }: PaywallScreenProps) {
-  const isTrialActive = daysRemaining !== undefined && daysRemaining > 0;
+  // Calculate trial end date if not provided (7 days from now)
+  const calculateTrialEndDate = () => {
+    if (trialEndDate) {
+      return trialEndDate;
+    }
+    const date = new Date();
+    date.setDate(date.getDate() + 7); // 7 days from now
+    return date.toISOString();
+  };
+
+  // Format trial end date (e.g., "January 15, 2026")
+  const formatTrialEndDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+  };
+
+  const displayTrialEndDate = calculateTrialEndDate();
 
   return (
     <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
@@ -38,70 +58,45 @@ export default function PaywallScreen({
           </Text>
         </View>
 
-        {/* Trial Status */}
-        {isTrialActive && (
-          <View style={styles.statusCard}>
-            <Text style={styles.statusText}>
-              {daysRemaining === 1 
-                ? '1 day remaining in your trial' 
-                : `${daysRemaining} days remaining in your trial`}
-            </Text>
+        {/* Pricing Card (at top) */}
+        <View style={styles.pricingCard}>
+          <View style={styles.priceRow}>
+            <Text style={styles.priceAmount}>£49</Text>
+            <Text style={styles.pricePeriod}>/year</Text>
           </View>
-        )}
+          <Text style={styles.trialInfo}>
+            Includes free 7-day trial — cancel anytime
+          </Text>
+          <Text style={styles.chargeDate}>
+            You won't be charged until {formatTrialEndDate(displayTrialEndDate)}
+          </Text>
+        </View>
 
-        {/* Trial Expired Message */}
-        {!isTrialActive && (
-          <View style={styles.expiredCard}>
-            <Text style={styles.expiredTitle}>Your trial has ended</Text>
-            <Text style={styles.expiredSubtitle}>
-              Subscribe to continue managing your net worth with confidence
-            </Text>
-          </View>
-        )}
-
-        {/* Benefits */}
+        {/* Benefits (only 3) */}
         <View style={styles.benefitsContainer}>
           {[
             'Real-time portfolio tracking with live market data',
             'Secure bank account sync via TrueLayer',
-            'Complete financial clarity across all assets',
-            'Privacy-first architecture with no data sharing',
-            'Designed for mass affluent professionals'
+            'Privacy-first architecture with no data sharing'
           ].map((benefit, index) => (
             <View key={index} style={styles.benefitRow}>
-              <View style={styles.checkContainer}>
-                <Check size={16} color={Colors.foreground} strokeWidth={2.5} />
-              </View>
+              <Check size={16} color={Colors.foreground} strokeWidth={2.5} />
               <Text style={styles.benefitText}>{benefit}</Text>
             </View>
           ))}
         </View>
 
-        {/* Pricing */}
-        <View style={styles.pricingCard}>
-          <Text style={styles.pricingLabel}>ANNUAL SUBSCRIPTION</Text>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceAmount}>£149</Text>
-            <Text style={styles.pricePeriod}>/year</Text>
-          </View>
-          <Text style={styles.pricingSubtext}>
-            Cancel anytime in Settings
-          </Text>
-        </View>
-
-        {/* Subscribe Button */}
+        {/* Start Free Trial Button */}
         <TouchableOpacity
-          style={[styles.subscribeButton, isProcessing && styles.subscribeButtonDisabled]}
+          style={[styles.trialButton, isProcessing && styles.trialButtonDisabled]}
           onPress={onSubscribe}
           disabled={isProcessing}
           activeOpacity={0.8}
         >
           {isProcessing ? (
-            <ActivityIndicator size="small" color={Colors.background} />
+            <ActivityIndicator size="small" color={Colors.white} />
           ) : (
-            <Text style={styles.subscribeButtonText}>
-              {isTrialActive ? 'Subscribe Now' : 'Continue with Regent'}
-            </Text>
+            <Text style={styles.trialButtonText}>Start Free Trial</Text>
           )}
         </TouchableOpacity>
 
@@ -119,8 +114,11 @@ export default function PaywallScreen({
 
         {/* Fine Print */}
         <Text style={styles.finePrint}>
-          Payment will be charged to your Apple ID account at confirmation of purchase. 
-          Subscription automatically renews unless cancelled at least 24 hours before the end of the current period.
+          Payment will be charged to your Apple ID account at the confirmation of purchase. 
+          Subscription automatically renews unless it is cancelled at least 24 hours before the end of the 
+          current period. Your account will be charged for renewal within 24 hours prior to the end of the 
+          current period. You can manage and cancel your subscriptions by going to your account settings on 
+          the App Store after purchase.
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -135,21 +133,25 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     justifyContent: 'center',
-    paddingHorizontal: Spacing.xl,
-    paddingVertical: Spacing['2xl'],
+    paddingHorizontal: 24,
+    paddingTop: 32,
+    paddingBottom: 24,
+    maxWidth: 448,
+    alignSelf: 'center',
+    width: '100%',
   },
   
   // Header
   header: {
     alignItems: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: 24,
   },
   logo: {
     fontSize: 40,
     fontWeight: '300',
     letterSpacing: -0.8,
     color: Colors.foreground,
-    marginBottom: Spacing.sm,
+    marginBottom: 12,
   },
   tagline: {
     fontSize: 18,
@@ -159,91 +161,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   
-  // Status Cards
-  statusCard: {
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.lg,
-    marginBottom: Spacing.lg,
-    alignItems: 'center',
-  },
-  statusText: {
-    fontSize: 15,
-    color: Colors.mutedForeground,
-  },
-  
-  expiredCard: {
-    backgroundColor: Colors.card,
-    borderRadius: BorderRadius.xl,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    padding: Spacing.xl,
-    marginBottom: Spacing.lg,
-    alignItems: 'center',
-  },
-  expiredTitle: {
-    fontSize: 17,
-    fontWeight: '500',
-    color: Colors.foreground,
-    marginBottom: Spacing.xs,
-  },
-  expiredSubtitle: {
-    fontSize: 15,
-    color: Colors.mutedForeground,
-    lineHeight: 22.5,
-    textAlign: 'center',
-  },
-  
-  // Benefits
-  benefitsContainer: {
-    marginBottom: 32,
-  },
-  benefitRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 16,
-  },
-  checkContainer: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: 'rgba(100, 116, 139, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-    marginTop: 2,
-  },
-  benefitText: {
-    flex: 1,
-    fontSize: 15,
-    color: Colors.foreground,
-    lineHeight: 22.5,
-  },
-  
-  // Pricing
+  // Pricing Card (at top, in white card)
   pricingCard: {
     backgroundColor: Colors.card,
-    borderRadius: BorderRadius.xl,
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: Colors.border,
-    padding: Spacing.xl,
-    marginBottom: Spacing.lg,
+    padding: 24,
     alignItems: 'center',
-  },
-  pricingLabel: {
-    fontSize: 12,
-    color: Colors.mutedForeground,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-    fontWeight: '500',
-    marginBottom: Spacing.xs,
+    marginBottom: 24,
   },
   priceRow: {
     flexDirection: 'row',
     alignItems: 'baseline',
-    marginBottom: Spacing.sm,
+    marginBottom: 8,
   },
   priceAmount: {
     fontSize: 48,
@@ -253,39 +184,67 @@ const styles = StyleSheet.create({
   },
   pricePeriod: {
     fontSize: 18,
-    color: Colors.mutedForeground,
     fontWeight: '400',
+    color: Colors.mutedForeground,
     marginLeft: 4,
   },
-  pricingSubtext: {
-    fontSize: 14,
+  trialInfo: {
+    fontSize: 15,
+    fontWeight: '500',
+    color: Colors.foreground,
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  chargeDate: {
+    fontSize: 13,
+    fontWeight: '400',
     color: Colors.mutedForeground,
+    textAlign: 'center',
   },
   
-  // Buttons
-  subscribeButton: {
-    backgroundColor: Colors.primary,
+  // Benefits (only 3)
+  benefitsContainer: {
+    marginBottom: 24,
+  },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    paddingHorizontal: 8,
+  },
+  benefitText: {
+    flex: 1,
+    fontSize: 15,
+    color: Colors.foreground,
+    lineHeight: 22.5,
+    marginLeft: 12,
+  },
+  
+  // Start Free Trial Button
+  trialButton: {
+    backgroundColor: Colors.foreground,
     height: 56,
-    borderRadius: BorderRadius.xl,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.md,
+    marginBottom: 16,
   },
-  subscribeButtonDisabled: {
+  trialButtonDisabled: {
     opacity: 0.6,
   },
-  subscribeButtonText: {
+  trialButtonText: {
     fontSize: 16,
     fontWeight: '500',
     color: Colors.background,
     letterSpacing: -0.16,
   },
   
+  // Restore Purchases
   restoreButton: {
     height: 48,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: Spacing.xl,
+    marginBottom: 32,
   },
   restoreButtonText: {
     fontSize: 15,

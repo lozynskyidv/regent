@@ -32,10 +32,8 @@ export default function Paywall() {
     }
   }, [isPremium, isInTrial]);
 
-  // Calculate days remaining from RevenueCat
-  const daysRemaining = trialEndDate
-    ? Math.max(0, Math.ceil((trialEndDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
-    : subscriptionState?.daysRemaining;
+  // Format trial end date for display
+  const trialEndDateString = trialEndDate ? trialEndDate.toISOString() : undefined;
 
   const handleSubscribe = async () => {
     try {
@@ -103,7 +101,7 @@ export default function Paywall() {
 
   return (
     <PaywallScreen
-      daysRemaining={daysRemaining}
+      trialEndDate={trialEndDateString}
       onSubscribe={handleSubscribe}
       onRestorePurchases={handleRestorePurchases}
       isProcessing={isProcessing}
