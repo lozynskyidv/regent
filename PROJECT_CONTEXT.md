@@ -1,13 +1,95 @@
 # PROJECT CONTEXT - Regent iOS App
 
-**Last Updated:** January 27, 2026  
-**Version:** 0.9.7 (Subscription Model Implementation)  
+**Last Updated:** January 28, 2026  
+**Version:** 0.9.8 (UI/UX Polish)  
 **Platform:** iOS only (React Native Expo)  
-**Access Model:** £149/year subscription with 7-day free trial (RevenueCat + Apple IAP)
+**Access Model:** £49/year subscription with 7-day free trial (RevenueCat + Apple IAP)
 
 ---
 
-## 💰 LATEST: Subscription System Implementation (v0.9.7 - January 27, 2026)
+## 🎨 LATEST: UI/UX Refinements - Design System Alignment (v0.9.8 - January 28, 2026)
+
+**Comprehensive visual polish to match paywall's refined design-sense across entire app**
+
+### **What Changed:**
+
+#### **Paywall Screen:**
+✅ **Removed Redundant Face ID Card:**
+- Native iOS purchase dialog handles Face ID automatically
+- Cleaner, less confusing UX (one-step purchase flow)
+- Better matches standard iOS purchase patterns
+
+✅ **Typography Matched to Web Prototype:**
+- Logo: 40px weight 300
+- Price: 48px weight 300 (reduced from 400)
+- Benefits: 15px with 22.5 lineHeight
+- Check icons: 16px with 2.5 strokeWidth
+- Button: 16px weight 500
+- Fine print: 12px with 18 lineHeight
+
+✅ **Spacing Optimization:**
+- Reduced all vertical spacing for above-the-fold fit
+- Card padding: 32px → 24px
+- Benefits gap: 16px → 12px
+- 80-90% of content now visible without scrolling
+
+✅ **Price Update:**
+- £149/year → **£49/year** (more accessible, better conversion rate)
+
+#### **Home Screen:**
+✅ **Typography Hierarchy Fixed:**
+- User name: 14px → **17px**, weight 500 → 400 (cleaner look)
+- "Overview": 32px → **28px**, weight 500 → 600 (better proportion)
+- Timestamp: 13px → **14px**, opacity 0.7 → 0.85 (more readable)
+
+✅ **Spacing Consistency:**
+- Header paddingTop: 24px → **20px**
+- ScrollView paddingTop: 16px → **8px** (closer to first card)
+- Card gaps: 16px → **24px** (consistent rhythm)
+
+#### **NET WORTH Card (Hero):**
+✅ **Visual Prominence Enhanced:**
+- Card padding: 24px → **28px** (more breathing room)
+- Shadow: opacity 0.04 → **0.05**, radius 3 → **4**, elevation 1 → **2**
+- Label: 12px → **13px**, marginBottom 8 → **12px**
+- Main value: 48px → **44px**, lineHeight 56 → **52px**
+- Change text: 16px → **17px**, lineHeight 24 → **26px**
+- Time period: 13px → **14px**, opacity **0.85** added
+
+#### **Assets & Liabilities Cards:**
+✅ **Typography Scale:**
+- Card padding: 32px → **24px** (consistent)
+- Label: 15px → **16px**, marginBottom 4 → **6px**
+- Total: 24px → **28px**, letterSpacing **-0.28**, lineHeight **36**
+- Item name: 16px → **15px**
+- Item value: 16px → **15px**, weight 400 → **500** (emphasize amounts)
+
+✅ **List Refinement:**
+- List gap: 12px → **8px** (tighter, cleaner)
+- "+X more": opacity **0.8** added
+
+### **Design-Sense Achievement:**
+| Before | After ✅ |
+|--------|---------|
+| Inconsistent font sizes | Deliberate typographic scale (13px → 14-17px → 28-44px) |
+| Loose, uneven spacing | Consistent 24px card rhythm |
+| Header too cramped | Proper breathing room |
+| "Overview" too large | Balanced hierarchy |
+| NET WORTH equal weight | Visually dominant (padding, shadow) |
+| Asset values blended in | Emphasized with weight 500 |
+
+### **Files Changed:**
+- `components/PaywallScreen.tsx` - Pixel-perfect typography, removed Face ID card, price update
+- `app/paywall.tsx` - Pass trialEndDate as ISO string
+- `app/home.tsx` - Refined typography, consistent spacing
+- `components/NetWorthCard.tsx` - Enhanced visual prominence, typography scale
+- `components/AssetsCard.tsx` - Typography refinement, consistent padding
+- `components/LiabilitiesCard.tsx` - Typography refinement, consistent padding
+- `web-prototype/src/components/PaywallScreen.tsx` - Fixed trial end logic bug
+
+---
+
+## 💰 Subscription System Implementation (v0.9.7 - January 27, 2026)
 
 **Pivoted from invite-only to £149/year subscription with RevenueCat integration**
 
@@ -120,12 +202,12 @@ All time               ← Time period label
 ## 🚀 QUICK START (5-Min Orientation)
 
 **What is Regent?**  
-Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber modernism + JPM restraint." Local storage + Supabase backend. **£149/year subscription with 7-day free trial.**
+Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber modernism + JPM restraint." Local storage + Supabase backend. **£49/year subscription with 7-day free trial.**
 
 **Current State (What's ACTUALLY Built):**  
 ✅ **P0 MVP COMPLETE:**
-- **Subscription System** (£149/year via RevenueCat + Apple IAP, 7-day free trial)
-- **Paywall Screen** (Beautiful UI matching web prototype, purchase & restore flows)
+- **Subscription System** (£49/year via RevenueCat + Apple IAP, 7-day free trial)
+- **Paywall Screen** (Pixel-perfect UI matching web prototype, above-the-fold optimized, purchase & restore flows)
 - **Authentication** (Google OAuth + Email/Password - fully functional with Supabase)
 - **Auth screen** (Face ID/PIN onboarding, fully functional)
 - **Empty State Onboarding** (Beautiful hero card with NYC skyline for new users)

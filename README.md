@@ -1,9 +1,9 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.9.7 (Subscription Model)  
+**Version:** 0.9.8 (UI/UX Polish)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
-**Access:** £149/year subscription with 7-day free trial (via RevenueCat + Apple IAP)
+**Access:** £49/year subscription with 7-day free trial (via RevenueCat + Apple IAP)
 
 ---
 
@@ -47,8 +47,8 @@ npx expo start --clear
 
 ## 📱 Current Features (P0 MVP Complete)
 
-✅ **Subscription System:** £149/year with 7-day free trial (RevenueCat + Apple IAP)  
-✅ **Paywall Screen:** Beautiful subscription UI matching web prototype design  
+✅ **Subscription System:** £49/year with 7-day free trial (RevenueCat + Apple IAP)  
+✅ **Paywall Screen:** Pixel-perfect UI matching web prototype, above-the-fold optimized  
 ✅ **Authentication:** Google OAuth, Email/Password, Face ID/PIN, Supabase Auth  
 ✅ **Empty State Onboarding:** Beautiful hero card for new users with NYC skyline  
 ✅ **Net Worth Card (Merged):** Hero card with integrated performance chart, count-up animation, interactive scrubbing  
@@ -67,6 +67,46 @@ npx expo start --clear
 ---
 
 ## 🎯 Recent Changes (January 2026)
+
+### **🎨 UI/UX Refinements - Design System Alignment** ✅ PRODUCTION READY (v0.9.8 - January 28, 2026)
+
+**Comprehensive visual polish across all screens to match paywall's refined design-sense**
+
+**Paywall Improvements:**
+- ✅ **Removed Face ID Card:** Native iOS purchase dialog handles Face ID automatically (cleaner UX)
+- ✅ **Typography Precision:** All font sizes, weights, and letter spacing now match web prototype exactly
+- ✅ **Above-the-Fold Optimization:** 80-90% of content fits on one screen (only legal text scrolls)
+- ✅ **Reduced Benefits:** 5 → 3 key benefits for focused messaging
+- ✅ **Price Update:** £149/year → **£49/year** (more accessible pricing)
+
+**Home Screen Improvements:**
+- ✅ **Typography Hierarchy:** User name (14px → 17px), "Overview" (32px → 28px), timestamp opacity improved
+- ✅ **Consistent Spacing:** 24px rhythm between all cards (was mixed 16px/24px)
+- ✅ **NET WORTH Card Enhancement:**
+  - Label size: 12px → 13px (more readable)
+  - Main value: 48px → 44px (refined scale)
+  - Card padding: 24px → 28px (more breathing room)
+  - Shadow depth increased for visual prominence
+- ✅ **Assets/Liabilities Cards:**
+  - Label: 15px → 16px
+  - Total: 24px → 28px (emphasize amounts)
+  - List items: 16px → 15px, values now weight 500 (clearer hierarchy)
+  - Padding: 32px → 24px (consistent with other cards)
+- ✅ **Empty State Polish:** Better spacing, refined typography, improved message box styling
+
+**Design-Sense Achievement:**
+- Deliberate typographic scale (13px → 14-17px → 28-44px)
+- Consistent 24px vertical rhythm across all cards
+- NET WORTH card visually dominant (larger padding, stronger shadow)
+- Professional, refined feel matching paywall quality
+
+**Technical Changes:**
+- Updated `app/home.tsx` typography and spacing
+- Refined `components/NetWorthCard.tsx` styling
+- Polished `components/AssetsCard.tsx` and `components/LiabilitiesCard.tsx`
+- Aligned `components/PaywallScreen.tsx` with web prototype pixel-perfectly
+
+---
 
 ### **💰 Subscription System Implementation** ✅ INTEGRATION READY (v0.9.7 - January 27, 2026)
 

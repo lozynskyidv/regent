@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: Colors.card,
     borderRadius: BorderRadius.lg,
-    padding: Spacing.xl,
+    padding: 24,
     borderWidth: 1,
     borderColor: Colors.border,
     shadowColor: '#000',
@@ -98,7 +98,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: Spacing.md,
+    marginBottom: 16,
   },
   headerLeft: {
     flex: 1,
@@ -109,17 +109,17 @@ const styles = StyleSheet.create({
     gap: Spacing.xs,
   },
   label: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: '500',
     color: Colors.mutedForeground,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   total: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '400',
     color: Colors.foreground,
-    letterSpacing: -0.24, // -0.01em
-    lineHeight: 31.2, // 1.3 * 24
+    letterSpacing: -0.28,
+    lineHeight: 36,
   },
   
   // Icon Buttons
@@ -144,30 +144,31 @@ const styles = StyleSheet.create({
   
   // List
   list: {
-    gap: Spacing.sm, // 12px (space-y-3 in web)
+    gap: 8,
   },
   listItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.sm,
+    paddingVertical: 12,
   },
   itemName: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '400',
     color: Colors.foreground,
     flex: 1,
     marginRight: Spacing.md,
   },
   itemValue: {
-    fontSize: 16,
-    fontWeight: '400',
+    fontSize: 15,
+    fontWeight: '500',
     color: Colors.foreground,
   },
   moreText: {
     fontSize: 14,
     color: Colors.mutedForeground,
     textAlign: 'center',
-    marginTop: Spacing.xs,
+    marginTop: 8,
+    opacity: 0.8,
   },
 });

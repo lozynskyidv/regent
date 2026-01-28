@@ -349,37 +349,37 @@ const styles = StyleSheet.create({
   // Header
   headerContainer: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.lg,
-    paddingBottom: Spacing.md,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Spacing.xs,
+    marginBottom: 4,
   },
   userName: {
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 17,
+    fontWeight: '400',
     color: Colors.mutedForeground,
-    letterSpacing: 0.42, // 0.03em
+    letterSpacing: 0,
   },
   settingsButton: {
     padding: 6,
     marginRight: -6,
   },
   pageTitle: {
-    fontSize: 32,
-    fontWeight: '500',
+    fontSize: 28,
+    fontWeight: '600',
     color: Colors.foreground,
-    letterSpacing: -0.64,
-    marginTop: Spacing.xs,
+    letterSpacing: -0.56,
+    marginTop: 8,
   },
   timestamp: {
-    fontSize: 13,
+    fontSize: 14,
     color: Colors.mutedForeground,
-    marginTop: Spacing.xs,
-    opacity: 0.7,
+    marginTop: 6,
+    opacity: 0.85,
   },
   
   // Loading
@@ -400,8 +400,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: Spacing.lg,
-    paddingTop: Spacing.md,
-    gap: Spacing.md, // 16px between Assets/Liabilities
+    paddingTop: 8,
+    gap: Spacing.lg, // 24px between cards (consistent)
   },
 
   // ===== Empty State Styles (100% Match to Web Prototype) =====
