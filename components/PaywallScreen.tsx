@@ -76,7 +76,7 @@ export default function PaywallScreen({
         <View style={styles.benefitsContainer}>
           {[
             'Real-time portfolio tracking with live market data',
-            'Secure bank account sync via TrueLayer',
+            'Encrypted cloud backups with military-grade security',
             'Privacy-first architecture with no data sharing'
           ].map((benefit, index) => (
             <View key={index} style={styles.benefitRow}>

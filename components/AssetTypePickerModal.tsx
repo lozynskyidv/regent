@@ -35,7 +35,6 @@ export default function AssetTypePickerModal({
       icon: Building2,
       title: 'Bank Account',
       description: 'Cash, savings, checking accounts',
-      // badge removed - TrueLayer not implemented yet
     },
     {
       id: 'stocks',

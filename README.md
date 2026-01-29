@@ -135,15 +135,14 @@ npx expo start --clear
 
 ### **💰 Subscription System Implementation** ✅ INTEGRATION READY (v0.9.7 - January 27, 2026)
 
-**Removed invite-only system, implemented £149/year subscription with RevenueCat**
+**Removed invite-only system, implemented £49/year subscription with RevenueCat**
 
 **Major Changes:**
 - ❌ **Removed Invite System:** Deleted ShareInviteCard, invite code screens, invite validation
-- ✅ **Added Subscription Flow:** £149/year with 7-day free trial via RevenueCat
+- ✅ **Added Subscription Flow:** £49/year with 7-day free trial via RevenueCat
 - ✅ **Paywall Screen:** Beautiful UI 100% matching web prototype design
 - ✅ **Purchase & Restore:** Full RevenueCat integration with Apple In-App Purchase
 - ✅ **Auth Flow Updated:** PIN entry → Paywall → Home (subscription check)
-- ✅ **TrueLayer Ready:** Benefit listed for future bank account sync integration
 
 **Implementation:**
 - Created `PaywallScreen.tsx` component (pixel-perfect match to web prototype)
@@ -153,15 +152,15 @@ npx expo start --clear
 
 **Next Steps Required:**
 1. Configure RevenueCat dashboard (see `SUBSCRIPTION_SETUP.md`)
-2. Create In-App Purchase product in App Store Connect (£149/year, 7-day trial)
+2. Create In-App Purchase product in App Store Connect (£49/year, 7-day trial)
 3. Link RevenueCat to App Store Connect
 4. Test purchase flow with sandbox account
 5. Submit app with IAP for App Store review
 
 **Unit Economics:**
-- Revenue: £149/year (£12.42/month)
-- Costs: £10.78/month (Twelve Data + Supabase + TrueLayer)
-- Margin: 13% gross profit
+- Revenue: £49/year (£4.08/month)
+- Costs: ~£1.78/month (Twelve Data + Supabase)
+- Margin: ~56% gross profit
 
 ---
 
@@ -372,7 +371,6 @@ NET WORTH
 - **Persistent Timestamp System:** "Updated X ago" now accurate across app restarts
 - **Hybrid Time Display:** Relative time (<24h) → Absolute time (≥24h with clock time)
 - **Commodity Symbol Fix:** Corrected all 20 commodity symbols to forex pair format (XAU/USD, XAG/USD, etc.)
-- **Banking Badge Removed:** Removed misleading "Live sync" badge (TrueLayer not implemented yet)
 
 **Technical Implementation:**
 - React Native Animated API for 60fps count-up animation
@@ -548,19 +546,7 @@ NET WORTH
 
 ---
 
-### 2. Bank Connections (TrueLayer OAuth)
-**Goal:** Read-only UK bank account balance fetching  
-**What to build:**
-- TrueLayer OAuth flow (similar to Google OAuth)
-- Bank selection UI
-- Auto-refresh mechanism (24-hour cycle)
-- Secure token storage in SecureStore
-
-**Current state:** Manual bank entry only
-
----
-
-### 3. Performance Chart ✅ COMPLETE
+### 2. Performance Chart ✅ COMPLETE
 **Status:** Fully implemented and merged into Net Worth Card  
 **Features:**
 - ✅ Historical snapshots stored in AsyncStorage
@@ -571,7 +557,7 @@ NET WORTH
 
 ---
 
-### 4. TestFlight Beta
+### 3. TestFlight Beta
 **Goal:** Distribute to beta testers  
 **What to do:**
 - Build with EAS: `eas build --platform ios`
@@ -627,7 +613,7 @@ web-prototype/        # Reference only (NOT for production)
    
 2. **App Store Connect Setup** (30 min)
    - Create In-App Purchase: `regent_premium_annual`
-   - Price: £149/year, 7-day free trial
+   - Price: £49/year, 7-day free trial
    - Submit for review
    
 3. **Link RevenueCat → App Store** (10 min)
@@ -650,7 +636,6 @@ web-prototype/        # Reference only (NOT for production)
 - [ ] **Referral System:** "Give friends 1 month free" (growth hack)
 
 ### **P2: Advanced Features**
-- [ ] **TrueLayer Integration:** Automatic bank account sync (requires £9/month cost)
 - [ ] **Monthly Subscription Option:** £14.99/month alongside annual
 - [ ] **Family Sharing:** Share subscription with up to 5 family members
 - [ ] **Export Data:** PDF reports, CSV exports
@@ -680,7 +665,7 @@ web-prototype/        # Reference only (NOT for production)
 | Doc | Purpose | When to Use |
 |-----|---------|-------------|
 | **`PROJECT_CONTEXT.md`** | Self-sufficient quick reference | **Start here, use 95% of the time** |
-| **`REGENT_CURSOR_SPEC.md`** | Complete product specification | Complex integrations only (TrueLayer, RevenueCat, etc.) |
+| **`REGENT_CURSOR_SPEC.md`** | Complete product specification | Complex integrations only (RevenueCat, etc.) |
 | **Git History** | Build history & decisions | `git log --oneline` for past changes |
 
 ---

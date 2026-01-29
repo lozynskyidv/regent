@@ -134,7 +134,7 @@
 
 ## 💰 Subscription System Implementation (v0.9.7 - January 27, 2026)
 
-**Pivoted from invite-only to £149/year subscription with RevenueCat integration**
+**Pivoted from invite-only to £49/year subscription with RevenueCat integration**
 
 ### **What Changed:**
 ❌ **Removed Invite System:**
@@ -144,7 +144,7 @@
 - Cleaned up all invite-related code and UI
 
 ✅ **Added Subscription System:**
-- **PaywallScreen:** Beautiful UI 100% matching web prototype (£149/year)
+- **PaywallScreen:** Beautiful UI 100% matching web prototype (£49/year)
 - **RevenueCat Integration:** `react-native-purchases` SDK installed & configured
 - **Purchase Flow:** Full implementation with Apple In-App Purchase
 - **Restore Purchases:** Working restore flow for reinstalls
@@ -157,7 +157,7 @@ Sign Up (Email/Google)
        ↓
 Enter PIN (Face ID)
        ↓
-PAYWALL (£149/year + 7-day trial)
+PAYWALL (£49/year + 7-day trial)
        ↓
 Subscribe or Restore
        ↓
@@ -289,7 +289,7 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
   - ✅ No redundancy or contradictions (everything in sync)
   
   **Technical:** Gesture.Pan() with runOnJS for thread coordination, direct setValue for instant appearance, fractional position interpolation for smooth movement, expo-haptics for tactile feedback, data locking during gestures.
-- **Paywall Screen** (£149/year subscription):
+- **Paywall Screen** (£49/year subscription):
   - ✅ Beautiful UI 100% matching web prototype design
   - ✅ RevenueCat integration (react-native-purchases SDK)
   - ✅ Purchase flow with Apple In-App Purchase
@@ -297,14 +297,13 @@ Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber 
   - ✅ 7-day free trial support
   - ✅ Trial countdown display
   - ✅ "Continue with Regent" CTA button
-  - ✅ 5 benefits including TrueLayer (future feature)
+  - ✅ 3 key benefits focused on core value
 
 ✅ **P0 MVP COMPLETE!** All core features production-ready
 
 **Next Priorities (P1):**
 1. Apple OAuth (App Store requirement - waiting on Apple Developer approval)
-2. Bank connections (TrueLayer OAuth)
-3. TestFlight distribution
+2. TestFlight distribution
 
 **Tech Stack:**  
 - React Native (Expo SDK 54), React 19.1.0, TypeScript 5.9  
@@ -429,7 +428,7 @@ types/
 2. AuthGuard detects `isAuthenticated && !isPremium` → Routes to `/paywall`
 3. Paywall screen shows features + "Start 14-Day Free Trial" button
 4. User taps button → RevenueCat `purchasePackage()` initiates Apple IAP
-5. Apple handles payment (sandbox: free, production: £149/year after trial)
+5. Apple handles payment (sandbox: free, production: £49/year after trial)
 6. RevenueCat grants `premium` entitlement → `isPremium = true`
 7. AuthGuard detects premium status → Routes to `/auth` (PIN setup)
 8. User creates PIN → Routes to `/home` (full app access) ✅
@@ -502,7 +501,7 @@ types/
 
 **Fully Functional:**
 - ✅ Google OAuth (Supabase auth, token management)
-- ✅ Paywall (14-day free trial with RevenueCat, £149/year)
+- ✅ Paywall (7-day free trial with RevenueCat, £49/year)
 - ✅ RevenueCat Integration (purchase flow, restore purchases, entitlements)
 - ✅ Face ID/PIN Auth (onboarding, authentication)
 - ✅ Empty State Onboarding (hero card with NYC skyline, dynamic welcome message)
@@ -525,8 +524,6 @@ types/
 
 **Not Built Yet (P1 - Next Priorities):**
 - ❌ **Apple OAuth** - Code implemented, needs Supabase configuration (App Store requirement)
-- ❌ Bank connections (TrueLayer OAuth flow)
-- ❌ Performance chart (net worth over time, line chart)
 - ❌ TestFlight distribution
 
 ---
@@ -650,7 +647,7 @@ if (pinHash) {
 - AuthGuard checks `isPremium` from RevenueCat entitlements
 - Paywall appears when authenticated but not premium
 - Apple In-App Purchase handles payment processing
-- 14-day free trial, then £149/year (or $149/€149 based on region)
+- 7-day free trial, then £49/year (or $49/€49 based on region)
 
 **Files:**
 - `utils/useRevenueCat.ts` - Custom hook wrapping RevenueCat SDK
@@ -680,8 +677,8 @@ if (isAuthenticated && !isPremium && !isLoadingSubscription) {
 
 **Features:**
 - ✅ Apple In-App Purchase integration
-- ✅ 14-day free trial (automatic)
-- ✅ £149/year subscription (sandbox tested with $149)
+- ✅ 7-day free trial (automatic)
+- ✅ £49/year subscription (sandbox tested with $49)
 - ✅ Restore purchases functionality
 - ✅ Entitlement checking (premium access)
 - ✅ Error handling (user cancellation, purchase failures)
@@ -1194,12 +1191,6 @@ curl -X POST "https://YOUR-PROJECT.supabase.co/functions/v1/fetch-asset-prices" 
 **Files:**
 - `constants/PopularSymbols.ts` - All commodity symbols corrected
 
-### Banking Badge Removal
-
-**What We Fixed:** Removed misleading "Live sync" badge (TrueLayer not implemented yet)
-
-**Files:**
-- `components/AssetTypePickerModal.tsx` - Badge removed
 
 ---
 
@@ -1399,34 +1390,7 @@ supabase functions deploy delete-account
 
 ---
 
-### **3. Bank Connections** (TrueLayer OAuth)
-
-**Current State:** Users manually enter bank balances  
-**Goal:** Read-only UK bank account connections with auto-refresh
-
-**What to Build:**
-- TrueLayer OAuth setup:
-  - Create account at truelayer.com
-  - Register redirect URI
-  - Add client ID/secret to `.env`
-- Create `ConnectBankModal.tsx`:
-  - Bank selection UI (Barclays, HSBC, Lloyds, etc.)
-  - OAuth flow (similar to Google OAuth in `app/index.tsx`)
-  - Handle callback and token storage (SecureStore)
-- Create `utils/truelayerApi.ts`:
-  - Fetch account balances
-  - Refresh access tokens
-  - Handle errors (expired tokens, revoked access)
-- Add auto-refresh mechanism:
-  - Check connections on app open
-  - Refresh every 24 hours
-  - Show "Connected" badge on bank assets
-
-**Starting Point:** See `app/index.tsx` Google OAuth flow, adapt for TrueLayer
-
----
-
-### **4. TestFlight Beta**
+### **3. TestFlight Beta**
 
 **Current State:** Running in Expo Go only  
 **Goal:** Distribute standalone build to beta testers
@@ -1454,7 +1418,7 @@ supabase functions deploy delete-account
 - [ ] Enable Apple OAuth in Supabase (App Store requirement)
 - [ ] Re-enable email verification in Supabase (currently disabled for Expo Go testing)
 - [ ] Replace RevenueCat test keys with production keys
-- [ ] Configure App Store Connect product (£149/year)
+- [ ] Configure App Store Connect product (£49/year)
 - [ ] Test Face ID in standalone build
 - [ ] Verify all entitlements in RevenueCat dashboard
 
@@ -1470,16 +1434,15 @@ supabase functions deploy delete-account
 
 **SecureStore (Encrypted):**
 - `@regent_auth` - PIN hash (bcrypt)
-- `@regent_truelayer_tokens` - Bank OAuth tokens
 - `@regent_google_token` - Google OAuth tokens
 
 **Trial Tracking Logic (Model A - Paywall at Sign-Up):**
 - User signs up → Navigate to Paywall screen (`/paywall`)
-- User taps "Start 14-Day Free Trial" → RevenueCat subscription starts
+- User taps "Start 7-Day Free Trial" → RevenueCat subscription starts
 - `trialStartDate = new Date().toISOString()`, `isActive = true`
-- User gets full app access for 14 days
-- On each app launch: Calculate `trialDaysRemaining = 14 - daysPassed`
-- After 14 days: RevenueCat auto-charges £149/year
+- User gets full app access for 7 days
+- On each app launch: Calculate `trialDaysRemaining = 7 - daysPassed`
+- After 7 days: RevenueCat auto-charges £49/year
 - If user cancels trial → `isActive = false`, show paywall again
 
 ---
@@ -2283,16 +2246,18 @@ const dotPosition = {
 
 **Why Regent Avoids FCA Regulation:**
 - ❌ NO direct investment account connections (avoids FCA licensing)
-- ✅ TrueLayer ONLY for bank account balances (NOT investments)
-- ✅ Manual stock entry (user enters ticker + quantity, we fetch prices)
+- ❌ NO automatic bank syncing (avoids Open Banking regulations)
+- ✅ Manual entry only for all assets (bank accounts, investments, property)
+- ✅ Live price fetching for public market data (stocks, crypto, commodities)
 - ✅ Read-only data (no trades, no management, no advice)
 - ✅ "For informational purposes only" disclaimer
 
 **What This Means:**
-- Users manually add stock holdings (can't connect Fidelity/Vanguard/etc.)
-- We fetch live prices via Twelve Data API
+- Users manually enter all balances and holdings
+- We fetch live prices via Twelve Data API for investments
 - We calculate portfolio value (quantity × price)
 - We NEVER execute trades or provide investment advice
+- We NEVER connect to financial institutions directly
 
 ---
 

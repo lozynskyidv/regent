@@ -442,7 +442,7 @@ Once setup is complete, proceed to:
 
 1. **RevenueCat SDK Integration**
    - Create RevenueCat account
-   - Configure iOS product ($149/year, 14-day trial)
+   - Configure iOS product ($49/year, 7-day trial)
    - Install `react-native-purchases` SDK
    - Connect paywall to actual payment processing
    - Currently: Paywall works with local trial tracking only
@@ -453,9 +453,9 @@ Once setup is complete, proceed to:
    - Live price fetching
    - Portfolio value calculation
 
-3. **Bank Connections (TrueLayer OAuth)**
-   - UK bank integration
-   - Read-only balance access
+3. **Manual Bank Entry**
+   - Simple balance tracking
+   - Privacy-first approach (no connections to banks)
    - Auto-refresh mechanism
 
 4. **Testing & Distribution**

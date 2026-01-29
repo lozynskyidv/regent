@@ -18,11 +18,6 @@ export interface Asset {
   createdAt: string; // ISO timestamp
   updatedAt: string; // ISO timestamp
   metadata?: {
-    // For bank accounts (TrueLayer)
-    accountId?: string;
-    bankName?: string;
-    lastSynced?: string;
-    
     // For portfolios (stocks/ETFs)
     ticker?: string;
     quantity?: number;

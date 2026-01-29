@@ -1,7 +1,6 @@
 /**
  * Add Bank Account Modal
- * Placeholder for TrueLayer integration - currently manual entry
- * TODO: Integrate TrueLayer for auto-sync
+ * Manual entry for bank account balances
  */
 
 import { useState } from 'react';
@@ -121,13 +120,6 @@ export default function AddBankModal({ visible, onClose }: AddBankModalProps) {
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
           >
-            {/* TrueLayer Notice */}
-            <View style={styles.notice}>
-              <Text style={styles.noticeText}>
-                🔜 Auto-sync with TrueLayer coming soon. For now, enter manually.
-              </Text>
-            </View>
-
             {/* Account Name */}
             <View style={styles.field}>
               <Text style={styles.label}>Account Name</Text>
@@ -216,20 +208,6 @@ const styles = StyleSheet.create({
     padding: Spacing.lg,
     gap: Spacing.lg,
     paddingBottom: Spacing['2xl'],
-  },
-
-  // Notice
-  notice: {
-    backgroundColor: Colors.secondary,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-  },
-  noticeText: {
-    fontSize: 14,
-    color: Colors.mutedForeground,
-    textAlign: 'center',
-    lineHeight: 20,
   },
 
   // Form Fields

@@ -120,7 +120,7 @@ export function ModalProvider({ children }: { children: ReactNode }) {
         setShowLoanModal(true);
         break;
       case 'creditcard':
-        // TODO: Add credit card modal with TrueLayer integration
+        // TODO: Add credit card modal
         console.log('Credit card modal coming soon');
         break;
       case 'other':

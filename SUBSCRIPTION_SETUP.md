@@ -1,4 +1,4 @@
-# Subscription System Setup - £149/year with 7-day trial
+# Subscription System Setup - £49/year with 7-day trial
 
 **Version:** v0.9.7 (Subscription Model)  
 **Date:** January 27, 2026  
@@ -56,7 +56,7 @@ const REVENUECAT_IOS_API_KEY = 'appl_YOUR_PRODUCTION_KEY_HERE';
    - Type: **Auto-Renewable Subscription**
    - Product ID: `regent_premium_annual` (or your choice)
    - Duration: **1 Year**
-   - Price: **£149.00** (Tier 149)
+   - Price: **£49.00** (Tier 49)
    - Free Trial: **7 Days**
 
 2. **Subscription Group:**
@@ -98,9 +98,9 @@ const REVENUECAT_IOS_API_KEY = 'appl_YOUR_PRODUCTION_KEY_HERE';
 
 2. **Paywall Screen:**
    ```
-   - Shows "£149/year"
+   - Shows "£49/year"
    - Shows "Cancel anytime in Settings"
-   - Shows 5 benefits (including TrueLayer)
+   - Shows 3 key benefits
    - "Continue with Regent" button
    - "Restore Purchases" button
    ```
@@ -164,19 +164,18 @@ const REVENUECAT_IOS_API_KEY = 'appl_YOUR_PRODUCTION_KEY_HERE';
 
 ## 📊 Unit Economics
 
-**Pricing:** £149/year  
+**Pricing:** £49/year  
 **Trial:** 7 days free  
 
 **Monthly Breakdown:**
-- Revenue: £149/year = **£12.42/month per user**
+- Revenue: £49/year = **£4.08/month per user**
 - Costs:
   - Twelve Data API: £1.58/month (amortized)
   - Supabase: £0.20/month
   - RevenueCat: **FREE** (under 2,500 subscribers)
-  - TrueLayer (if implemented): £9/month (daily auto-sync)
-  - **Total Cost:** £10.78/month per user
+  - **Total Cost:** £1.78/month per user
 
-**Gross Margin:** £1.64/month per user = **13% margin**
+**Gross Margin:** £2.30/month per user = **56% margin**
 
 ---
 
@@ -212,9 +211,9 @@ Include screenshots showing:
 
 ### **PaywallScreen.tsx**
 Beautiful subscription screen with:
-- Large "£149" pricing display
+- Large "£49" pricing display
 - "Cancel anytime in Settings" messaging
-- 5 key benefits with checkmarks (including TrueLayer)
+- 3 key benefits with checkmarks
 - Primary CTA button ("Continue with Regent")
 - Restore purchases link
 - Fine print (Apple requirements)
@@ -256,8 +255,8 @@ Beautiful subscription screen with:
    - Send reminder notification on Day 5
 
 2. **Pricing Optimization:**
-   - Current: £149/year
-   - Consider monthly option (£14.99/month = £179.88/year)
+   - Current: £49/year
+   - Consider monthly option (£4.99/month = £59.88/year)
 
 3. **Conversion Tracking:**
    - Log events: `trial_started`, `trial_converted`, `purchase_cancelled`

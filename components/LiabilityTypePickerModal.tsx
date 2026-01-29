@@ -39,7 +39,7 @@ export default function LiabilityTypePickerModal({
       id: 'creditcard',
       icon: CreditCard,
       title: 'Credit Cards',
-      description: 'Auto-sync via TrueLayer',
+      description: 'Track balances and payments',
     },
     {
       id: 'loan',
