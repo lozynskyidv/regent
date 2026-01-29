@@ -76,7 +76,7 @@ export default function PaywallScreen({
         <View style={styles.benefitsContainer}>
           {[
             'Real-time portfolio tracking with live market data',
-            'Encrypted cloud backups with military-grade security',
+            'Your data stored locally on your device',
             'Privacy-first architecture with no data sharing'
           ].map((benefit, index) => (
             <View key={index} style={styles.benefitRow}>
