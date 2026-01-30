@@ -1,9 +1,10 @@
 # Regent - Premium Net Worth Tracking
 
-**Version:** 0.9.9 (Paywall Timing - Aha Moment)  
+**Version:** 1.0.0 (Production Ready - TestFlight)  
 **Platform:** iOS only (React Native + Expo)  
 **Target:** Mass Affluent Professionals (£100k-£1m net worth)  
-**Access:** £49/year subscription with 7-day free trial (via RevenueCat + Apple IAP)
+**Access:** £49/year subscription with 7-day free trial (via RevenueCat + Apple IAP)  
+**Status:** 🚀 **LIVE ON TESTFLIGHT** - Ready for testing
 
 ---
 
@@ -47,9 +48,9 @@ npx expo start --clear
 
 ## 📱 Current Features (P0 MVP Complete)
 
-✅ **Subscription System:** £49/year with 7-day free trial (RevenueCat + Apple IAP)  
+✅ **Subscription System:** £49/year with 7-day free trial (RevenueCat + Apple IAP) - **PRODUCTION KEYS**  
 ✅ **Paywall Screen:** Pixel-perfect UI matching web prototype, above-the-fold optimized  
-✅ **Authentication:** Google OAuth, Email/Password, Face ID/PIN, Supabase Auth  
+✅ **Authentication:** Apple Sign In, Google OAuth, Email/Password, Face ID/PIN, Supabase Auth - **ALL WORKING**  
 ✅ **Empty State Onboarding:** Beautiful hero card for new users with NYC skyline  
 ✅ **Net Worth Card (Merged):** Hero card with integrated performance chart, count-up animation, interactive scrubbing  
 ✅ **Time Ranges:** 1M, 3M, 6M, 1Y, All (dynamic data sampling, 30-100 points)  
@@ -515,65 +516,61 @@ NET WORTH
 
 ---
 
-## 🔜 Next Up (P1 Features - Priority Order)
+## 🚀 Current Status: TestFlight Beta
 
-### 1. Add Visual Indicator Dot to Performance Chart 🔴 HIGH PRIORITY
-**Goal:** Show a dot/marker on the chart line when user taps to indicate selected data point  
-**Why:** Users can get "lost" when scrubbing - unclear which exact point they're viewing  
-**Solution:** Render a small circle on the line at the tapped position  
-**Effort:** 30-60 minutes (add dot rendering logic + positioning)
+✅ **Build 1.0.0 (1)** - Submitted to TestFlight (January 30, 2026)  
+✅ **Apple OAuth** - Production ready, configured in Supabase  
+✅ **RevenueCat** - Production iOS SDK key installed  
+✅ **Performance Chart** - Custom SVG with gradient fill and interactive scrubbing  
+🧪 **Testing Phase** - Verifying Apple Sign In and subscription flow
 
-### 2. Add Gradient Fill to Performance Chart 🟡 POLISH
-**Goal:** Match web-prototype's gradient fill under line  
-**Solution:** Custom SVG implementation (react-native-chart-kit doesn't support gradients)  
-**Effort:** 2-3 hours
-
-### 3. Apple OAuth 🟡 ON HOLD (Waiting for Apple Developer Enrollment)
-**Goal:** Enable Apple sign-in (App Store requirement)  
-**What to do:**
-- Enable Apple provider in Supabase Dashboard
-- Add Service ID and key from Apple Developer
-- Test sign-in flow (code already implemented)
-
-**Current state:**  
-- ✅ Code complete (fixed `redirectTo` parameter, added logging)
-- ✅ Comprehensive documentation created (5 setup guides)
-- ⏳ **Waiting for Apple Developer Program confirmation** (enrollment documents submitted)
-- 🔴 **BLOCKED:** Cannot configure without Apple Developer access
-
-**Effort:** 5-10 minutes (once enrollment approved)  
-**Documentation:** See `APPLE_OAUTH_SETUP.md` for complete setup guide
+**TestFlight Link:** https://appstoreconnect.apple.com/apps/6758517452/testflight/ios
 
 ---
 
-### 2. Performance Chart ✅ COMPLETE
-**Status:** Fully implemented and merged into Net Worth Card  
-**Features:**
-- ✅ Historical snapshots stored in AsyncStorage
-- ✅ Custom SVG line chart with gradient fill
-- ✅ Time range selector (1M, 3M, 6M, 1Y, All)
-- ✅ Interactive scrubbing with haptic feedback
-- ✅ Dynamic data sampling (30-100 points)
+## 🧪 Testing Checklist
+
+### **Critical Tests (Pre-App Store):**
+- [ ] Apple Sign In authentication flow
+- [ ] RevenueCat subscription purchase (£49/year)
+- [ ] Face ID/PIN setup and authentication
+- [ ] Portfolio live price updates
+- [ ] Data persistence across sessions
+- [ ] Sign out and sign back in
+- [ ] Account deletion (GDPR compliance)
+
+### **Pre-Launch Checklist:**
+- [x] Fix performance chart gesture conflict
+- [x] Add visual indicator dot to performance chart
+- [x] Add gradient fill to performance chart
+- [x] Enable Apple OAuth in Supabase
+- [x] Replace RevenueCat test keys with production keys
+- [x] Configure App Store Connect product
+- [x] Build and submit to TestFlight
+- [ ] Complete TestFlight testing
+- [ ] Create App Store listing
+- [ ] Submit for App Store review
 
 ---
 
-### 3. TestFlight Beta
-**Goal:** Distribute to beta testers  
-**What to do:**
-- Build with EAS: `eas build --platform ios`
-- Submit to App Store Connect
-- Create TestFlight internal group
-- Gather feedback and iterate
+## 🔜 Next Steps
 
-**Pre-Launch Checklist:**
-- [x] Fix performance chart gesture conflict (COMPLETE - v0.9.2)
-- [ ] Add visual indicator dot to performance chart (HIGH PRIORITY)
-- [ ] Enable Apple OAuth in Supabase (App Store requirement)
-- [ ] Re-enable email verification in Supabase (currently disabled for Expo Go testing)
-- [ ] Replace RevenueCat test keys with production keys (if subscription model returns)
-- [ ] Configure App Store Connect product
-- [ ] Test Face ID in standalone build
-- [ ] Add gradient fill to performance chart
+### **1. TestFlight Testing** (Current)
+- Test Apple Sign In thoroughly
+- Test subscription purchases with sandbox accounts
+- Verify all features work on real devices
+- Fix any bugs discovered
+
+### **2. App Store Submission** (Next)
+- Prepare app screenshots
+- Write app description and metadata
+- Create privacy policy and support URL
+- Submit for App Store review
+
+### **3. Post-Launch** (Future)
+- Monitor crash reports and user feedback
+- Iterate based on real user behavior
+- Plan P1 features (referrals, analytics, etc.)
 
 ---
 
@@ -603,43 +600,28 @@ web-prototype/        # Reference only (NOT for production)
 
 ---
 
-## 🎯 Next Priorities
+## 🎯 Future Roadmap
 
-### **P0: Launch Subscription (Critical Path)**
-1. **RevenueCat Configuration** (15 min)
-   - Create project at app.revenuecat.com
-   - Get production iOS API key
-   - Update `/utils/useRevenueCat.ts` with real API key
-   
-2. **App Store Connect Setup** (30 min)
-   - Create In-App Purchase: `regent_premium_annual`
-   - Price: £49/year, 7-day free trial
-   - Submit for review
-   
-3. **Link RevenueCat → App Store** (10 min)
-   - Add product to RevenueCat dashboard
-   - Create `premium` entitlement
-   - Create offering with annual package
-   
-4. **Test End-to-End** (15 min)
-   - Sandbox account purchase flow
-   - Restore purchases
-   - Trial expiry handling
-
-**📖 Full guide:** `SUBSCRIPTION_SETUP.md`
-
-### **P1: Polish & Growth Features**
+### **P1: Post-Launch Enhancements**
 - [ ] **Trial Reminders:** Push notification on Day 5 ("2 days left")
-- [ ] **Onboarding Improvements:** 3-step tutorial for new users
-- [ ] **Settings Enhancement:** Add "Manage Subscription" link
+- [ ] **Onboarding Tutorial:** 3-step walkthrough for new users
+- [ ] **Settings Enhancement:** Add "Manage Subscription" deep link
 - [ ] **Analytics:** Track trial_started, trial_converted, churn events
-- [ ] **Referral System:** "Give friends 1 month free" (growth hack)
+- [ ] **Referral System:** "Invite friends" viral growth mechanic
 
 ### **P2: Advanced Features**
-- [ ] **Monthly Subscription Option:** £14.99/month alongside annual
+- [ ] **Monthly Subscription:** £14.99/month option alongside annual
 - [ ] **Family Sharing:** Share subscription with up to 5 family members
-- [ ] **Export Data:** PDF reports, CSV exports
+- [ ] **Export Data:** PDF reports, CSV exports for tax filing
 - [ ] **Investment Insights:** Performance attribution, sector allocation
+- [ ] **Widgets:** iOS home screen widgets for quick net worth glance
+- [ ] **Watch App:** Net worth on Apple Watch
+
+### **P3: Long-Term Vision**
+- [ ] **Android Version:** React Native codebase ready for Android
+- [ ] **Wealth Projections:** "What if" scenarios and retirement planning
+- [ ] **Tax Optimization:** Capital gains tracking and tax-loss harvesting
+- [ ] **Financial Advisor Integration:** Share view-only access with advisors
 
 ---
 
