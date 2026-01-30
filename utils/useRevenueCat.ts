@@ -12,9 +12,9 @@ import Purchases, {
   PurchasesError,
 } from 'react-native-purchases';
 
-// RevenueCat API keys (test keys from dashboard)
-const REVENUECAT_IOS_API_KEY = 'test_PoLKzvEYygTGhoNcJtPPQnbVZEs';
-const REVENUECAT_ANDROID_API_KEY = 'test_PoLKzvEYygTGhoNcJtPPQnbVZEs';
+// RevenueCat API keys (production)
+const REVENUECAT_IOS_API_KEY = 'appl_YsKPtpcVpohFQoThbTiytPNKxPB';
+const REVENUECAT_ANDROID_API_KEY = 'test_PoLKzvEYygTGhoNcJtPPQnbVZEs'; // Update when Android is ready
 
 interface UseRevenueCatReturn {
   customerInfo: CustomerInfo | null;
