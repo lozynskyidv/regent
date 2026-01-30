@@ -18,7 +18,8 @@
       "infoPlist": {
         "NSFaceIDUsageDescription": "Regent uses Face ID to securely access your financial data.",
         "UIRequiresFullScreen": true,
-        "UIStatusBarStyle": "UIStatusBarStyleLightContent"
+        "UIStatusBarStyle": "UIStatusBarStyleLightContent",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
