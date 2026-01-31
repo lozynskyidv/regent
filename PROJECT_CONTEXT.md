@@ -302,11 +302,60 @@ eas submit --platform ios
 
 ## Links
 
+- **Website:** https://worthview.app (Netlify)
+- **Website Repo:** https://github.com/lozynskyidv/worthview-website
+- **App Repo:** https://github.com/lozynskyidv/regent
 - **TestFlight:** https://appstoreconnect.apple.com/apps/6758517452/testflight/ios
 - **Supabase:** https://supabase.com/dashboard/project/jkseowelliyafkoizjzx
 - **RevenueCat:** https://app.revenuecat.com
 - **App Store Checklist:** `APP_STORE_SUBMISSION_CHECKLIST.md`
 - **Build Guide:** `BUILD_AND_SHIP.md`
+
+---
+
+## Marketing & Assets
+
+### Website (worthview.app)
+**Location:** `/Users/dmytrolozynskyi/Documents/Regent App/worthview-website/`  
+**Deployment:** Netlify (auto-deploy from GitHub)  
+**Tech:** React + Vite + Tailwind CSS
+
+The website features:
+- Hero section with WorthView logo (WV monogram)
+- App screenshot with transparent background
+- Feature showcase (local storage, privacy, etc.)
+- Pricing section (£49/year, 7-day trial)
+- Trust bar (encrypted, FCA-compliant, no data sharing)
+- Download button (ready for App Store link)
+
+**How it works:**
+1. Push code to `github.com/lozynskyidv/worthview-website` (main branch)
+2. Netlify automatically builds and deploys
+3. Live at `worthview.app` (DNS configured via Namecheap)
+4. Build command: `npm run build` → `dist/` folder
+
+### App Store Icons
+**Location:** `/Users/dmytrolozynskyi/Documents/Regent App/WorthView/app-store-icons/`
+
+Contains:
+- `WorthViewIcon.tsx` - SVG logo component (WV monogram on black)
+- `IconShowcase.tsx` - Interactive page to generate/download icons at all required sizes
+- `README.md` - Complete export instructions
+
+**Logo Specs:**
+- Background: #1A1A1A (black)
+- Text: #FAFAFA (white)
+- Monogram: WV
+- Font Weight: 300 (light)
+- Corner Radius: 26px (scales proportionally)
+
+**Required Sizes:** 1024×1024, 512×512, 180×180, 120×120, 87×87, 80×80, 60×60
+
+### Domain & DNS
+- **Domain:** `worthview.app` (purchased on Namecheap)
+- **Hosting:** Netlify
+- **DNS:** Netlify nameservers configured in Namecheap
+- **SSL:** Automatic via Netlify (Let's Encrypt)
 
 ---
 

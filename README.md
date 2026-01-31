@@ -17,6 +17,38 @@ Track your complete net worth across stocks, crypto, property, bank accounts, an
 
 ---
 
+## Website
+
+**Live at:** [worthview.app](https://worthview.app) (deployed on Netlify)
+
+The marketing website is a separate React/Vite/Tailwind project located at:
+```
+/Users/dmytrolozynskyi/Documents/Regent App/worthview-website/
+```
+
+**Website Features:**
+- Landing page with hero section and app screenshot
+- WorthView logo (WV monogram)
+- Feature showcase
+- Pricing information
+- App Store download button (placeholder, ready for production link)
+
+**Tech Stack:**
+- React 19.1 + TypeScript
+- Vite 5.4 (build tool)
+- Tailwind CSS 3.4
+- Deployed on Netlify with automatic deployments from GitHub
+- Domain: `worthview.app` (Namecheap)
+
+**Repository:** [github.com/lozynskyidv/worthview-website](https://github.com/lozynskyidv/worthview-website)
+
+**Deployment:**
+- Pushes to `main` branch automatically deploy to Netlify
+- Build command: `npm run build`
+- Output directory: `dist`
+
+---
+
 ## Tech Stack
 
 - **Platform:** iOS (React Native + Expo SDK 54)
@@ -110,6 +142,21 @@ eas submit --platform ios
 ### App Store
 
 See `APP_STORE_SUBMISSION_CHECKLIST.md` for complete submission guide.
+
+---
+
+## Additional Resources
+
+### App Store Icons
+Located at `/Users/dmytrolozynskyi/Documents/Regent App/WorthView/app-store-icons/`
+- Contains WorthView logo component (WV monogram)
+- Icon showcase for generating all required sizes
+- See folder README for export instructions
+
+### Documentation
+- **App Store Checklist:** `APP_STORE_SUBMISSION_CHECKLIST.md`
+- **Build & Ship Guide:** `BUILD_AND_SHIP.md`
+- **Project Context:** `PROJECT_CONTEXT.md`
 
 ---
 
