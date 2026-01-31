@@ -332,6 +332,17 @@ export default function SettingsScreen() {
               We'd love to hear from you
             </Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.feedbackButton, { marginTop: Spacing.sm }]}
+            onPress={() => Linking.openURL('https://worthview.app/privacy')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.feedbackButtonText}>Privacy Policy</Text>
+            <Text style={styles.feedbackButtonDescription}>
+              Learn how we protect your data
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* Bottom Spacer */}

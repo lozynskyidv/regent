@@ -15,6 +15,9 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.dmy.networth",
       "buildNumber": "3",
+      "config": {
+        "usesNonExemptEncryption": false
+      },
       "infoPlist": {
         "NSFaceIDUsageDescription": "WorthView uses Face ID to securely access your financial data.",
         "UIRequiresFullScreen": true,
