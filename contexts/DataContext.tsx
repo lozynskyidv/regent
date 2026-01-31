@@ -636,7 +636,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         
         // STEP 2: Mark invite code as used (if user signed up with a code)
         try {
-          const inviteCodeId = await AsyncStorage.getItem('@regent_invite_code_id');
+          const inviteCodeId = await AsyncStorage.getItem('@worthview_invite_code_id');
           if (inviteCodeId) {
             console.log('🎟️ Marking invite code as used:', inviteCodeId);
             const { error: markError } = await supabase.functions.invoke('mark-invite-used', {
@@ -649,7 +649,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
               console.log('✅ Invite code marked as used');
               // Keep invite code in storage to maintain hasValidatedInvite state
               // Only remove the code_id since it's been used
-              await AsyncStorage.removeItem('@regent_invite_code_id');
+              await AsyncStorage.removeItem('@worthview_invite_code_id');
             }
           }
         } catch (err) {
@@ -746,7 +746,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // STEP 3: Clear PIN from SecureStore
       console.log('🔑 Clearing PIN from SecureStore...');
       try {
-        await SecureStore.deleteItemAsync('regent_pin_hash');
+        await SecureStore.deleteItemAsync('worthview_pin_hash');
         console.log('✅ PIN cleared');
       } catch (pinError) {
         console.warn('⚠️ PIN deletion failed (non-critical):', pinError);
@@ -898,7 +898,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // This ensures AuthGuard redirects to invite screen, not sign-up
       log('🎟️ Clearing invite codes from AsyncStorage...');
       try {
-        await AsyncStorage.multiRemove(['@regent_invite_code', '@regent_invite_code_id']);
+        await AsyncStorage.multiRemove(['@worthview_invite_code', '@worthview_invite_code_id']);
         log('✅ Invite codes cleared');
       } catch (err) {
         log(`⚠️ Error clearing invite codes: ${err}`);
@@ -940,14 +940,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
       // Delete PIN from SecureStore with verification
       log('🔑 Deleting PIN from SecureStore...');
       try {
-        await SecureStore.deleteItemAsync('regent_pin_hash');
+        await SecureStore.deleteItemAsync('worthview_pin_hash');
         
         // Verify PIN is actually gone
-        const pinCheck = await SecureStore.getItemAsync('regent_pin_hash');
+        const pinCheck = await SecureStore.getItemAsync('worthview_pin_hash');
         if (pinCheck) {
           log('⚠️ PIN still exists after deletion, retrying...');
-          await SecureStore.deleteItemAsync('regent_pin_hash');
-          const secondCheck = await SecureStore.getItemAsync('regent_pin_hash');
+          await SecureStore.deleteItemAsync('worthview_pin_hash');
+          const secondCheck = await SecureStore.getItemAsync('worthview_pin_hash');
           if (secondCheck) {
             log('❌ PIN deletion failed after retry');
           } else {
@@ -964,10 +964,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
       log('🔍 Verifying trial state cleared...');
       try {
         const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
-        const trialCheck = await AsyncStorage.getItem('regent_subscription');
+        const trialCheck = await AsyncStorage.getItem('worthview_subscription');
         if (trialCheck) {
           log('⚠️ Trial state still exists, force deleting...');
-          await AsyncStorage.removeItem('regent_subscription');
+          await AsyncStorage.removeItem('worthview_subscription');
           log('✅ Trial state force deleted');
         } else {
           log('✅ Trial state verified cleared');

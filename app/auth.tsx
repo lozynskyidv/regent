@@ -65,7 +65,7 @@ export default function AuthScreen() {
 
       // Check if PIN is already set up
       console.log('🔍 Checking for existing PIN in SecureStore...');
-      const pinHash = await SecureStore.getItemAsync('regent_pin_hash');
+      const pinHash = await SecureStore.getItemAsync('worthview_pin_hash');
       console.log('🔑 PIN hash check result:', pinHash ? `EXISTS (${pinHash.substring(0, 20)}...)` : 'NOT FOUND');
       setStoredPinHash(pinHash);
       
@@ -119,7 +119,7 @@ export default function AuthScreen() {
 
       // Attempt biometric authentication
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Authenticate to access Regent',
+        promptMessage: 'Authenticate to access WorthView',
         cancelLabel: 'Use PIN instead',
         disableDeviceFallback: true,
       });
@@ -150,14 +150,14 @@ export default function AuthScreen() {
       console.log('🔐 Requesting biometric permission...');
 
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Enable Face ID to quickly access Regent',
+        promptMessage: 'Enable Face ID to quickly access WorthView',
         cancelLabel: 'Cancel',
         disableDeviceFallback: true,
       });
 
       if (result.success) {
         console.log('✅ Face ID enabled successfully');
-        Alert.alert('Face ID Enabled', 'You can now use Face ID to access Regent.');
+        Alert.alert('Face ID Enabled', 'You can now use Face ID to access WorthView.');
       }
     } catch (err) {
       console.error('Face ID setup error:', err);
@@ -228,7 +228,7 @@ export default function AuthScreen() {
 
       // Hash and store PIN
       const pinHash = await hashPIN(originalPin);
-      await SecureStore.setItemAsync('regent_pin_hash', pinHash);
+      await SecureStore.setItemAsync('worthview_pin_hash', pinHash);
 
       console.log('✅ PIN created successfully');
       

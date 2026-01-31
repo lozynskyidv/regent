@@ -87,7 +87,7 @@ This will automatically:
 
 ### **4. Install & Test**
 - Open TestFlight on your iPhone
-- Install "Regent"
+- Install "WorthView"
 - Launch the app
 
 ---
@@ -149,7 +149,7 @@ eas build --platform ios
 1. **Authentication → Providers → Apple**: Is it **Enabled**?
 2. **Authentication → URL Configuration**: Are redirect URLs added?
    ```
-   regent://auth/callback
+   worthview://auth/callback
    exp://localhost:8081/--/auth/callback
    ```
 
@@ -164,7 +164,7 @@ eas build --platform ios
 ## 📊 **Monitor Your App**
 
 ### **EAS Dashboard**
-- View builds: https://expo.dev/accounts/[your-account]/projects/regent/builds
+- View builds: https://expo.dev/accounts/[your-account]/projects/worthview/builds
 - Monitor build status, logs, crashes
 
 ### **RevenueCat Dashboard**

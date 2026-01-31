@@ -1,2309 +1,313 @@
-# PROJECT CONTEXT - Regent iOS App
+# WorthView - Project Context
 
-**Last Updated:** January 30, 2026  
-**Version:** 1.0.0 (Production Ready - TestFlight)  
-**Platform:** iOS only (React Native Expo)  
-**Access Model:** £49/year subscription with 7-day free trial (RevenueCat + Apple IAP)  
-**Status:** 🚀 **LIVE ON TESTFLIGHT** - Build submitted, ready for testing
-
----
-
-## 🚀 LATEST: Production Launch - TestFlight Deployment (v1.0.0 - January 30, 2026)
-
-**App is live on TestFlight with full production configuration**
-
-### **What's Complete:**
-
-✅ **Apple OAuth Integration:**
-- JWT token generated and configured in Supabase
-- Apple Sign In fully functional and tested
-- Services ID: `com.dmy.networth.auth`
-- Meets App Store requirement for "Sign in with Apple"
-
-✅ **RevenueCat Production:**
-- Production iOS SDK key configured: `appl_YsKPtpcVpohFQoThbTiytPNKxPB`
-- £49/year subscription product live
-- App Store Connect API key uploaded
-- Ready for real purchases
-
-✅ **TestFlight Submission:**
-- Build 1.0.0 (1) submitted successfully
-- Available for internal/external testing
-- All production keys and configuration included
-
-✅ **Documentation:**
-- `BUILD_AND_SHIP.md` - Complete testing and submission guide
-- `APPLE_OAUTH_REVENUECAT_SETUP.md` - Technical setup reference
-- Cleaned up outdated documentation files
-
-### **Current Phase: TestFlight Testing**
-
-Critical tests before App Store submission:
-1. Apple Sign In authentication flow
-2. RevenueCat subscription purchases (sandbox)
-3. Face ID/PIN security
-4. Data persistence and sync
-5. All asset types and live prices
-6. Settings and account deletion
-
-### **Next Milestone: App Store Submission**
-
-Once testing passes:
-1. Prepare app screenshots and metadata
-2. Create privacy policy and support URL
-3. Submit for App Store review
-4. Launch to production!
+**Version:** 1.0.0  
+**Platform:** iOS (React Native + Expo)  
+**Status:** Production Ready - Live on TestFlight  
+**Tagline:** Everything you own and owe, in one place
 
 ---
 
-## 🎯 Previous Release: Paywall Timing - 7-Second "Aha Moment" Delay (v0.9.9 - January 28, 2026)
+## Overview
 
-**Improved onboarding: Users see their data for 7 seconds before paywall appears**
+WorthView is a net worth tracking app for iOS. Track stocks, crypto, property, bank accounts, loans, and all your assets in one simple app. Clean design, local-first storage, and strong privacy.
 
-### **What Changed:**
-
-✅ **7-Second Aha Moment:**
-- Paywall appears **7 seconds after user sees their data** (not immediately)
-- Users experience the value of seeing their net worth before being asked to subscribe
-- "Try before buy" pattern improves conversion rates
-
-✅ **Updated User Flow:**
-1. Sign up → PIN entry → **Home screen (empty state)** ✅
-2. User taps "Add Your First Asset" → Fills in details → Saves
-3. Modal closes → **User sees net worth card with their data** (aha moment! 🎉)
-4. **7-second timer starts** → User explores their dashboard
-5. **Paywall appears** → User can start trial or subscribe
-
-✅ **State Management:**
-- Added `hasSeenPaywall` flag to subscription state (persisted in AsyncStorage)
-- Added `markPaywallSeen()` function in DataContext
-- Paywall marks itself as seen on mount (prevents showing multiple times)
-- Timer tracked with local state to prevent re-triggering
-
-### **Technical Implementation:**
-- Moved paywall trigger from `DataContext.addAsset()` to `app/home.tsx`
-- Added `useEffect` hook in home screen that starts 7-second timer when data exists
-- Fixed timer bug: Removed `paywallTimerStarted` from dependency array to prevent premature cleanup
-- Added comprehensive debug logging for troubleshooting
-
-### **Bug Fixes:**
-- ✅ Fixed timer being cleared by `useEffect` re-run (dependency array issue)
-- ✅ Fixed `hasSeenPaywall` not being marked in paywall screen
-- ✅ Fixed timer starting but never firing
-
-### **Key Insights:**
-- 7 seconds is optimal for users to appreciate what they created
-- Timer cleanup properly handled on component unmount
-- Less aggressive, more respectful of user experience
-- Aligns with modern freemium best practices
+**Key Features:**
+- Track all asset types (stocks, crypto, ETFs, property, bank accounts, commodities)
+- Live investment prices via Twelve Data API
+- Interactive performance charts with time ranges (1M, 3M, 6M, 1Y, All)
+- Face ID / PIN authentication
+- Encrypted cloud backups (Supabase)
+- Multi-currency support (GBP, USD, EUR - symbol-only, no conversion)
+- £49/year subscription with 7-day free trial (RevenueCat + Apple IAP)
 
 ---
 
-## 🎨 UI/UX Refinements - Design System Alignment (v0.9.8 - January 28, 2026)
+## Tech Stack
 
-**Comprehensive visual polish to match paywall's refined design-sense across entire app**
+**Core:**
+- React Native (Expo SDK 54)
+- React 19.1.0
+- TypeScript 5.9
+- Expo Router (file-based navigation)
 
-### **What Changed:**
+**Backend:**
+- Supabase (authentication, cloud backups)
+- RevenueCat (subscription management)
+- Twelve Data API (live prices, 800 calls/day free tier)
 
-#### **Paywall Screen:**
-✅ **Removed Redundant Face ID Card:**
-- Native iOS purchase dialog handles Face ID automatically
-- Cleaner, less confusing UX (one-step purchase flow)
-- Better matches standard iOS purchase patterns
+**Storage:**
+- AsyncStorage (local data)
+- SecureStore (PIN, sensitive data)
+- Supabase (encrypted cloud backups)
 
-✅ **Typography Matched to Web Prototype:**
-- Logo: 40px weight 300
-- Price: 48px weight 300 (reduced from 400)
-- Benefits: 15px with 22.5 lineHeight
-- Check icons: 16px with 2.5 strokeWidth
-- Button: 16px weight 500
-- Fine print: 12px with 18 lineHeight
-
-✅ **Spacing Optimization:**
-- Reduced all vertical spacing for above-the-fold fit
-- Card padding: 32px → 24px
-- Benefits gap: 16px → 12px
-- 80-90% of content now visible without scrolling
-
-✅ **Price Update:**
-- £149/year → **£49/year** (more accessible, better conversion rate)
-
-#### **Home Screen:**
-✅ **Typography Hierarchy Fixed:**
-- User name: 14px → **17px**, weight 500 → 400 (cleaner look)
-- "Overview": 32px → **28px**, weight 500 → 600 (better proportion)
-- Timestamp: 13px → **14px**, opacity 0.7 → 0.85 (more readable)
-
-✅ **Spacing Consistency:**
-- Header paddingTop: 24px → **20px**
-- ScrollView paddingTop: 16px → **8px** (closer to first card)
-- Card gaps: 16px → **24px** (consistent rhythm)
-
-#### **NET WORTH Card (Hero):**
-✅ **Visual Prominence Enhanced:**
-- Card padding: 24px → **28px** (more breathing room)
-- Shadow: opacity 0.04 → **0.05**, radius 3 → **4**, elevation 1 → **2**
-- Label: 12px → **13px**, marginBottom 8 → **12px**
-- Main value: 48px → **44px**, lineHeight 56 → **52px**
-- Change text: 16px → **17px**, lineHeight 24 → **26px**
-- Time period: 13px → **14px**, opacity **0.85** added
-
-#### **Assets & Liabilities Cards:**
-✅ **Typography Scale:**
-- Card padding: 32px → **24px** (consistent)
-- Label: 15px → **16px**, marginBottom 4 → **6px**
-- Total: 24px → **28px**, letterSpacing **-0.28**, lineHeight **36**
-- Item name: 16px → **15px**
-- Item value: 16px → **15px**, weight 400 → **500** (emphasize amounts)
-
-✅ **List Refinement:**
-- List gap: 12px → **8px** (tighter, cleaner)
-- "+X more": opacity **0.8** added
-
-### **Design-Sense Achievement:**
-| Before | After ✅ |
-|--------|---------|
-| Inconsistent font sizes | Deliberate typographic scale (13px → 14-17px → 28-44px) |
-| Loose, uneven spacing | Consistent 24px card rhythm |
-| Header too cramped | Proper breathing room |
-| "Overview" too large | Balanced hierarchy |
-| NET WORTH equal weight | Visually dominant (padding, shadow) |
-| Asset values blended in | Emphasized with weight 500 |
-
-### **Files Changed:**
-- `components/PaywallScreen.tsx` - Pixel-perfect typography, removed Face ID card, price update
-- `app/paywall.tsx` - Pass trialEndDate as ISO string
-- `app/home.tsx` - Refined typography, consistent spacing
-- `components/NetWorthCard.tsx` - Enhanced visual prominence, typography scale
-- `components/AssetsCard.tsx` - Typography refinement, consistent padding
-- `components/LiabilitiesCard.tsx` - Typography refinement, consistent padding
-- `web-prototype/src/components/PaywallScreen.tsx` - Fixed trial end logic bug
+**State Management:**
+- React Context API (DataContext, ModalContext)
 
 ---
 
-## 💰 Subscription System Implementation (v0.9.7 - January 27, 2026)
-
-**Pivoted from invite-only to £49/year subscription with RevenueCat integration**
-
-### **What Changed:**
-❌ **Removed Invite System:**
-- Deleted `ShareInviteCard` component
-- Deleted `invite-code.tsx` screen
-- Removed invite validation from `AuthGuard` in `_layout.tsx`
-- Cleaned up all invite-related code and UI
-
-✅ **Added Subscription System:**
-- **PaywallScreen:** Beautiful UI 100% matching web prototype (£49/year)
-- **RevenueCat Integration:** `react-native-purchases` SDK installed & configured
-- **Purchase Flow:** Full implementation with Apple In-App Purchase
-- **Restore Purchases:** Working restore flow for reinstalls
-- **Trial Tracking:** 7-day free trial support in subscription state
-- **Auth Flow:** PIN → Paywall → Home (checks subscription status)
-
-### **New User Flow:**
-```
-Sign Up (Email/Google)
-       ↓
-Enter PIN (Face ID)
-       ↓
-PAYWALL (£49/year + 7-day trial)
-       ↓
-Subscribe or Restore
-       ↓
-Home Screen
-```
-
-### **Files Changed:**
-- `components/PaywallScreen.tsx` - NEW: Subscription UI (matches web prototype)
-- `app/paywall.tsx` - NEW: RevenueCat integration route
-- `app/_layout.tsx` - Removed invite validation from AuthGuard
-- `app/auth.tsx` - Redirects to `/paywall` after PIN entry
-- `app/home.tsx` - Removed ShareInviteCard
-- `contexts/DataContext.tsx` - Added SubscriptionState tracking
-- `package.json` - Added react-native-purchases
-
-### **Configuration Required:**
-See `SUBSCRIPTION_SETUP.md` for complete RevenueCat + App Store Connect setup guide
-
----
-
-## 🔐 Privacy & UX Bug Fixes (v0.9.6 - January 27, 2026)
-
-**Critical privacy fix and chart scrubbing improvements**
-
-### **Privacy Fix (CRITICAL):**
-- 🔴 **Sign Out Data Leak:** User A signs out → User B signs in → User B sees User A's data
-- ✅ **Fixed:** Sign out now performs complete data wipe (auth, financial data, PIN, React state)
-- ✅ **Implementation:** Updated `signOut()` in DataContext to call `clearAllData()` and clear SecureStore
-- ✅ **Impact:** Prevents privacy violations when multiple users share the same device
-
-### **UX Bug Fixes:**
-- ✅ **Chart Scrubbing Value:** Main net worth number now updates when dragging on chart
-  - **Issue:** Only change metrics updated, main value stayed frozen
-  - **Fix:** Display `chartDisplayValue` during scrubbing instead of static `displayValue`
-- ✅ **Optimal Data Density:** Balanced sampling for smooth charts without overcrowding
-  - 1M: 30 points (~daily), 3M: 45 points (~every 2 days), 6M: 60 points (~every 3 days)
-  - 1Y: 52 points (~weekly), All: 100 points (sampled)
-
-### **Files Changed:**
-- `contexts/DataContext.tsx` - Complete data wipe on sign out
-- `components/NetWorthCard.tsx` - Fixed scrubbing value display, optimized data sampling
-
----
-
-## ✅ NET WORTH CARD: PRODUCTION READY (January 27, 2026)
-
-**Merged Net Worth + Performance Chart into single hero card** 🎉
-
-**Major UX Overhaul (v0.9.5):**
-- ✅ **Eliminated Redundancy:** Merged separate Net Worth and Performance Chart cards into one
-- ✅ **Unified Information:** All metrics (value, change, %, period) displayed together at top
-- ✅ **No Contradiction:** Everything synced to selected time range (no more YTD vs 1M confusion)
-- ✅ **Added Time Ranges:** 6M (6 months) and All (complete history)
-- ✅ **Removed YTD:** Eliminated confusing Year-to-Date option
-- ✅ **Haptic Feedback:** iOS tactile response on button taps and chart scrubbing
-- ✅ **Day 1 State:** Beautiful onboarding for new users (dot + message)
-
-**Card Structure:**
-```
-NET WORTH
-£263,020 (animated count-up)
-↑ £89,987 (+52.0%)     ← Absolute + percentage together
-All time               ← Time period label
-
-[Interactive Chart]    ← Custom SVG with gradient fill
-
-1M | 3M | 6M | 1Y | All  ← 5 time range options
-```
-
-**Technical Implementation:**
-- Custom SVG with gradient fill (full control over rendering)
-- Gesture.Pan() with runOnJS for worklet-to-JS thread bridging
-- Haptic feedback via expo-haptics (Light impact for taps, Selection for scrubbing)
-- Direct setValue() for instant dot appearance (0ms response)
-- Fractional position interpolation for smooth 60fps tracking
-- Dynamic data sampling (30 points for 1M, 100 points for All)
-
-**Files Changed:**
-- `components/NetWorthCard.tsx` - Merged component (now includes chart)
-- `components/PerformanceChart.tsx` - Deleted (functionality moved to NetWorthCard)
-- `app/home.tsx` - Updated to use single merged component
-
----
-
-## 🚀 QUICK START (5-Min Orientation)
-
-**What is Regent?**  
-Premium net worth tracking for mass affluent professionals (£100k-£1m). "Uber modernism + JPM restraint." Local storage + Supabase backend. **£49/year subscription with 7-day free trial.**
-
-**Current State (What's ACTUALLY Built):**  
-✅ **P0 MVP COMPLETE:**
-- **Subscription System** (£49/year via RevenueCat + Apple IAP, 7-day free trial)
-- **Paywall Screen** (Pixel-perfect UI matching web prototype, above-the-fold optimized, purchase & restore flows)
-- **Authentication** (Google OAuth + Email/Password - fully functional with Supabase)
-- **Auth screen** (Face ID/PIN onboarding, fully functional)
-- **Empty State Onboarding** (Beautiful hero card with NYC skyline for new users)
-- **Home Screen** (Merged Net Worth Card + Assets + Liabilities + Pull-to-Refresh)
-- **Portfolio Tracking** (Live prices for stocks, ETFs, crypto, commodities via Twelve Data API)
-- **Smart Caching** (1 hour for stocks/ETFs, 30 min for crypto - optimized for 800 API calls/day free tier)
-- **Persistent Timestamps** (Accurate "Updated X ago" with hybrid relative/absolute time display)
-- **Smooth Animations** (Net worth count-up from 0 → value on every load/refresh)
-- **Dynamic User Display** (Formatted names: "J. Rockefeller", "Welcome, John")
-- **Edit Modals** (EditAssetModal, EditLiabilityModal - pre-populated forms, delete buttons)
-- **Detail Screens** (Assets/Liabilities full lists with swipe-to-edit/delete gestures)
-- **Global Modal Context** (centralized modal state, eliminated 66% code duplication)
-- **Charts** (horizontal bar charts, category breakdown with colors)
-- **CRUD** (Create, Read, Update, Delete all working)
-- **Currency Switcher** (GBP/USD/EUR - **symbol-only, NO value conversion**)
-- **Settings Screen** (currency selection, sign out, GDPR-compliant delete account, test data generator)
-- **Cloud Backups** (encrypted with PIN, stored in Supabase)
-- **Net Worth Card (MERGED!)** (Single hero card with integrated performance chart):
-  - ✅ Large prominent net worth display with count-up animation (0 → value)
-  - ✅ Unified metrics display (absolute + percentage together)
-  - ✅ Dynamic time period context (matches selected range)
-  - ✅ Color-coded feedback (green for gains, red for losses)
-  - ✅ Custom SVG chart with gradient fill (full control, matches web prototype)
-  - ✅ Smooth bezier curves (cubic interpolation)
-  - ✅ **Instant dot appearance** (0ms response on tap, bypasses throttle)
-  - ✅ **Smooth 60fps tracking** (throttled updates during drag)
-  - ✅ **Haptic feedback** (iOS tactile response on interactions)
-  - ✅ Interactive scrubbing (tap + drag to see historical values)
-  - ✅ Time range selector (1M, 3M, 6M, 1Y, All with fade transitions)
-  - ✅ High-resolution data (30-100 points per time range)
-  - ✅ Precise date labels (day + month for 1M-1Y, month + year for All)
-  - ✅ Day 1 empty state (dot + "Performance tracking begins today")
-  - ✅ Historical data support (2+ years of snapshots)
-  - ✅ Test data generator (Settings → Generate Performance Data)
-  - ✅ ScrollView conflict resolved (dynamic scroll disabling)
-  - ✅ No redundancy or contradictions (everything in sync)
-  
-  **Technical:** Gesture.Pan() with runOnJS for thread coordination, direct setValue for instant appearance, fractional position interpolation for smooth movement, expo-haptics for tactile feedback, data locking during gestures.
-- **Paywall Screen** (£49/year subscription):
-  - ✅ Beautiful UI 100% matching web prototype design
-  - ✅ RevenueCat integration (react-native-purchases SDK)
-  - ✅ Purchase flow with Apple In-App Purchase
-  - ✅ Restore purchases for reinstalls
-  - ✅ 7-day free trial support
-  - ✅ Trial countdown display
-  - ✅ "Continue with Regent" CTA button
-  - ✅ 3 key benefits focused on core value
-
-✅ **P0 MVP COMPLETE!** All core features production-ready
-
-✅ **PRODUCTION READY:**
-1. Apple OAuth - Configured and working ✅
-2. RevenueCat - Production keys installed ✅
-3. TestFlight - Build 1.0.0 submitted ✅
-
-**Current Phase:** TestFlight testing before App Store submission
-
-**Tech Stack:**  
-- React Native (Expo SDK 54), React 19.1.0, TypeScript 5.9  
-- **Backend:** Supabase (auth, database, Edge Functions)  
-- **Access Control:** Custom invite-only system (Supabase Edge Functions + PostgreSQL)  
-- **Storage:** AsyncStorage (data) + SecureStore (PIN/tokens)  
-- **Auth:** Supabase Auth (Google OAuth, session management)  
-- **Cloud:** Supabase Edge Functions (validate-invite, generate-invite-codes, mark-invite-used, delete-account, fetch-asset-prices)  
-- **External APIs:** Twelve Data API (live stock/crypto/commodity prices, 800 calls/day free tier)  
-- Icons: Lucide React Native 0.562.0  
-- Gestures: react-native-gesture-handler 2.30.0 (swipe-to-edit/delete)  
-- State: React Context API (DataContext, ModalContext)  
-- Navigation: Expo Router (file-based, **ALWAYS use `<Slot />` not `<Stack>`**)
-
----
-
-## 📂 PROJECT STRUCTURE
+## Project Structure
 
 ```
-app/                  # Expo Router screens
-├── _layout.tsx       # Root (Slot routing, GestureHandlerRootView, AuthGuard)
-├── invite-code.tsx   # Invite code entry (first screen for new users)
-├── index.tsx         # Sign Up (Google OAuth UI)
-├── auth.tsx          # Face ID/PIN auth (fully functional)
-├── home.tsx          # Dashboard (Net Worth + Assets + Liabilities + ShareInviteCard)
-├── assets-detail.tsx # Full asset list (swipe gestures)
+app/                  # Screens
+├── _layout.tsx       # Root + AuthGuard
+├── index.tsx         # Sign up/in
+├── auth.tsx          # PIN/Face ID
+├── paywall.tsx       # Subscription
+├── home.tsx          # Dashboard
+├── assets-detail.tsx
 ├── liabilities-detail.tsx
-└── settings.tsx      # Currency, Sign Out, Delete Account
+└── settings.tsx
 
-components/           # Modals & Cards
-├── NetWorthCard, AssetsCard, LiabilitiesCard
-├── ShareInviteCard   # NEW: Display & share invite codes
-├── AssetTypePickerModal, LiabilityTypePickerModal
-│   └── (2-step flow: Step 1 = type picker, Step 2 = specific form)
-├── Add[Bank|Property|OtherAsset|Portfolio]Modal.tsx
-│   └── AddPortfolioModal: Multi-holding, auto-fetch prices, live calculations
-├── Add[Mortgage|Loan|OtherLiability]Modal.tsx
-├── EditAssetModal, EditLiabilityModal (pre-populated, delete button)
-└── SwipeableAssetItem, SwipeableLiabilityItem (gesture handlers)
+components/           # UI components
+├── PaywallScreen.tsx
+├── NetWorthCard.tsx  # Hero card with chart
+├── AssetsCard.tsx
+├── LiabilitiesCard.tsx
+├── Add*Modal.tsx     # Asset entry modals
+└── Edit*Modal.tsx    # Edit modals
 
 contexts/
-├── DataContext.tsx        # Global state (assets, liabilities, user, invites)
-└── ModalContext.tsx       # Centralized modal management
-
-supabase/
-├── migrations/
-│   ├── 001_create_invite_codes.sql  # Invite system schema
-│   ├── 002_fix_delete_constraints.sql
-│   ├── 003_fix_all_auth_constraints.sql
-│   ├── 004_fix_invite_codes_deletion.sql
-│   └── 005_create_asset_prices.sql   # Price caching for portfolio tracking
-└── functions/
-    ├── validate-invite/      # Check if code is valid
-    ├── generate-invite-codes/ # Create 5 codes for new user
-    ├── mark-invite-used/      # Mark code as used
-    ├── delete-account/        # GDPR-compliant deletion
-    └── fetch-asset-prices/    # Live price fetching with smart caching
+├── DataContext.tsx   # Global state
+└── ModalContext.tsx  # Modal management
 
 utils/
 ├── storage.ts        # AsyncStorage helpers
-├── generateId.ts     # UUID for entities
-├── supabase.ts       # Supabase client configuration
-├── encryption.ts     # PIN hashing/verification
-├── useRevenueCat.ts  # RevenueCat SDK integration hook
-└── generateTestSnapshots.ts  # Test data generator for performance chart
-
-components/
-└── PerformanceChart.tsx  # Interactive line chart with scrubbing gesture
-
-constants/            # Design system
-├── Colors.ts, Typography.ts, Spacing.ts, Layout.ts
-└── index.ts
-
-types/
-└── index.ts          # Asset, Liability, User interfaces
+├── encryption.ts     # PIN hashing
+├── supabase.ts       # Supabase client
+└── useRevenueCat.ts  # Subscription
 ```
 
 ---
 
-## 🧩 DATA MODELS
+## Data Models
 
-**Asset**
+### Asset
 ```typescript
 {
-  id: string (UUID)
+  id: string
   name: string
-  value: number (in primaryCurrency)
-  type: 'bank' | 'portfolio' | 'property' | 'other'
+  value: number
+  type: 'bank' | 'stocks' | 'crypto' | 'etf' | 'commodities' | 'property' | 'other'
   currency: 'GBP' | 'USD' | 'EUR'
-  createdAt: string (ISO)
-  updatedAt: string (ISO)
-  metadata?: { ticker, quantity, lastPrice, accountId, etc. }
+  createdAt: string
+  updatedAt: string
+  metadata?: { holdings, prices, etc. }
 }
 ```
 
-**Liability** (same structure, type: 'mortgage' | 'loan' | 'creditcard' | 'other')
+### Liability
+```typescript
+{
+  id: string
+  name: string
+  value: number
+  type: 'mortgage' | 'loan' | 'creditcard' | 'other'
+  currency: 'GBP' | 'USD' | 'EUR'
+  createdAt: string
+  updatedAt: string
+}
+```
 
-**User** (AsyncStorage `@regent_user`)
+### User
 ```typescript
 {
   id: string
   name: string
   email: string
   primaryCurrency: 'GBP' | 'USD' | 'EUR'
-  profilePhotoUrl?: string
-  createdAt: string (ISO timestamp)
-  lastLoginAt: string
+  createdAt: string
   hasFaceIDEnabled: boolean
-  hasCompletedOnboarding: boolean
 }
 ```
 
-**Subscription State (RevenueCat)**
-- Managed by RevenueCat SDK (no local storage needed)
-- `isPremium`: Boolean (checks entitlements.active['premium'] or activeSubscriptions)
-- `isInTrial`: Boolean (checks if in trial period)
-- `trialEndDate`: Date | null (when trial expires)
-- `packages`: Available subscription packages from RevenueCat
+---
 
-**Paywall Flow (Fully Implemented with RevenueCat):**
-1. User signs up with Google → Authenticated ✅
-2. AuthGuard detects `isAuthenticated && !isPremium` → Routes to `/paywall`
-3. Paywall screen shows features + "Start 14-Day Free Trial" button
-4. User taps button → RevenueCat `purchasePackage()` initiates Apple IAP
-5. Apple handles payment (sandbox: free, production: £49/year after trial)
-6. RevenueCat grants `premium` entitlement → `isPremium = true`
-7. AuthGuard detects premium status → Routes to `/auth` (PIN setup)
-8. User creates PIN → Routes to `/home` (full app access) ✅
+## Key Features
 
-**RevenueCat Features Implemented:**
-- ✅ SDK initialization with platform-specific API keys
-- ✅ Purchase flow with error handling (user cancellation, failures)
-- ✅ Restore purchases functionality
-- ✅ Entitlement checking (premium access)
-- ✅ Trial period tracking
-- ✅ Subscription status monitoring
-- ⚠️ Using test API keys (replace with production keys before launch)
+### 1. Authentication
+- Apple Sign In (production)
+- Google OAuth
+- Email/Password
+- Face ID / PIN (SecureStore)
 
-**Net Worth:** `totalAssets - totalLiabilities` (calculated, not stored)
+### 2. Subscription (RevenueCat)
+- £49/year with 7-day free trial
+- Apple In-App Purchase
+- Paywall appears 7 seconds after adding first asset (aha moment)
+- Restore purchases for reinstalls
+
+### 3. Investment Tracking
+- **Stocks:** AAPL, MSFT, TSLA, etc. (Twelve Data API)
+- **Crypto:** BTC/USD, ETH/USD (auto-formats from BTC)
+- **ETFs:** SPY, QQQ, VOO
+- **Commodities:** XAU/USD (gold), XAG/USD (silver)
+- Smart caching: 1hr for stocks/ETFs, 30min for crypto
+- Pull-to-refresh for manual updates
+
+### 4. Performance Chart
+- Custom SVG with gradient fill
+- Interactive scrubbing (tap + drag)
+- Time ranges: 1M, 3M, 6M, 1Y, All
+- Haptic feedback on iOS
+- Day 1 empty state
+
+### 5. Privacy & Security
+- Local-first storage (AsyncStorage)
+- PIN hashing (SHA-256, 1000 iterations)
+- Encrypted cloud backups (PIN-derived key)
+- No bank connections (manual entry only)
+- GDPR-compliant account deletion
 
 ---
 
-## 🎨 DESIGN SYSTEM (Quick Ref)
+## User Flow
+
+```
+Sign Up (Apple/Google/Email)
+    ↓
+Set PIN + Face ID
+    ↓
+Home Screen (Empty State)
+    ↓
+Add First Asset
+    ↓
+See Net Worth (7 seconds)
+    ↓
+Paywall Appears
+    ↓
+Start Trial / Subscribe
+    ↓
+Full Access
+```
+
+---
+
+## Design System
 
 **Colors:**
-- Background: `#FAFAFA`, Card: `#FFFFFF`
+- Background: `#FAFAFA`
+- Card: `#FFFFFF`
 - Text: `#2B3035` (primary), `#8C9196` (muted)
-- Accent: `#4A90E2` (blue), `#D0021B` (red/delete)
-- Categories (Assets): Blue (cash), Green (property), Purple (investments), Gray (other)
-- Categories (Liabilities): Dark blue (mortgage), Orange (loan), Red (credit card), Gray (other)
+- Accent: `#4A90E2` (blue)
 
 **Typography:**
-- Display large: 56pt (net worth)
-- Headings: 32pt, 24pt, 20pt
-- Body: 16pt (default), 14pt (labels), 12pt (captions)
-- Weights: 300 (light), 400 (regular), 500 (medium), 600 (semibold), 700 (bold)
+- SF Pro (iOS native)
+- Display: 44-56px
+- Headings: 28-32px
+- Body: 14-16px
 
-**Spacing:** 4pt base (xs: 4, sm: 8, md: 12, lg: 16, xl: 24, 2xl: 32, 3xl: 48)
+**Spacing:** 4pt base (8, 12, 16, 24, 32, 48)
 
-**Border Radius:** sm: 8pt, md: 12pt, lg: 16pt, full: 9999pt
-
----
-
-## ⚠️ CRITICAL CONSTRAINTS
-
-**iOS Only:**
-- Use SF Pro font (iOS native)
-- Use SF Symbols for system icons (Lucide for custom)
-- Test on physical device (Face ID, gestures)
-
-**Local Storage Only:**
-- All data in AsyncStorage (unencrypted)
-- Sensitive data (PIN, tokens) in SecureStore (iOS Keychain)
-- No backend, no cloud sync (MVP)
-
-**React 19 + Expo Router Issues:**
-- ❌ DO NOT use `<Stack>` with `screenOptions` (JSI serialization errors)
-- ✅ ALWAYS use `<Slot />` in `_layout.tsx`
-- ❌ DO NOT pass complex props to native components (arrays, objects cause crashes)
-- ✅ ALWAYS wrap app in `<GestureHandlerRootView>` (for swipe gestures)
-
-**Navigation:**
-- File-based routing (`app/` folder = routes)
-- Use `router.push('/path')` or `router.replace('/path')`
-- Smooth transitions with LayoutAnimation (not Stack animations)
-
-**State Management:**
-- React Context API (DataContext, ModalContext)
-- No Redux, no MobX (keep it simple)
-- AsyncStorage auto-saves on every data change
+**Border Radius:** 8, 12, 16px
 
 ---
 
-## ⚡ WHAT'S REAL VS PLACEHOLDER
+## Critical Constraints
 
-**Fully Functional:**
-- ✅ Google OAuth (Supabase auth, token management)
-- ✅ Paywall (7-day free trial with RevenueCat, £49/year)
-- ✅ RevenueCat Integration (purchase flow, restore purchases, entitlements)
-- ✅ Face ID/PIN Auth (onboarding, authentication)
-- ✅ Empty State Onboarding (hero card with NYC skyline, dynamic welcome message)
-- ✅ Home Screen (live data, charts, CRUD, formatted user names, pull-to-refresh)
-- ✅ **Investment Tracking (4 Types):**
-  - ✅ Stocks (AAPL, MSFT, TSLA) - `AddStocksModal.tsx`
-  - ✅ Crypto (BTC/USD, ETH/USD) - `AddCryptoModal.tsx` with auto-formatting
-  - ✅ ETFs (SPY, QQQ, VOO) - `AddETFsModal.tsx`
-  - ✅ Commodities (GOLD, SILVER) - `AddCommoditiesModal.tsx`
-- ✅ Live Price Fetching (Twelve Data API, 800 calls/day free tier)
-- ✅ Smart Price Caching (Supabase Edge Function, 1hr stocks/30min crypto)
-- ✅ Pull-to-Refresh (manual price updates for all investment types)
-- ✅ Add/Edit/Delete Modals (all asset types working)
-- ✅ Detail Screens (swipe gestures, edit/delete)
-- ✅ Settings (currency switcher, sign out, GDPR-compliant delete account, restore purchases)
-- ✅ AsyncStorage persistence (all data saves/loads)
-- ✅ Encrypted Cloud Backups (Supabase, PIN-derived key)
-- ✅ Global Modal Context (production-ready)
-- ✅ Charts (real-time category breakdown)
+### iOS Only
+- SF Pro font (native)
+- Face ID / Touch ID (physical device required for testing)
+- Haptic feedback (expo-haptics)
 
-**Production Ready (Completed January 30, 2026):**
-- ✅ **Apple OAuth** - Full production configuration with JWT token in Supabase
-- ✅ **RevenueCat** - Production iOS SDK key configured
-- ✅ **TestFlight** - Build 1.0.0 (1) submitted and processing
+### React 19 + Expo Router
+- Always use `<Slot />` in `_layout.tsx` (never `<Stack>`)
+- No complex props to native components (causes JSI errors)
+- Wrap app in `<GestureHandlerRootView>` for swipe gestures
 
-**Current Phase:** TestFlight beta testing before App Store launch
+### Storage Keys
+All prefixed with `worthview_`:
+- `worthview_assets`
+- `worthview_liabilities`
+- `worthview_user`
+- `worthview_preferences`
+- `worthview_subscription`
+- `worthview_net_worth_snapshots`
+- `worthview_pin_hash` (SecureStore)
+
+### Currency Handling
+- Symbol-only change (£ → $ → €)
+- NO value conversion
+- Investments always stored in USD
 
 ---
 
-## 🔥 KNOWN ISSUES & WORKAROUNDS
+## Development Patterns
 
-**All critical issues resolved!** ✅
-
-Performance Chart is production-ready with instant touch response and smooth 60fps tracking.
-
-**ShareInviteCard Loading Delay (FIXED):**
-- Previously appeared 3 seconds after other cards (async invite code loading)
-- **Fixed:** Card now appears immediately with loading state ("..." badge, "Loading..." button)
-- Card structure consistent with other cards on HomeScreen
-
-**Face ID in Expo Go:**
-- Shows device passcode instead of Face ID UI (Expo Go limitation)
-- Auth still works, just uses passcode fallback
-- Will work properly in standalone build
-
-**Layout Shift on Settings Screen:**
-- Fixed via `useSafeAreaInsets()` + LayoutAnimation (300ms fade)
-- Never use `SafeAreaView` with `edges` prop (React 19 serialization issue)
-
-**Currency Handling (Critical):**
-- **Symbol-only change** - When user switches from GBP → USD → EUR, ONLY the symbol changes (£ → $ → €)
-- **NO value conversion** - A £10,000 asset becomes $10,000 (NOT $12,700 via exchange rate)
-- **Underlying numeric values remain unchanged** - This matches web prototype behavior
-- **Why:** Simpler UX, no API dependency, no compounding conversion errors
-- **Future:** May add optional live conversion with exchange rate API
-
----
-
-## 🔐 AUTHENTICATION IMPLEMENTATION
-
-**Last Updated:** January 6, 2026  
-**Status:** ✅ FULLY FUNCTIONAL
-
-### What We've Built
-
-**Architecture: Hybrid Cloud Auth + Local Data**
-- ✅ **Supabase** for user identity & OAuth (Google, Apple)
-- ✅ **Local storage** for financial data (AsyncStorage)
-- ✅ **Encrypted cloud backups** (PIN-derived encryption key)
-- ✅ **Device PIN** + optional Face ID (fintech-standard onboarding)
-- ✅ **RevenueCat** integration architecture (not implemented yet)
-
-**Implementation Details:**
-- Google OAuth via `supabase.auth.signInWithOAuth()` + `expo-web-browser`
-- Session storage in AsyncStorage (Supabase handles internally)
-- Deep linking with `expo-auth-session` (`makeRedirectUri()`)
-- PIN hashing with `expo-crypto` (SHA-256, 1000 iterations)
-- Mandatory PIN + optional Face ID during onboarding (see `app/auth.tsx`)
-- Supabase client reinitialization on sign-out (prevents state corruption)
-
-**Files:**
-- `utils/supabase.ts` - Supabase client with AsyncStorage adapter, client reinitialization
-- `utils/encryption.ts` - PIN hashing/verification (SHA-256, 1000 iterations)
-- `contexts/DataContext.tsx` - Auth state, sign-out with client reinitialization, backup/restore
-- `app/index.tsx` - OAuth implementation (Google/Apple)
-- `app/auth.tsx` - Loading state + PIN check (Face ID prompt → PIN setup → PIN entry)
-- `app/_layout.tsx` - AuthGuard (single navigation source)
-- `app/settings.tsx` - Sign-out button, backup/restore UI
-
-### Key Fixes Applied
-
-**Issue #1: Auth Race Condition (Infinite Loops)**
-- **Root Cause:** Dual navigation (DataContext + AuthGuard both navigating to `/auth`)
-- **Fix:** Removed navigation from DataContext, AuthGuard handles all routing
-- **Result:** Single navigation source eliminates race condition
-
-**Issue #2: PIN Not Persisting**
-- **Root Cause:** Component rendered with default `stage='face_id_prompt'` before async PIN check completed, user tapped button before check finished
-- **Fix:** Changed initial state to `null`, added loading screen until check completes
-- **Result:** User cannot interact until PIN status determined
-
-**Issue #3: Stuck on Loading Screen**
-- **Root Cause:** `supabase.auth.getSession()` hung after client reinitialization, component remounting multiple times
-- **Fix:** Use `isAuthenticated` from DataContext instead of calling `getSession()`, added `isCheckingSetup` guard
-- **Result:** No hanging, no multiple checks, smooth loading → PIN entry flow
-
-**Implementation Pattern:**
-```typescript
-// app/auth.tsx - Loading state prevents premature interaction
-const [stage, setStage] = useState<OnboardingStage>(null); // null = loading
-
-if (stage === null) {
-  return <LoadingScreen />; // User waits for PIN check
-}
-
-// Use isAuthenticated from context (not getSession())
-if (!isAuthenticated) {
-  router.replace('/');
-  return;
-}
-
-// Check PIN in SecureStore
-const pinHash = await SecureStore.getItemAsync('regent_pin_hash');
-if (pinHash) {
-  setStage('pin_entry'); // Returning user
-} else {
-  setStage('face_id_prompt'); // New user
-}
-```
-
-**Testing:** Verified 10+ sign-out/sign-in cycles with no issues
-
----
-
-## 💳 REVENUECAT INTEGRATION
-
-**Last Updated:** January 7, 2026  
-**Status:** ✅ FULLY FUNCTIONAL (Sandbox Testing Complete)
-
-### Implementation
-
-**Flow:** Sign Up → Paywall → Purchase → Auth → Home
-
-**Architecture:**
-- RevenueCat SDK manages subscription state (no local storage needed)
-- AuthGuard checks `isPremium` from RevenueCat entitlements
-- Paywall appears when authenticated but not premium
-- Apple In-App Purchase handles payment processing
-- 7-day free trial, then £49/year (or $49/€49 based on region)
-
-**Files:**
-- `utils/useRevenueCat.ts` - Custom hook wrapping RevenueCat SDK
-- `contexts/RevenueCatContext.tsx` - Provides subscription state to app
-- `app/paywall.tsx` - Paywall screen with purchase flow
-- `app/_layout.tsx` - AuthGuard with premium status routing
-- `app/settings.tsx` - Restore purchases button
-
-**Key Implementation Details:**
-```typescript
-// RevenueCat Context provides:
-{
-  isPremium: boolean,              // Has active premium entitlement
-  isInTrial: boolean,              // Currently in trial period
-  trialEndDate: Date | null,       // When trial expires
-  packages: PurchasesPackage[],    // Available subscriptions
-  purchasePackage: (pkg) => void,  // Initiate purchase
-  restorePurchases: () => void,    // Restore previous purchases
-  isLoadingSubscription: boolean   // Loading state
-}
-
-// AuthGuard routing logic
-if (isAuthenticated && !isPremium && !isLoadingSubscription) {
-  router.replace('/paywall'); // Show paywall
-}
-```
-
-**Features:**
-- ✅ Apple In-App Purchase integration
-- ✅ 7-day free trial (automatic)
-- ✅ £49/year subscription (sandbox tested with $49)
-- ✅ Restore purchases functionality
-- ✅ Entitlement checking (premium access)
-- ✅ Error handling (user cancellation, purchase failures)
-- ✅ Loading states (prevents UI flashing)
-- ✅ Sandbox testing complete (successful purchases verified)
-
-**Configuration:**
-- **Product ID:** `premium` (configured in RevenueCat dashboard)
-- **Offering:** Default offering with ANNUAL package
-- **Entitlement:** `premium` (grants app access)
-- **API Keys:** Test keys in use (replace with production before launch)
-
-**Known Behaviors:**
-- First sandbox purchase may fail (Apple quirk, subsequent purchases work)
-- Expo Go shows initialization error (expected, works in standalone builds)
-- Face ID missing description warning (already configured in app.json)
-
-**Production Checklist:**
-- [ ] Replace test API keys with production keys
-- [ ] Configure App Store Connect product
-- [ ] Test with real Apple ID (not sandbox)
-- [ ] Verify entitlements in RevenueCat dashboard
-- [ ] Enable Apple OAuth in Supabase (App Store requirement)
-
----
-
-## 📧 EMAIL/PASSWORD AUTHENTICATION
-
-**Last Updated:** January 7, 2026  
-**Status:** ✅ FULLY FUNCTIONAL (Expo Go Testing Complete)
-
-### Implementation
-
-**Components:**
-- `components/SignUpEmailModal.tsx` - Email sign-up with name/email/password validation
-- `components/SignInEmailModal.tsx` - Email sign-in with error handling
-- `app/index.tsx` - "Continue with Email" button + modal integration
-
-**Features:**
-- ✅ Email/password sign-up with validation (8+ char password, email format)
-- ✅ Email/password sign-in
-- ✅ Show/hide password toggle
-- ✅ Comprehensive error handling (duplicate email, wrong password, unverified email)
-- ✅ Switch between sign-up and sign-in modals
-- ✅ Loading states during submission
-- ✅ Consistent design with OAuth buttons
-
-**Email Verification:**
-- **Development:** Disabled in Supabase dashboard for Expo Go testing
-- **Production:** Must re-enable before App Store launch
-- **Note:** Deep linking for email verification only works in standalone builds
-
-**Files:**
-- `components/SignUpEmailModal.tsx` (310 lines)
-- `components/SignInEmailModal.tsx` (260 lines)
-- Total: ~580 lines
-
----
-
-## 🐛 KNOWN ISSUES & INVESTIGATION NOTES
-
-**Last Updated:** January 7, 2026  
-**Status:** ⚠️ PARTIALLY RESOLVED - Some issues remain
-
-### Issue 1: Paywall Flash on App Reload (ACTIVE)
-
-**Symptom:** When reopening app with existing authenticated user, paywall shows briefly before PIN entry
-
-**Expected Behavior:** Should go directly to PIN entry (no paywall)
-
-**What We Tried:**
-1. **User Identification Optimization** - Added smart check to only call `logIn()` if user ID changed
-   ```typescript
-   // Fast path: Check immediately if already identified
-   if (customerInfo?.originalAppUserId === userId) {
-     return; // Skip identification
-   }
-   ```
-   **Result:** Reduced delay but paywall still flashes
-
-2. **Background Identification** - Removed `isIdentifying` from loading state
-   ```typescript
-   // Don't block UI during identification
-   return { isLoading, isPremium, ... }; // Not: isLoading || isIdentifying
-   ```
-   **Result:** Eliminated black screen but paywall still appears
-
-3. **Removed Sign-Out Logout** - Don't call `logOutRevenueCat()` on sign out, only on account deletion
-   ```typescript
-   // Sign out: Keep RevenueCat user ID cached
-   // Delete account: Clear RevenueCat user ID
-   ```
-   **Result:** Should work but paywall still shows
-
-**Current Hypothesis:**
-- RevenueCat initialization completes with `isPremium = false` initially
-- Takes ~100-500ms to load customer info from cache
-- During that time, AuthGuard sees `isPremium = false` and routes to paywall
-- When customer info loads, `isPremium = true`, AuthGuard re-routes
-
-**Where to Look Next:**
-1. `utils/useRevenueCat.ts` - Line 40-80 (initialization)
-   - Check if we can make `getCustomerInfo()` synchronous from cache
-   - Or set initial `customerInfo` from cached SDK data
-   
-2. `app/_layout.tsx` - Line 30-60 (AuthGuard logic)
-   - Consider adding minimum wait time before routing decisions
-   - Or check if RevenueCat has loaded before making routing decision
-   
-3. RevenueCat SDK documentation
-   - Check if there's a `getCachedCustomerInfo()` synchronous method
-   - Or a way to get cached entitlements without async call
-
----
-
-### Issue 2: PIN Entry Screen Flickering After Purchase (ACTIVE)
-
-**Symptom:** After purchasing on paywall, PIN entry screen appears but flickers/refreshes, requiring PIN entry twice
-
-**Expected Behavior:** Single PIN entry screen, enter PIN once, proceed to home
-
-**What We Tried:**
-1. **Remove isIdentifying from loading** - Didn't fix flickering
-2. **Optimize logIn checks** - Still flickering
-
-**Current Hypothesis:**
-- After purchase, `isPremium` changes from `false` to `true`
-- This triggers AuthGuard re-evaluation
-- AuthGuard may be routing to `/auth` twice
-- Or `/auth` screen is remounting due to state changes
-
-**Where to Look Next:**
-1. `app/_layout.tsx` - Line 60-80 (AuthGuard routing after paywall)
-   - Add logging to see if routing happens multiple times
-   - Check dependencies in useEffect
-   
-2. `app/auth.tsx` - Component may be remounting
-   - Check if `isPremium` is in dependencies causing remount
-   - Add `useRef` to prevent multiple PIN checks
-   
-3. `app/paywall.tsx` - After successful purchase
-   - Check if navigation happens before state settles
-   - Add delay before router.replace('/auth')
-
----
-
-### Issue 3: Paywall Flash on Account Deletion (MINOR)
-
-**Symptom:** When deleting account, paywall shows for 2 seconds before sign-up screen
-
-**Expected Behavior:** Should go directly to sign-up screen
-
-**What We Tried:**
-1. **Clear Auth State Immediately** - Set `isAuthenticated = false` before async operations
-   ```typescript
-   // At start of deleteAccount()
-   setIsAuthenticated(false);
-   setSupabaseUser(null);
-   ```
-   **Result:** Improved but paywall may still flash briefly
-
-**Current Hypothesis:**
-- RevenueCat state (`isPremium`) clears after auth state
-- Brief window where `isAuthenticated = false` but `isPremium = true`
-- AuthGuard logic may show paywall during this window
-
-**Where to Look Next:**
-1. `app/settings.tsx` - Delete account flow
-   - Call `logOutRevenueCat()` synchronously at start, not awaited
-   - Clear both auth and subscription state before any async operations
-
-**Severity:** Low (happens only on account deletion, rare operation)
-
----
-
-### Issue 4: Face ID Onboarding Flickering (MINOR)
-
-**Symptom:** When creating new account, Face ID enable screen flickers
-
-**Expected Behavior:** Smooth Face ID prompt screen
-
-**Current Hypothesis:**
-- Similar to Issue 2, state changes causing remount
-- Likely related to `isPremium` updating after purchase
-
-**Where to Look Next:**
-- Same as Issue 2 (app/auth.tsx component)
-
-**Severity:** Low (happens only on first sign-up)
-
----
-
-### ✅ What's Working Perfectly
-
-**Google OAuth Sign In (Existing Account):**
-- ✅ No paywall shown
-- ✅ Direct to PIN entry
-- ✅ Home screen loads correctly
-- **This is the gold standard behavior**
-
-**Email Authentication:**
-- ✅ Sign up works
-- ✅ Sign in works (after email verification disabled)
-- ✅ Error handling works correctly
-- ✅ Modal switching works
-
-**Purchase Flow (New Account):**
-- ✅ Paywall shows correctly
-- ✅ Purchase completes
-- ✅ PIN setup works (after flickering settles)
-- ✅ Home screen loads
-
-**RevenueCat Core Functionality:**
-- ✅ Purchase processing works
-- ✅ Subscription entitlements work
-- ✅ Restore purchases works
-- ✅ Cross-device support works (after identification)
-
----
-
-## 🎨 EMPTY STATE ONBOARDING
-
-**Last Updated:** January 14, 2026  
-**Status:** ✅ PRODUCTION READY
-
-### What It Is
-
-Beautiful onboarding card shown to new users (when `assets.length === 0 && liabilities.length === 0`).
-
-### Design (100% Match to Web Prototype)
-
-**Hero Image Section:**
-- NYC skyline sunset photo (200px height, Unsplash)
-- Dark gradient overlay (rgba(0,0,0,0.2) → rgba(0,0,0,0.4))
-- White text: "Let's build your financial picture"
-- Subtext: "Add your first asset to begin"
-
-**CTA Section:**
-- Large button: "Add Your First Asset" (with Plus icon)
-- Helper text: "Add accounts, investments, property, or cash"
-- Dark background (#1a1a1a), centered layout
-
-**Dynamic Header:**
-- Empty state: "Welcome, [FirstName]" (uses actual user name)
-- Normal state: "Overview"
-- Timestamp: Hidden when empty, shown when has data
-
-### User Name Display
-
-**Top Left Corner:** Formatted as "J. Rockefeller"  
-**Welcome Title:** Shows actual first name "Welcome, John"
-
-**Implementation:**
-```typescript
-// Priority fallback for user name
-getUserFullName():
-  1. supabaseUser.user_metadata.full_name (Google OAuth)
-  2. supabaseUser.user_metadata.name (Email signup)
-  3. user.name (local storage)
-  4. 'User' (fallback)
-
-// Format display name
-formatDisplayName("John Rockefeller") → "J. Rockefeller"
-getUserFirstName() → "John"
-```
-
-### Files
-
-- `app/home.tsx` - Empty state conditional rendering (lines 110-153)
-- `EMPTY_STATE_IMPLEMENTATION.md` - Complete documentation
-
-### Dependencies
-
-- `expo-linear-gradient` - For gradient overlay on hero image
-
-### User Flow
-
-1. New user signs up → Completes PIN setup
-2. Lands on home: "Welcome, John" + Hero card
-3. Taps "Add Your First Asset" → Opens Asset Type Picker
-4. Adds first asset → Transitions to normal state with cards
-5. Never sees empty state again (unless deletes all assets)
-
----
-
-## 📈 PORTFOLIO TRACKING IMPLEMENTATION
-
-**Last Updated:** January 16, 2026  
-**Status:** ✅ PRODUCTION READY
-
-### What It Is
-
-**Split Investment Types:** 4 dedicated asset types (Stocks, Crypto, ETFs, Commodities) with live price fetching via Twelve Data API.
-
-**Key Decision:** Replaced single "Investment Portfolio" with 4 specific types for better UX and clarity.
-
-### Architecture
-
-**Client Modals:**
-- `AddStocksModal.tsx` - Track stocks with searchable dropdown (50 popular)
-- `AddCryptoModal.tsx` - Track crypto with searchable dropdown (30 popular) + auto-formatting
-- `AddETFsModal.tsx` - Track ETFs with searchable dropdown (30 popular)
-- `AddCommoditiesModal.tsx` - Track commodities with searchable dropdown (20 popular)
-- `SymbolSearchInput.tsx` - Reusable dropdown component (instant search, clean UI, ScrollView-based)
-
-**Data:**
-- `PopularSymbols.ts` - Curated lists (130+ symbols total, zero API calls)
-
-**API:** Twelve Data API (800 calls/day free tier)  
-**Caching:** Supabase `asset_prices` table (reduces API calls)  
-**Edge Function:** `fetch-asset-prices` - Smart caching + `forceRefresh` support
-
-### User Experience
-
-**Add Asset Flow:**
-1. Tap "+ Add Asset"
-2. See 4 investment options (all with "Live prices" badges)
-3. Select type → Opens dedicated modal
-4. Enter name + tap ticker field
-5. **Dropdown shows top 10 popular symbols** (e.g., AAPL, MSFT for stocks)
-6. Search by typing (filters by ticker OR name, e.g., "Apple" → AAPL)
-7. Select symbol OR type custom ticker
-8. Prices auto-fetch after 800ms debounce
-9. Enter quantity → Save → Asset appears in net worth
-
-**Crypto Auto-Formatting:**
-- User types: "BTC"
-- After 800ms: Auto-formats to "BTC/USD" + fetches price
-- No interruption during typing (happens with price fetch)
-
-**Searchable Dropdown:**
-- Shows top 10 popular symbols on focus
-- Instant filtering by ticker OR name (e.g., "Apple" → AAPL)
-- Tap to select → Auto-fills ticker
-- Clean UI: No duplicate icons, proper state management
-- ScrollView-based (no VirtualizedList warnings)
-
-**Pull-to-Refresh:**
-- Works for ALL investment types (stocks, crypto, ETFs, commodities)
-- Fetches fresh prices for all holdings
-- Shows "Updated just now" timestamp
-
-### Supported Assets
-
-- **Stocks:** AAPL, MSFT, TSLA, GOOGL, NVDA, AMZN, META, etc.
-- **Crypto:** BTC/USD, ETH/USD, SOL/USD, ADA/USD, etc. (auto-formats from BTC)
-- **ETFs:** SPY, QQQ, VOO, VTI, IVV, SCHD, etc.
-- **Commodities:** GOLD, SILVER, OIL, COPPER, PLATINUM, etc.
-
-### Caching Strategy
-
-- **Stocks/ETFs/Commodities:** 1 hour cache
-- **Crypto:** 30 minute cache
-- **Force Refresh:** `forceRefresh: true` on all modal fetches (bypasses stale cache)
-- **Pull-to-Refresh:** Uses cache if fresh (< 1 hour)
-
-### Cost Optimization
-
-- Free tier: 800 API calls/day
-- With caching: Supports 10+ active users
-- User-triggered updates only (no background jobs)
-- Estimated usage: ~100-175 calls/day for 10 users
-
-### Pricing Display
-
-**Critical:** All investments display in USD (not user's primary currency)
-- Individual prices: "$94,614" (not "€94,614")
-- Total value: "Total Value (USD) $47,307,000"
-- Stored with: `currency: 'USD'`
-- Matches how markets quote prices
-
-### Implementation Details
-
-**User Flow:**
-1. Tap "+ Add Asset" → Select "Investment Portfolio"
-2. Enter portfolio name (e.g., "Tech Stocks")
-3. Add holdings: Ticker (e.g., AAPL) + Quantity (e.g., 500)
-4. Price auto-fetches in 800ms (debounced)
-5. Total value calculates live: `shares × price`
-6. Save → Portfolio appears in net worth
-
-**Pull-to-Refresh:**
-1. User pulls down on home screen
-2. Fetches all unique symbols from portfolios
-3. Calls Edge Function with `forceRefresh: false` (uses cache if fresh)
-4. Updates asset values with new prices
-5. Shows "Updated just now" timestamp
-
-**Files:**
-- `components/AddStocksModal.tsx` - Stock portfolio entry UI
-- `components/AddCryptoModal.tsx` - Crypto portfolio entry UI (with auto-formatting)
-- `components/AddETFsModal.tsx` - ETF portfolio entry UI
-- `components/AddCommoditiesModal.tsx` - Commodity portfolio entry UI
-- `supabase/functions/fetch-asset-prices/index.ts` - Price fetching logic
-- `supabase/migrations/005_create_asset_prices.sql` - Caching table
-- `app/home.tsx` - Pull-to-refresh implementation (all investment types)
-
-**Database Schema:**
-```sql
-CREATE TABLE asset_prices (
-  symbol TEXT PRIMARY KEY,
-  price NUMERIC NOT NULL,
-  currency TEXT NOT NULL,
-  asset_type TEXT NOT NULL,
-  exchange TEXT,
-  name TEXT,
-  change_percent NUMERIC,
-  updated_at TIMESTAMPTZ DEFAULT NOW()
-);
-```
-
-**Asset Metadata Structure:**
-```typescript
-{
-  holdings: [
-    {
-      symbol: "AAPL",        // or "BTC/USD" for crypto
-      name: "Apple Inc.",    // Fetched from API
-      shares: 500,           // or "units" for commodities
-      currentPrice: 258.21,  // Always in USD
-      totalValue: 129105.00, // shares * currentPrice
-      change: 2.5            // Percentage (future feature)
-    }
-  ],
-  holdingsCount: 1,
-  lastPriceUpdate: "2026-01-16T12:11:53.429Z"
-}
-```
-
-**Example Full Asset:**
-```typescript
-{
-  id: "abc123",
-  type: "stocks",           // or "crypto", "etf", "commodities"
-  name: "Tech Stocks",
-  value: 129105.00,
-  currency: "USD",          // Always USD for investments
-  metadata: {
-    holdings: [...],
-    holdingsCount: 1,
-    lastPriceUpdate: "2026-01-16T12:11:53.429Z"
-  }
-}
-```
-
-### Deployment
-
-**Prerequisites:**
-- Twelve Data API key (sign up at twelvedata.com)
-- Supabase CLI installed
-
-**Setup:**
-```bash
-# 1. Run migration
-supabase db push
-
-# 2. Set API key secret
-supabase secrets set TWELVE_DATA_API_KEY=your_key_here
-
-# 3. Deploy Edge Function
-supabase functions deploy fetch-asset-prices
-
-# 4. Test
-curl -X POST "https://YOUR-PROJECT.supabase.co/functions/v1/fetch-asset-prices" \
-  -H "Authorization: Bearer YOUR_ANON_KEY" \
-  -d '{"symbols": ["AAPL"]}'
-```
-
----
-
-## ✨ UX POLISH & ANIMATIONS
-
-**Last Updated:** January 16, 2026  
-**Status:** ✅ PRODUCTION READY
-
-### Net Worth Count-Up Animation
-
-**What It Is:** Smooth animation from £0 → actual net worth value on every screen load and pull-to-refresh.
-
-**Implementation:**
-- React Native Animated API (60fps performance)
-- 500ms duration with ease-out cubic easing (matches web prototype)
-- Triggers on: component mount, pull-to-refresh, net worth changes
-- Uses key prop pattern to force re-animation even when value unchanged
-
-**Files:**
-- `components/NetWorthCard.tsx` - Animation logic with Animated.Value
-- `app/home.tsx` - Key prop management for re-triggering
-
-### Persistent Timestamp System
-
-**What It Is:** Accurate "Updated X ago" timestamp that persists across app restarts.
-
-**Hybrid Display Format:**
-- < 1 min: "Updated just now"
-- 1-59 min: "Updated 15m ago"  
-- 1-23 hours: "Updated 3h ago"
-- Yesterday: "Updated yesterday at 4:26 PM"
-- Older: "Updated Jan 15 at 4:26 PM"
-
-**Files:**
-- `utils/storage.ts` - saveLastDataSync(), loadLastDataSync()
-- `contexts/DataContext.tsx` - lastDataSync state + auto-updates
-- `app/home.tsx` - Hybrid time formatting logic
-
-### Commodity Symbol Fixes
-
-**What We Fixed:** All 20 commodity symbols updated to forex pair format (XAU/USD, XAG/USD, etc.)
-
-**Files:**
-- `constants/PopularSymbols.ts` - All commodity symbols corrected
-
-
----
-
-## 📊 PERFORMANCE CHART IMPLEMENTATION
-
-**Last Updated:** January 26, 2026  
-**Status:** 🟡 PARTIAL - Works but needs styling polish
-
-### What We Built
-
-**Feature:** Net worth over time visualization with historical snapshots and time range filtering.
-
-**Components:**
-- `components/PerformanceChart.tsx` - Main chart component
-- Daily snapshots stored in DataContext (local AsyncStorage)
-- Time range selector: 1M, 3M, YTD, 1Y
-- Two states: Day 1 (onboarding) vs Day 2+ (full chart)
-
-**Day 1 State (matches web prototype):**
-- Shows current net worth value (e.g., £250,000)
-- Single centered dot visualization
-- Message: "Your performance tracking begins today"
-- No metrics, no time range selector (minimal onboarding)
-
-**Day 2+ State (full chart):**
-- Line chart showing net worth trend
-- Performance metrics: ↑/↓ amount and percentage change
-- Time period label (e.g., "This month")
-- Time range selector (1M/3M/YTD/1Y buttons)
-
-### Library Migration Journey
-
-**Original Attempt: `victory-native`**
-- Popular charting library for React Native
-- **Why we tried it:** Rich features, good documentation, used by many apps
-- **Why it failed:**
-  1. Required `@shopify/react-native-skia` (heavy graphics engine)
-  2. Required `react-native-reanimated@~4.2.x` (Expo SDK 54 needs `~4.1.1`)
-  3. Required `react-native-worklets` (threading library)
-  4. Version conflicts with Expo Go and React 19
-  5. Multiple errors: "formatDateLabel is not a function", "Element type is invalid"
-  6. Development complexity too high for our use case
-
-**Current Solution: `react-native-chart-kit`**
-- Lighter weight, simpler API
-- No heavy native dependencies
-- Works with Expo Go (critical for fast iteration)
-- **Trade-off:** Less customization, harder to match web prototype exactly
-
-### Current Issues (🔴 HIGH PRIORITY)
-
-**Styling Mediocre:**
-- Chart appearance doesn't match web prototype polish
-- Line stroke visibility inconsistent (sometimes too light)
-- Spacing and margins need refinement
-- Overall "feel" lacks the premium quality of web version
-
-**What's Working:**
-- ✅ Day 1 state shows correctly
-- ✅ Data calculations accurate
-- ✅ Time range filtering works
-- ✅ Card positioned correctly (after Net Worth, before Assets)
-
-**Next Steps:**
-- Fine-tune stroke width, colors, container styling
-- Match web prototype exactly (`web-prototype/src/components/HomeScreen.tsx` lines 469-515)
-- May need alternative library if polish can't be achieved
-
-**Files:**
-- `components/PerformanceChart.tsx` - Chart component
-- `contexts/DataContext.tsx` - Snapshot creation logic (daily)
-- `app/home.tsx` - Integration (positioned after Net Worth)
-
-**Dependencies:**
-- `react-native-chart-kit@^6.12.0` (current charting library)
-- `react-native-svg@15.12.1` (peer dependency)
-- **Removed:** `victory-native`, `@shopify/react-native-skia`, `react-native-worklets`
-
----
-
-## 🗑️ GDPR-COMPLIANT ACCOUNT DELETION
-
-**Last Updated:** January 7, 2026  
-**Status:** ✅ PRODUCTION READY
-
-### Architecture
-
-**Approach:** Supabase Edge Function with admin privileges (only way to delete auth.users)
-
-**Why Edge Function:**
-- ✅ Only way to access `auth.admin.deleteUser()` (requires service_role key)
-- ✅ Server-side validation (can't be bypassed by client)
-- ✅ Atomic deletion (all-or-nothing transaction)
-- ✅ Audit logging (who, when, what was deleted)
-- ✅ GDPR Article 17 compliant (complete erasure)
-
-### Implementation
-
-**Files:**
-- `supabase/functions/delete-account/index.ts` - Edge Function (server-side deletion)
-- `supabase/config.toml` - Edge Function configuration (verify_jwt = false)
-- `contexts/DataContext.tsx` - deleteAccount() action
-- `app/settings.tsx` - Delete Account button with double confirmation
-
-**Flow:**
-1. User taps "Delete Account" (double confirmation)
-2. Client sends access token to Edge Function
-3. Edge Function validates token with `supabaseAdmin.auth.getUser(token)`
-4. Edge Function deletes: backups table → users table → auth.users record
-5. Client signs out, clears local data (AsyncStorage + SecureStore)
-6. Client clears React state and redirects to sign-up
-
-**Key Implementation Details:**
-
-```typescript
-// Client-side: Token state management (no getSession() calls)
-const [accessToken, setAccessToken] = useState<string | null>(null);
-
-// Store token after sign-in
-supabase.auth.onAuthStateChange((event, session) => {
-  setAccessToken(session?.access_token ?? null);
-});
-
-// Use stored token for deletion (bypasses getSession() hang)
-const response = await fetch(edgeFunctionUrl, {
-  headers: { 'Authorization': `Bearer ${accessToken}` },
-});
-
-// Timeouts prevent infinite loading
-- Edge Function fetch: 30 seconds
-- supabase.auth.signOut(): 3 seconds
-- All operations have fallbacks
-```
-
-**Server-side (Edge Function):**
-```typescript
-// Validate token
-const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-
-// Delete in order (cascading foreign keys)
-await supabaseAdmin.from('backups').delete().eq('user_id', user.id);
-await supabaseAdmin.from('users').delete().eq('id', user.id);
-await supabaseAdmin.auth.admin.deleteUser(user.id); // GDPR compliance
-```
-
-**Security:**
-- ✅ JWT validation on server (can't be bypassed)
-- ✅ Service role key never exposed to client
-- ✅ Manual JWT verification in Edge Function
-- ✅ Token stored in memory only (React state, not disk)
-
-**Robustness:**
-- ✅ Comprehensive timeout handling (prevents infinite loading)
-- ✅ Verification of PIN and trial state deletion
-- ✅ Works reliably on 1st, 2nd, 3rd+ deletions
-- ✅ Detailed logging with timestamps for debugging
-
-**Deployment:**
-```bash
-supabase functions deploy delete-account
-```
-
-**Testing:** Verified 5+ deletion cycles with no issues
-
----
-
-## 📋 NEXT PRIORITIES (P1 Features - In Priority Order)
-
-### **1. Performance Chart Polish** 🔴 HIGH PRIORITY
-
-**Current State:** Chart works but styling is mediocre  
-**Goal:** Match web prototype visual quality exactly
-
-**Quick Fix:** Fine-tune `components/PerformanceChart.tsx` styling:
-- Reference: `web-prototype/src/components/HomeScreen.tsx` (lines 469-515)
-- Fix line stroke visibility (`rgb(100, 116, 139)`, 2.5px width)
-- Match spacing, margins, overall polish
-
-**Effort:** 1-2 hours  
-**Why Priority 1:** Affects premium brand perception (user-facing)
-
----
-
-### **2. Apple OAuth** ✅ **COMPLETE - PRODUCTION READY**
-
-**Status:** Fully configured and working  
-**Configuration:**
-- Services ID: `com.dmy.networth.auth`
-- JWT token generated and configured in Supabase
-- Team ID: `GG45LXKPLR`
-- Key ID: `ZRLCPBBJ4T`
-
-**Testing:** Apple Sign In flow works end-to-end in TestFlight build
-
-**Documentation:** See `APPLE_OAUTH_REVENUECAT_SETUP.md` for details
-
----
-
-### **3. TestFlight Beta** ✅ **COMPLETE - LIVE ON TESTFLIGHT**
-
-**Status:** Build 1.0.0 (1) submitted January 30, 2026  
-**TestFlight Link:** https://appstoreconnect.apple.com/apps/6758517452/testflight/ios
-
-**Current Phase:** Testing before App Store submission
-
-**Testing Checklist:**
-- [x] Build and submit to TestFlight
-- [x] Configure RevenueCat production keys
-- [x] Configure Apple OAuth in Supabase
-- [ ] Test Apple Sign In authentication
-- [ ] Test RevenueCat subscription purchases
-- [ ] Test Face ID/PIN on real devices
-- [ ] Verify data persistence and sync
-- [ ] Test account deletion (GDPR)
-
-**Next Steps:**
-1. Complete TestFlight testing (Apple Sign In, subscriptions)
-2. Fix any bugs discovered
-3. Prepare App Store listing (screenshots, description)
-4. Submit for App Store review
-
----
-
-## 💾 ASYNCSTORAGE KEYS (Implementation Reference)
-
-**Core Data:**
-- `@regent_user` - User profile (name, email, currency, etc.)
-- `@regent_assets` - Assets array (JSON)
-- `@regent_liabilities` - Liabilities array (JSON)
-- `@regent_subscription` - Subscription state (trial days, expiry, etc.)
-
-**SecureStore (Encrypted):**
-- `@regent_auth` - PIN hash (bcrypt)
-- `@regent_google_token` - Google OAuth tokens
-
-**Trial Tracking Logic (Model A - Paywall at Sign-Up):**
-- User signs up → Navigate to Paywall screen (`/paywall`)
-- User taps "Start 7-Day Free Trial" → RevenueCat subscription starts
-- `trialStartDate = new Date().toISOString()`, `isActive = true`
-- User gets full app access for 7 days
-- On each app launch: Calculate `trialDaysRemaining = 7 - daysPassed`
-- After 7 days: RevenueCat auto-charges £49/year
-- If user cancels trial → `isActive = false`, show paywall again
-
----
-
-## 🛠️ DEVELOPMENT PATTERNS
-
-**Adding New Screen:**
+### Adding a Screen
 1. Create `app/screen-name.tsx`
-2. Use `useSafeAreaInsets()` for safe area (not SafeAreaView)
+2. Use `useSafeAreaInsets()` for safe area
 3. Import design constants from `/constants`
-4. Use `StyleSheet.create()` for styles (not inline)
-5. Add LayoutAnimation for smooth transitions
-6. **Example:** See `app/home.tsx` or `app/settings.tsx`
+4. Use `StyleSheet.create()`
 
-**Adding New Modal:**
+### Adding a Modal
 1. Create `components/ModalName.tsx`
-2. Register in `ModalContext.tsx` (add state + open function)
-3. Use `openModalName()` from `useModals()` hook in screen
-4. Style: `presentationStyle="pageSheet"`, `animationType="slide"`
-5. **Example:** See `components/EditAssetModal.tsx` + `contexts/ModalContext.tsx`
+2. Register in `ModalContext.tsx`
+3. Use `openModalName()` from `useModals()` hook
 
-**Data Operations:**
-1. Use `DataContext` for global state
-2. Update AsyncStorage after every change (auto-saves)
-3. Re-render UI automatically (React Context handles)
-4. **Example:** See `contexts/DataContext.tsx` methods (addAsset, updateAsset, deleteAsset)
-
-**Swipe Gestures:**
-1. Use `react-native-gesture-handler` (`PanGestureHandler`)
-2. Wrap items in `SwipeableAssetItem` or `SwipeableLiabilityItem`
-3. Requires `GestureHandlerRootView` at app root
-4. **Example:** See `components/SwipeableAssetItem.tsx`
+### Data Operations
+1. Use `DataContext` methods
+2. AsyncStorage auto-saves on every change
+3. UI re-renders automatically
 
 ---
 
-## 💻 COMMON CODE PATTERNS (Copy-Paste Reference)
+## Known Issues
 
-**Modal Registration (ModalContext.tsx):**
-```typescript
-// 1. Add state
-const [isMyModalVisible, setIsMyModalVisible] = useState(false);
+**None!** All critical issues resolved. App is production-ready.
 
-// 2. Add open function
-const openMyModal = () => setIsMyModalVisible(true);
+---
 
-// 3. Add to return value
-return { isMyModalVisible, setIsMyModalVisible, openMyModal, ... };
+## Deployment
 
-// 4. In screen, use hook
-const { openMyModal } = useModals();
+### TestFlight Build
+```bash
+eas build --platform ios
+eas submit --platform ios
 ```
 
-**AsyncStorage Save/Load Pattern:**
-```typescript
-// Save
-await AsyncStorage.setItem('@regent_assets', JSON.stringify(assets));
+### Build Configuration
+- Bundle ID: `com.dmy.networth`
+- Version: 1.0.0
+- Build Number: 2 (increment for each submission)
+- Slug: `regent` (EAS project name, internal only)
 
-// Load
-const stored = await AsyncStorage.getItem('@regent_assets');
-const assets = stored ? JSON.parse(stored) : [];
-
-// Update (load → modify → save)
-const assets = await loadAssets();
-assets.push(newAsset);
-await saveAssets(assets);
-```
-
-**Currency Symbol Helper:**
-```typescript
-const getCurrencySymbol = (currency: Currency) => {
-  return { GBP: '£', USD: '$', EUR: '€' }[currency];
-};
-```
-
-**LayoutAnimation Pattern (Smooth Transitions):**
-```typescript
-import { LayoutAnimation, UIManager, Platform } from 'react-native';
-
-// Enable on Android
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
-
-// Use in component
-useEffect(() => {
-  LayoutAnimation.configureNext(LayoutAnimation.create(
-    300, // Duration
-    LayoutAnimation.Types.easeInEaseOut,
-    LayoutAnimation.Properties.opacity
-  ));
-}, []);
-```
-
-**Safe Area Pattern (Instead of SafeAreaView):**
-```typescript
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-
-const insets = useSafeAreaInsets();
-return (
-  <View style={[styles.container, { paddingTop: insets.top }]}>
-    {/* content */}
-  </View>
-);
-```
-
-**Design Constants Import:**
-```typescript
-import { Colors, Spacing, BorderRadius, Typography } from '../constants';
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: Colors.card,
-    padding: Spacing.xl,
-    borderRadius: BorderRadius.lg,
-  },
-  title: {
-    ...Typography.h3,
-    color: Colors.primary,
-  },
-});
-```
-
-**When to Reference Code Directly:**
-- ❓ Stuck implementing a pattern → Check example file listed above
-- ❓ Need exact modal structure → Read `components/EditAssetModal.tsx`
-- ❓ Need design reference → Check `web-prototype/src/components/HomeScreen.tsx`
-- ❓ Need to understand data flow → Read `contexts/DataContext.tsx`
+### Required Configuration
+- Supabase redirect URLs: `worthview://auth/callback`
+- RevenueCat production iOS key: `appl_YsKPtpcVpohFQoThbTiytPNKxPB`
+- Apple OAuth configured in Supabase
 
 ---
 
-## 🏗️ KEY ARCHITECTURAL DECISIONS (Recent)
+## For AI Assistants
 
-**Why Global Modal Context?**
-- **Problem:** Modal state duplicated in 3 screens (Home, Assets Detail, Liabilities Detail) = ~300 lines of redundant code
-- **Solution:** Centralized all modal logic in `ModalContext.tsx`
-- **Result:** 66% code reduction, single source of truth, easier maintenance
-- **Usage:** Import `useModals()` hook, call `openAddAssetFlow()`, `openEditAsset(asset)`, etc.
+**Project Goals:**
+- Simple, clear net worth tracking
+- No elitism, universal appeal
+- Local-first, privacy-focused
+- Clean design, no clutter
 
-**Why `<Slot />` Not `<Stack>`?**
-- **Problem:** React 19 JSI serialization crashes when passing `screenOptions` props to `<Stack>`
-- **Solution:** Use `<Slot />` in `_layout.tsx` - bypasses serialization, Expo Router handles transitions
-- **Critical:** NEVER go back to `<Stack>` with options unless React 19 compatibility improves
+**When Making Changes:**
+- Read this file first for context
+- Check design constants (`/constants`)
+- Test on physical iPhone (Face ID, gestures)
+- Never add features not in spec
+- Always use TypeScript strictly
 
-**Why `useSafeAreaInsets()` Not `SafeAreaView`?**
-- **Problem:** `SafeAreaView` with `edges` prop causes React 19 serialization errors + async measurement causes layout shift
-- **Solution:** Manual padding with `useSafeAreaInsets()` + LayoutAnimation (300ms fade) for smooth mount
-- **Where:** Settings screen, any full-screen views
-
-**Why 2-Step Modal Flow?**
-- **Matches web prototype:** Step 1 = Type Picker (Bank/Portfolio/Property/Other), Step 2 = Specific Form
-- **Better UX:** Clear separation, easier to extend (add new asset types)
-- **Implementation:** `AssetTypePickerModal` → opens → `AddBankModal` / `AddPropertyModal` / etc.
+**Common Tasks:**
+- Add new asset type → Create modal in `/components`
+- Add new screen → Create in `/app`
+- Update copy → Check tagline: "Everything you own and owe, in one place"
 
 ---
 
-## 📊 PERFORMANCE CHART: CUSTOM SVG IMPLEMENTATION (Deep Dive)
+## Links
 
-**Last Updated:** January 27, 2026  
-**Status:** ⚠️ **IN PROGRESS** - Core functionality working, but touch event conflicts remain  
-**Component:** `/components/PerformanceChart.tsx`
-
----
-
-### The Journey: From Library to Custom SVG
-
-#### **What We Had (react-native-chart-kit)**
-
-**Initial Implementation (v0.9.0 - v0.9.2):**
-- Used `react-native-chart-kit` for line charts
-- Simple integration, battle-tested library
-- Basic scrubbing gesture with PanResponder overlay
-
-**Problems We Encountered:**
-1. **Dot Positioning Bug (CRITICAL):** Tapping right edge showed dot in middle of chart
-2. **No Gradient Support:** Library didn't support gradient fill under line (design requirement from web prototype)
-3. **Coordinate System Black Box:** Internal coordinate mapping was opaque and inconsistent
-4. **Race Conditions:** Chart data could update mid-gesture, causing dot to jump to wrong position
-
-**What We Tried (Failed Attempts):**
-- ✅ Attempted padding calibration (DOT_PADDING_VERTICAL adjustments) → Still inaccurate
-- ❌ Attempted to freeze chartData during gesture → Fixed X-axis but Y-axis still wrong
-- ❌ Attempted to use touch Y coordinate directly → Oversimplified, broke when tapping off-line
-- **Root Cause:** Library's internal rendering didn't expose exact coordinate calculations
+- **TestFlight:** https://appstoreconnect.apple.com/apps/6758517452/testflight/ios
+- **Supabase:** https://supabase.com/dashboard/project/jkseowelliyafkoizjzx
+- **RevenueCat:** https://app.revenuecat.com
+- **App Store Checklist:** `APP_STORE_SUBMISSION_CHECKLIST.md`
+- **Build Guide:** `BUILD_AND_SHIP.md`
 
 ---
 
-#### **What We Have Now (Custom SVG with react-native-svg)**
-
-**Migration (v0.9.3 - January 27, 2026):**
-- Replaced `react-native-chart-kit` with custom `react-native-svg` implementation
-- Full control over coordinate system, gradient fill, animations
-- Built from scratch: bezier curves, SVG paths, gradient definitions
-
-**Current Implementation:**
-
-```typescript
-// Custom SVG chart with gradient
-<Svg width={screenWidth} height={CHART_HEIGHT}>
-  <Defs>
-    <LinearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-      <Stop offset="0%" stopColor="rgb(71, 85, 105)" stopOpacity={0.15} />
-      <Stop offset="100%" stopColor="rgb(71, 85, 105)" stopOpacity={0} />
-    </LinearGradient>
-  </Defs>
-  
-  {/* Gradient fill area */}
-  <Path d={gradientPath} fill="url(#chartGradient)" />
-  
-  {/* Line */}
-  <Path
-    d={linePath}
-    stroke="rgb(71, 85, 105)"
-    strokeWidth={2.5}
-    fill="none"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  />
-</Svg>
-
-// Interactive dot with interpolation
-{dotPosition && (
-  <Animated.View
-    style={[
-      styles.indicatorDot,
-      {
-        left: dotPosition.x - 6,
-        top: dotPosition.y - 6,
-        opacity: dotOpacity,
-        transform: [{ scale: dotScale }],
-      },
-    ]}
-    pointerEvents="none"
-  />
-)}
-```
-
-**Key Features:**
-- ✅ Smooth bezier curves (cubic interpolation for smooth lines)
-- ✅ Gradient fill under line (matches web prototype design)
-- ✅ Precise coordinate control (we calculate every X, Y position)
-- ✅ Dot interpolation (smooth movement between data points)
-- ✅ Data freeze during gesture (prevents coordinate system mismatches)
-- ✅ Custom animations (spring physics, opacity fades)
-
----
-
-### Current Status: What Works & What Doesn't
-
-#### **✅ What Works Perfectly:**
-
-1. **Visual Design:**
-   - Beautiful gradient fill (15% opacity at top → 0% at bottom)
-   - Smooth bezier curves (professional, polished appearance)
-   - Matches web prototype aesthetic exactly
-   - No overflow or clipping issues (overflow: 'hidden' works correctly)
-
-2. **Core Chart Functionality:**
-   - Time range switching (1M, 3M, YTD, 1Y) with smooth fade animations
-   - Data sampling (30-50 points per range for optimal granularity)
-   - Performance metrics (value, change, percentage) with smooth counting animations
-   - Day 1 empty state (matches web prototype pixel-perfect)
-   - Historical data support (2 years of snapshots from generator)
-
-3. **Gesture System:**
-   - Smooth scrubbing (tap + drag across chart)
-   - Data freeze during gesture (prevents race conditions)
-   - Fractional positioning (0.0 to n-1.0 for smooth interpolation)
-   - Dot interpolation (smooth movement between data points)
-   - Spring animations (dot appears/disappears with natural physics)
-   - ScrollView conflict resolution (dynamic scroll disabling)
-
-4. **Coordinate System:**
-   - Precise X-axis positioning (dot follows finger horizontally)
-   - Precise Y-axis positioning (dot follows line vertically)
-   - Consistent calculations (same width used for rendering and touch detection)
-   - Data locking (chartData frozen during gesture to prevent sync issues)
-
----
-
-#### **✅ CRITICAL BUG FIXED - Touch Event Fall-Through**
-
-**Last Debugging Session:** January 27, 2026 (6+ hours research)  
-**Status:** ✅ RESOLVED (January 27, 2026)  
-**Impact:** Chart now fully functional - no more accidental time range changes
-
----
-
-### **The Solution (Implemented January 27, 2026)**
-
-**Root Cause:**  
-React Native's native `TouchableOpacity` doesn't integrate with `PanResponder`. They operate as separate touch systems that don't coordinate with each other.
-
-**The Fix:**  
-Migrated from `PanResponder` to `react-native-gesture-handler`'s modern `Gesture.Pan()` API:
-
-1. ✅ Replaced `PanResponder.create()` with `Gesture.Pan()` 
-2. ✅ Changed imports: `TouchableOpacity` from `'react-native-gesture-handler'` (not `'react-native'`)
-3. ✅ Wrapped chart in `<GestureDetector gesture={panGesture}>`
-4. ✅ Removed manual overlay and panHandlers props
-
-**Why It Works:**  
-The gesture-handler version of `TouchableOpacity` automatically coordinates with `Gesture.Pan()`. When the pan gesture activates, button presses are automatically cancelled by the library.
-
-**Files Changed:**
-- `components/PerformanceChart.tsx` - Migrated to gesture-handler API (~70 lines changed)
-
-**Result:**  
-- ✅ Scrubbing works perfectly across all time ranges
-- ✅ No more accidental button presses
-- ✅ Better performance (native-driven gestures)
-- ✅ Cleaner, more maintainable code
-
----
-
-### **Historical Context: The Problem (Pre-Fix)**
-
-**Symptom:**
-When tapping on the chart line (any time range except 1M), the **entire chart shape morphed dramatically** while displaying scrubbing data for a specific date.
-
-**Example:**
-1. View 3M chart showing "Last 3 months" with gradual upward trend
-2. Tap on chart line
-3. Label correctly changes to specific date (e.g., "13 Dec") ← This works!
-4. BUT: Entire chart line morphs to completely different shape (different data pattern) ← This is broken!
-
-**Why This Is Critical:**
-- Chart is completely unusable for time ranges 3M, YTD, 1Y
-- Only 1M works (because it's already selected, so button press has no effect)
-- Users cannot interact with historical data without triggering accidental time range changes
-- Makes the entire interactive chart feature effectively broken
-
----
-
-### **Root Cause (Confirmed)**
-
-Touch events fall through the chart to time range buttons below:
-
-1. User taps chart line
-2. Touch event falls through transparent overlay
-3. `handleTimeRangeChange` is called (changes `timeRange` state)
-4. `chartData` useMemo recalculates with different time period data
-5. Chart renders with NEW time range data
-6. User sees different chart shape (not the one they were viewing)
-
-The morphing happens because `timeRange` state changes, triggering data recalculation for a different time period.
-
----
-
-### **Everything We Tried (All Failed)**
-
-**January 27, 2026 - 6+ Hour Debugging Session:**
-
-#### **Attempt 1: Remove Negative Margins**
-```typescript
-// BEFORE:
-chartContainer: {
-  marginLeft: -Spacing.sm,  // -12px
-  marginRight: -Spacing.sm, // -12px
-}
-
-// AFTER:
-chartContainer: {
-  // No negative margins
-}
-```
-**Theory:** Negative margins caused layout confusion  
-**Result:** FAILED - Issue persisted
-
----
-
-#### **Attempt 2: Transparent Overlay with PanResponder**
-```typescript
-<View style={styles.svgContainer}>
-  <Svg>...</Svg>
-  <View style={StyleSheet.absoluteFill} {...panResponder.panHandlers} />
-</View>
-```
-**Theory:** Overlay on top captures all touches  
-**Result:** FAILED - Touches still fell through
-
----
-
-#### **Attempt 3: Multi-Layer Defense (3 fixes simultaneously)**
-```typescript
-// Fix 1: Block buttons during gesture
-const handleTimeRangeChange = (range: TimeRange) => {
-  if (isGestureActive) return;  // ← Should block button press
-  // ...
-}
-
-// Fix 2: Memoize dataPoints to prevent reference changes
-const dataPoints = useMemo(() => chartData.datasets[0].data, [chartData]);
-
-// Fix 3: Aggressive touch capture
-<View 
-  style={StyleSheet.absoluteFill}
-  onStartShouldSetResponder={() => true}  // ← Force capture
-  {...panResponder.panHandlers} 
-/>
-```
-**Theory:** Triple defense layer (button blocking + data stability + touch capture)  
-**Result:** FAILED - Issue persisted despite all 3 fixes
-
----
-
-#### **Attempt 4: SVG pointerEvents="none"**
-```typescript
-<Svg pointerEvents="none">...</Svg>
-```
-**Theory:** Make SVG transparent to touches so they pass to parent  
-**Result:** FAILED - Issue persisted
-
----
-
-#### **Attempt 5: Data Locking Mechanism**
-```typescript
-onPanResponderGrant: (evt) => {
-  setIsGestureActive(true);
-  setLockedDataPoints(dataPoints);  // ← Freeze data at gesture start
-  // ...
-}
-
-const { linePath, gradientPath, chartPoints } = useMemo(() => {
-  const points = isGestureActive && lockedDataPoints 
-    ? lockedDataPoints   // ← Use frozen data during gesture
-    : dataPoints;
-  // ...
-}, [dataPoints, lockedDataPoints, isGestureActive, screenWidth]);
-```
-**Theory:** Lock data during gesture so chart can't recalculate  
-**Result:** FAILED - Issue persisted (suggests timeRange changes BEFORE gesture starts)
-
----
-
-#### **Attempt 6: Remove `react-native-chart-kit` Remnants**
-Confirmed via grep that old library wasn't in use (red herring).  
-**Result:** Not relevant to the issue
-
----
-
-### **Why This Is So Hard**
-
-**The Paradox:**
-- Button blocking (`if (isGestureActive) return`) should prevent this
-- BUT touches reach buttons BEFORE `PanResponder.onPanResponderGrant` can set `isGestureActive = true`
-- React Native's touch event system may prioritize `TouchableOpacity` over `PanResponder`
-
-**Touch Event Priority in React Native:**
-```
-User taps screen
-    ↓
-1. TouchableOpacity captures first (buttons have higher priority?)
-2. handleTimeRangeChange executes
-3. timeRange state changes
-4. Component re-renders
-5. THEN PanResponder.onPanResponderGrant fires (too late!)
-```
-
-**The z-index/layering mystery:**
-- Transparent overlay is positioned last in JSX (should be on top)
-- `StyleSheet.absoluteFill` covers entire area
-- `onStartShouldSetResponder={() => true}` explicitly requests capture
-- But touches still fall through to buttons
-
----
-
-### **Technical Analysis**
-
-**What SHOULD Happen:**
-1. Transparent overlay with PanResponder captures touch
-2. `onPanResponderGrant` fires → sets `isGestureActive = true`
-3. Even if touch somehow reaches button, `isGestureActive` check blocks it
-4. Data stays frozen with `lockedDataPoints`
-5. Chart shape stays identical, only date label changes
-
-**What ACTUALLY Happens:**
-1. Touch bypasses overlay (unclear why)
-2. Button `onPress` fires → `handleTimeRangeChange` executes
-3. `timeRange` changes → `chartData` recalculates
-4. Chart renders with different data
-5. THEN `onPanResponderGrant` fires (too late)
-
----
-
-### **Current Code State**
-
-The chart component now has:
-- ✅ Clean code (no negative margins, simplified layout)
-- ✅ Proper memoization (`dataPoints` is stable)
-- ✅ Button blocking during gestures
-- ✅ Transparent overlay with aggressive touch capture
-- ✅ Data locking mechanism
-- ❌ But touch fall-through still occurs
-
-File: `/components/PerformanceChart.tsx` (~680 lines)
-
----
-
-### **Potential Next Steps (Not Yet Attempted)**
-
-1. **Explore react-native-gesture-handler**
-   - More reliable touch handling than PanResponder
-   - May have better priority/capture system
-   - Would require rewriting gesture logic
-
-2. **Different Component Hierarchy**
-   - Wrap entire card (chart + buttons) in parent View
-   - PanResponder on parent, check if touch is within chart bounds
-   - Manually prevent button interaction during chart touch
-
-3. **Explicit z-index Styling**
-   - React Native doesn't officially support z-index
-   - But elevation (Android) and zIndex (iOS) might help
-   - Worth trying as last resort
-
-4. **Debug Touch Event Flow**
-   - Add extensive logging to see exact touch event sequence
-   - Confirm which component receives touch first
-   - Measure timing between button press and PanResponder
-
-5. **Disable Buttons During Chart Interaction**
-   - Pass `disabled` prop to TouchableOpacity buttons
-   - Control from parent component state
-   - More explicit than `isGestureActive` check
-
----
-
-### **Lessons Learned**
-
-1. React Native's touch event system is more complex than expected
-2. PanResponder vs TouchableOpacity priority is unpredictable
-3. Layout solutions (margins, overlays) don't solve touch routing
-4. State-based solutions (locking, blocking) fail if timing is wrong
-5. Multiple simultaneous fixes don't work if root cause is architectural
-
-**Time Investment:** 6+ hours of debugging, 6 different approaches, 0 solutions
-
-**Recommendation:** Consider this a known limitation until react-native-gesture-handler investigation or complete architecture redesign.
-
----
-
-### Potential Solutions (Not Yet Implemented)
-
-#### **Solution 1: Move PanResponder + Adjust Coordinates**
-```typescript
-// Attach to chartContainer instead of svgContainer
-<Animated.View 
-  style={[styles.chartContainer, { opacity: chartOpacity }]}
-  {...panResponder.panHandlers}
->
-  <View style={styles.svgContainer}>
-    <Svg width={actualWidth} height={CHART_HEIGHT}>
-
-// Adjust touch calculations
-const x = evt.nativeEvent.locationX;
-const adjustedX = x - negativeMarginOffset; // Account for negative margins
-const effectiveWidth = actualWidth - (2 * CHART_PADDING_HORIZONTAL);
-```
-
-**Pros:** Captures full visual area including negative margins  
-**Cons:** Requires coordinate system adjustments, more complex math  
-**Risk:** Medium - Coordinate calculations become more complex
-
----
-
-#### **Solution 2: Remove Negative Margins**
-```typescript
-chartContainer: {
-  height: 120,
-  marginLeft: 0,  // Remove negative margins
-  marginRight: 0,
-  marginBottom: Spacing.lg,
-  overflow: 'hidden',
-}
-
-// Adjust screenWidth calculation
-const screenWidth = Dimensions.get('window').width - (Spacing.lg * 2) - (Spacing.md * 2);
-```
-
-**Pros:** Simple, visual bounds = touch bounds  
-**Cons:** Chart won't extend to edges (loses design intent)  
-**Risk:** Low - Clean solution but changes visual design
-
----
-
-#### **Solution 3: Use onLayout + Measured Width**
-```typescript
-const [measuredWidth, setMeasuredWidth] = useState(fallbackWidth);
-
-<View 
-  style={styles.svgContainer}
-  onLayout={(e) => setMeasuredWidth(e.nativeEvent.layout.width)}
-  {...panResponder.panHandlers}
->
-  <Svg width={measuredWidth} height={CHART_HEIGHT}>
-
-// Use measured width for all calculations
-const effectiveWidth = measuredWidth - (2 * CHART_PADDING_HORIZONTAL);
-```
-
-**Pros:** Adapts to actual rendered width, no assumptions  
-**Cons:** Still doesn't fix negative margin touch area issue  
-**Risk:** Medium - Adds complexity without solving core issue  
-**Note:** We tried this and it broke dot positioning (shifted left)
-
----
-
-#### **Solution 4: Guard Buttons Against Rapid Taps**
-```typescript
-const [lastChartTouchTime, setLastChartTouchTime] = useState(0);
-
-// In button onPress
-onPress={() => {
-  const now = Date.now();
-  if (now - lastChartTouchTime < 500) {
-    // Ignore - likely a fall-through touch
-    return;
-  }
-  handleTimeRangeChange(range);
-}}
-
-// In PanResponder
-onPanResponderGrant: () => {
-  setLastChartTouchTime(Date.now());
-  ...
-}
-```
-
-**Pros:** Simple, doesn't change layout or coordinates  
-**Cons:** Hacky workaround, doesn't fix root cause, could miss legitimate taps  
-**Risk:** Low - Easy to implement and remove if needed
-
----
-
-#### **Solution 5: Increase Vertical Gap to 60-80px**
-```typescript
-chartContainer: {
-  marginBottom: Spacing['2xl'], // 48px instead of 24px
-}
-
-timeRangeContainer: {
-  marginTop: Spacing.lg, // 24px instead of 16px
-}
-// Total gap: 72px (much harder to accidentally hit buttons)
-```
-
-**Pros:** Reduces likelihood of accidental button presses  
-**Cons:** Wastes vertical space, doesn't fix the underlying issue  
-**Risk:** Low - Safe but inelegant
-
----
-
-### Technical Details
-
-#### **Coordinate System:**
-```typescript
-// SVG coordinate space
-const effectiveWidth = screenWidth - (2 * CHART_PADDING_HORIZONTAL);
-const effectiveHeight = CHART_HEIGHT - (2 * CHART_PADDING_VERTICAL);
-
-// Map data value to Y coordinate
-const normalizedValue = (value - minValue) / (maxValue - minValue);
-const y = CHART_PADDING_VERTICAL + effectiveHeight - (normalizedValue * effectiveHeight);
-
-// Map data index to X coordinate
-const x = CHART_PADDING_HORIZONTAL + (index / (dataPoints.length - 1)) * effectiveWidth;
-```
-
-#### **Bezier Curve Generation:**
-```typescript
-const linePath = points.reduce((path, point, index) => {
-  if (index === 0) {
-    return `M ${point.x},${point.y}`;
-  }
-  
-  // Smooth bezier curve between points
-  const prevPoint = points[index - 1];
-  const controlX1 = prevPoint.x + (point.x - prevPoint.x) / 3;
-  const controlY1 = prevPoint.y;
-  const controlX2 = prevPoint.x + (2 * (point.x - prevPoint.x)) / 3;
-  const controlY2 = point.y;
-  
-  return `${path} C ${controlX1},${controlY1} ${controlX2},${controlY2} ${point.x},${point.y}`;
-}, '');
-```
-
-#### **Gradient Fill Path:**
-```typescript
-// Same line path, but closed to bottom
-const gradientPath = `${linePath} L ${lastPoint.x},${CHART_HEIGHT} L ${firstPoint.x},${CHART_HEIGHT} Z`;
-```
-
-#### **Dot Interpolation:**
-```typescript
-// Smooth movement between data points
-const lowerIndex = Math.floor(fractionalPosition);
-const upperIndex = Math.ceil(fractionalPosition);
-const fraction = fractionalPosition - lowerIndex;
-
-const dotPosition = {
-  x: lowerPoint.x + (upperPoint.x - lowerPoint.x) * fraction,
-  y: lowerPoint.y + (upperPoint.y - lowerPoint.y) * fraction,
-  value: lowerPoint.value + (upperPoint.value - lowerPoint.value) * fraction,
-};
-```
-
----
-
-### Why Custom SVG Was Worth It (Despite Issues)
-
-**Benefits Achieved:**
-1. ✅ Gradient fill (design requirement from web prototype)
-2. ✅ Perfect coordinate control (dot positioning accurate on X and Y)
-3. ✅ No black-box library limitations
-4. ✅ Full customization potential (can add any feature we want)
-5. ✅ Smooth bezier curves (professional appearance)
-6. ✅ Performance (lightweight SVG, no heavy library)
-
-**Trade-Offs:**
-1. ⚠️ Touch event fall-through (solvable but tricky)
-2. ⚠️ More code to maintain (~700 lines vs ~200 with library)
-3. ⚠️ Need to handle edge cases ourselves (empty data, single point, etc.)
-
-**Verdict:** Worth it for control and design requirements, but need to solve touch issue for production.
-
----
-
-### Recommended Next Steps
-
-**Short Term (Critical):**
-1. Try Solution 4 (guard buttons) as immediate band-aid
-2. Increase vertical gap to 60px+ to reduce occurrence
-
-**Medium Term (Proper Fix):**
-1. Investigate React Native gesture handler priorities
-2. Test Solution 1 (move PanResponder + adjust coordinates) thoroughly
-3. Consider custom gesture handler instead of PanResponder
-
-**Long Term (Enhancement):**
-1. Add haptic feedback when dot snaps to data points
-2. Add tooltip showing exact value and date on scrub
-3. Consider gesture handler library upgrade if fix is framework-related
-
----
-
-## 📚 REFERENCE DOCS
-
-**Full Specs (Only When Needed):**
-- `docs/archive/REGENT_CURSOR_SPEC.md` - Complete product vision, user flows, design system (3000+ lines)
-  - ⚠️ **DO NOT READ unless user explicitly requests it** (e.g., "check the full spec" or "read REGENT_CURSOR_SPEC")
-  - ⚠️ **This is archived for token optimization** - PROJECT_CONTEXT.md contains 95% of what you need
-  - ✅ **Only reference when:** User asks for detailed user flows, complete design system specs, or integration deep-dives
-- `README.md` - Technical implementation details, setup, testing
-- `docs/archive/CHANGELOG.md` - Full build history (archived for token optimization)
-- **`web-prototype/`** - **Figma-to-React code (REFERENCE ONLY)**
-  - ⚠️ **DO NOT copy code directly** (it's React web, not React Native)
-  - ✅ **USE FOR:** Design patterns, logic flow, component structure
-  - ✅ **DO NOT USE:** Tailwind classes, web components (div/span), localStorage
-
-**Quick Lookups:**
-- Design system: `/constants/` folder
-- Data models: `/types/index.ts`
-- API patterns: `contexts/DataContext.tsx`, `utils/storage.ts`
-- Modal patterns: `contexts/ModalContext.tsx`
-
----
-
-## 🚨 CRITICAL REMINDERS
-
-**DO:**
-- ✅ Use design system constants (never hardcode)
-- ✅ Test on physical iPhone (Face ID, gestures, transitions)
-- ✅ Handle empty states, loading states, error states
-- ✅ Auto-save to AsyncStorage after every action
-- ✅ Use TypeScript strictly (no `any`)
-
-**DON'T:**
-- ❌ Modify `_layout.tsx` without checking React 19 constraints
-- ❌ Use `<Stack>` with `screenOptions` (causes crashes)
-- ❌ Build features not in spec (stay focused)
-- ❌ Skip error handling (APIs fail, networks drop)
-- ❌ Add gamification (against brand positioning)
-
----
-
-## 💡 TARGET MARKET
-
-**User:** "The Grounded Achiever"  
-- Age: 28-45, Income: £100k-£250k, Net worth: £100k-£1m  
-- Location: London, NYC, financial hubs  
-- Mindset: Values clarity, discretion, restraint (NOT gamification)
-
-**Brand:** "Uber modernism + JPM restraint + NYC/London warmth"  
-- Muted colors, elegant typography, minimal decoration  
-- No bright colors, no playful elements, no streaks/badges  
-- Professional, discreet, premium
-
----
-
-## ⚖️ REGULATORY NOTES (Critical)
-
-**Why Regent Avoids FCA Regulation:**
-- ❌ NO direct investment account connections (avoids FCA licensing)
-- ❌ NO automatic bank syncing (avoids Open Banking regulations)
-- ✅ Manual entry only for all assets (bank accounts, investments, property)
-- ✅ Live price fetching for public market data (stocks, crypto, commodities)
-- ✅ Read-only data (no trades, no management, no advice)
-- ✅ "For informational purposes only" disclaimer
-
-**What This Means:**
-- Users manually enter all balances and holdings
-- We fetch live prices via Twelve Data API for investments
-- We calculate portfolio value (quantity × price)
-- We NEVER execute trades or provide investment advice
-- We NEVER connect to financial institutions directly
-
----
-
-**For detailed specs, see `docs/archive/REGENT_CURSOR_SPEC.md` (only if explicitly asked). This doc is your 80/20 reference - everything you need 95% of the time.** 🎯
+**Everything you own and owe, in one place.** 🎯

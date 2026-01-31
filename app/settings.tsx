@@ -4,10 +4,10 @@
  * Matches web prototype structure with smart progressive disclosure
  */
 
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch, Linking, LayoutAnimation, Platform, UIManager, TextInput, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Switch, Linking, LayoutAnimation, Platform, UIManager, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Upload, Download, Cloud } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { useState, useEffect } from 'react';
 import { Colors, Spacing, BorderRadius } from '../constants';
 import { useData } from '../contexts/DataContext';
@@ -20,20 +20,10 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets(); // Get safe area insets immediately
-  const { primaryCurrency, setCurrency, signOut, deleteAccount, backupData, restoreData, supabaseUser, isAuthProcessing, generateTestData, netWorth } = useData();
+  const { primaryCurrency, setCurrency, signOut, deleteAccount, supabaseUser, isAuthProcessing } = useData();
   const [faceIDEnabled, setFaceIDEnabled] = useState(true); // Mock state for now
   const [pendingCurrency, setPendingCurrency] = useState<'GBP' | 'USD' | 'EUR' | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
-  
-  const getCurrencySymbol = (currency: 'GBP' | 'USD' | 'EUR') => {
-    return { GBP: '£', USD: '$', EUR: '€' }[currency];
-  };
-  
-  // PIN modal state
-  const [showPINModal, setShowPINModal] = useState(false);
-  const [pinModalAction, setPinModalAction] = useState<'backup' | 'restore' | null>(null);
-  const [pin, setPin] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
 
   // Smooth layout animation on mount
   useEffect(() => {
@@ -76,43 +66,6 @@ export default function SettingsScreen() {
         },
       ]
     );
-  };
-
-  const handleBackup = () => {
-    setPinModalAction('backup');
-    setShowPINModal(true);
-  };
-
-  const handleRestore = () => {
-    setPinModalAction('restore');
-    setShowPINModal(true);
-  };
-
-  const handlePINSubmit = async () => {
-    if (pin.length !== 4) {
-      Alert.alert('Invalid PIN', 'Please enter a 4-digit PIN.');
-      return;
-    }
-
-    setIsProcessing(true);
-
-    try {
-      if (pinModalAction === 'backup') {
-        await backupData(pin);
-      } else if (pinModalAction === 'restore') {
-        await restoreData(pin);
-      }
-
-      // Success - close modal
-      setShowPINModal(false);
-      setPin('');
-      setPinModalAction(null);
-    } catch (error) {
-      // Error alerts are handled in DataContext
-      console.error('PIN action error:', error);
-    } finally {
-      setIsProcessing(false);
-    }
   };
 
   const handleSignOut = () => {
@@ -289,7 +242,7 @@ export default function SettingsScreen() {
               <View style={styles.settingLeft}>
                 <Text style={styles.settingLabel}>Face ID</Text>
                 <Text style={styles.settingDescription}>
-                  Use Face ID to unlock Regent
+                  Use Face ID to unlock WorthView
                 </Text>
               </View>
               <Switch
@@ -317,51 +270,6 @@ export default function SettingsScreen() {
               <Text style={styles.aboutValue}>2026.01.06</Text>
             </View>
           </View>
-        </View>
-
-        {/* Data & Backup Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Data & Backup</Text>
-          
-          <View style={styles.card}>
-            <TouchableOpacity
-              style={styles.backupRow}
-              onPress={handleBackup}
-              activeOpacity={0.7}
-            >
-              <View style={styles.iconContainer}>
-                <Upload size={20} color={Colors.primary} />
-              </View>
-              <View style={styles.backupContent}>
-                <Text style={styles.backupLabel}>Backup Data</Text>
-                <Text style={styles.backupDescription}>
-                  Securely backup your financial data
-                </Text>
-              </View>
-            </TouchableOpacity>
-
-            <View style={styles.divider} />
-
-            <TouchableOpacity
-              style={styles.backupRow}
-              onPress={handleRestore}
-              activeOpacity={0.7}
-            >
-              <View style={styles.iconContainer}>
-                <Download size={20} color={Colors.primary} />
-              </View>
-              <View style={styles.backupContent}>
-                <Text style={styles.backupLabel}>Restore Data</Text>
-                <Text style={styles.backupDescription}>
-                  Restore from a previous backup
-                </Text>
-              </View>
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.sectionNote}>
-            <Cloud size={12} color={Colors.mutedForeground} /> Your data is encrypted with your PIN before backup. Only you can decrypt it.
-          </Text>
         </View>
 
         {/* Account Section */}
@@ -410,49 +318,13 @@ export default function SettingsScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* Development / Test Data Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Development Tools</Text>
-          
-          <TouchableOpacity
-            style={styles.card}
-            onPress={async () => {
-              Alert.alert(
-                'Generate Test Data',
-                `This will create 2 years of historical performance data based on your current net worth (${getCurrencySymbol(primaryCurrency)}${netWorth.toLocaleString('en-GB')}).\n\nThis is for testing the performance chart.`,
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  {
-                    text: 'Generate',
-                    onPress: async () => {
-                      try {
-                        await generateTestData(730, 50); // 2 years, 50% growth
-                        Alert.alert('Success', 'Generated 730 days of test data! Check the performance chart on the home screen.');
-                      } catch (error) {
-                        Alert.alert('Error', 'Failed to generate test data');
-                        console.error(error);
-                      }
-                    }
-                  }
-                ]
-              );
-            }}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.settingLabel}>Generate Performance Data</Text>
-            <Text style={styles.settingDescription}>
-              Create 2 years of test data for chart visualization
-            </Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Contact & Feedback Section */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Contact & Feedback</Text>
           
           <TouchableOpacity
             style={styles.feedbackButton}
-            onPress={() => Linking.openURL('mailto:support@regent.app?subject=Regent%20App%20Feedback')}
+            onPress={() => Linking.openURL('mailto:support@worthview.app?subject=WorthView%20App%20Feedback')}
             activeOpacity={0.7}
           >
             <Text style={styles.feedbackButtonText}>Send Feedback</Text>
@@ -465,65 +337,6 @@ export default function SettingsScreen() {
         {/* Bottom Spacer */}
         <View style={{ height: Spacing['2xl'] }} />
       </ScrollView>
-
-      {/* PIN Modal */}
-      <Modal
-        visible={showPINModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => {
-          setShowPINModal(false);
-          setPin('');
-          setPinModalAction(null);
-        }}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>
-              {pinModalAction === 'backup' ? 'Backup Data' : 'Restore Data'}
-            </Text>
-            <Text style={styles.modalDescription}>
-              Enter your 4-digit PIN to {pinModalAction === 'backup' ? 'encrypt and backup' : 'decrypt and restore'} your data
-            </Text>
-
-            <TextInput
-              style={styles.pinInput}
-              value={pin}
-              onChangeText={setPin}
-              placeholder="Enter PIN"
-              keyboardType="number-pad"
-              maxLength={4}
-              secureTextEntry
-              autoFocus
-              editable={!isProcessing}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonCancel]}
-                onPress={() => {
-                  setShowPINModal(false);
-                  setPin('');
-                  setPinModalAction(null);
-                }}
-                disabled={isProcessing}
-              >
-                <Text style={styles.modalButtonTextCancel}>Cancel</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.modalButton, styles.modalButtonConfirm]}
-                onPress={handlePINSubmit}
-                disabled={pin.length !== 4 || isProcessing}
-              >
-                <Text style={styles.modalButtonTextConfirm}>
-                  {isProcessing ? 'Processing...' : 'Confirm'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
 
       {/* Full-Screen Loading Overlay During Auth Operations */}
       {isAuthProcessing && (

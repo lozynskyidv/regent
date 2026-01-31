@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Regent",
+    "name": "WorthView",
     "slug": "regent",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -14,9 +14,9 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.dmy.networth",
-      "buildNumber": "1",
+      "buildNumber": "2",
       "infoPlist": {
-        "NSFaceIDUsageDescription": "Regent uses Face ID to securely access your financial data.",
+        "NSFaceIDUsageDescription": "WorthView uses Face ID to securely access your financial data.",
         "UIRequiresFullScreen": true,
         "UIStatusBarStyle": "UIStatusBarStyleLightContent",
         "ITSAppUsesNonExemptEncryption": false
@@ -41,13 +41,13 @@
       [
         "expo-local-authentication",
         {
-          "faceIDPermission": "Regent uses Face ID to securely access your financial data."
+          "faceIDPermission": "WorthView uses Face ID to securely access your financial data."
         }
       ],
       "expo-asset",
       "expo-font"
     ],
-    "scheme": "regent",
+    "scheme": "worthview",
     "extra": {
       "router": {
         "origin": false
@@ -55,6 +55,7 @@
       "eas": {
         "projectId": "e2762de0-6530-42a2-903f-2a93705158f0"
       }
-    }
+    },
+    "owner": "lozynskyidv"
   }
 }

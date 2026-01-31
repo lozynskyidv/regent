@@ -52,9 +52,9 @@ export default function PaywallScreen({
       >
         {/* Logo/Title */}
         <View style={styles.header}>
-          <Text style={styles.logo}>Regent</Text>
+          <Text style={styles.logo}>WorthView</Text>
           <Text style={styles.tagline}>
-            Financial clarity for discerning professionals
+            Everything you own and owe, in one place
           </Text>
         </View>
 
@@ -75,9 +75,9 @@ export default function PaywallScreen({
         {/* Benefits (only 3) */}
         <View style={styles.benefitsContainer}>
           {[
-            'Real-time portfolio tracking with live market data',
-            'Your data stored locally on your device',
-            'Privacy-first architecture with no data sharing'
+            'Track stocks, crypto, property, and all your assets',
+            'See your complete financial picture at a glance',
+            'Your data stays private on your device'
           ].map((benefit, index) => (
             <View key={index} style={styles.benefitRow}>
               <Check size={16} color={Colors.foreground} strokeWidth={2.5} />

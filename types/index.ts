@@ -1,6 +1,6 @@
 /**
  * Core TypeScript Types
- * Data models for Regent app
+ * Data models for WorthView app
  */
 
 // Currency types

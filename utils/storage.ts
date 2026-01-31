@@ -8,13 +8,13 @@ import { Asset, Liability, User, NetWorthSnapshot } from '../types';
 
 // Storage keys (no @ prefix - not needed for AsyncStorage)
 const STORAGE_KEYS = {
-  ASSETS: 'regent_assets',
-  LIABILITIES: 'regent_liabilities',
-  USER: 'regent_user',
-  PREFERENCES: 'regent_preferences',
-  SUBSCRIPTION: 'regent_subscription',
-  LAST_DATA_SYNC: 'regent_last_data_sync',
-  NET_WORTH_SNAPSHOTS: 'regent_net_worth_snapshots',
+  ASSETS: 'worthview_assets',
+  LIABILITIES: 'worthview_liabilities',
+  USER: 'worthview_user',
+  PREFERENCES: 'worthview_preferences',
+  SUBSCRIPTION: 'worthview_subscription',
+  LAST_DATA_SYNC: 'worthview_last_data_sync',
+  NET_WORTH_SNAPSHOTS: 'worthview_net_worth_snapshots',
 } as const;
 
 // ============================================
@@ -377,8 +377,8 @@ export async function clearAllData(): Promise<void> {
       STORAGE_KEYS.SUBSCRIPTION,
       STORAGE_KEYS.LAST_DATA_SYNC,
       STORAGE_KEYS.NET_WORTH_SNAPSHOTS,
-      '@regent_invite_code',      // Clear invite validation for fresh start
-      '@regent_invite_code_id',   // Clear invite code ID
+      '@worthview_invite_code',      // Clear invite validation for fresh start
+      '@worthview_invite_code_id',   // Clear invite code ID
     ]);
     console.log('✅ All data cleared');
   } catch (error) {

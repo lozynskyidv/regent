@@ -25,7 +25,7 @@ export default function SignUpScreen() {
 
   // Get the proper redirect URI for this platform (must be inside component to work correctly)
   // In dev: exp://localhost:8081/--/auth/callback
-  // In production: regent://auth/callback
+  // In production: worthview://auth/callback
   const redirectUri = makeRedirectUri({
     path: 'auth/callback',
   });
@@ -239,9 +239,9 @@ export default function SignUpScreen() {
         
         {/* Branding */}
         <View style={styles.heroContent}>
-          <Text style={styles.logo}>Regent</Text>
+          <Text style={styles.logo}>WorthView</Text>
           <Text style={styles.tagline}>
-            Financial clarity for discerning professionals
+            Everything you own and owe, in one place
           </Text>
         </View>
       </View>

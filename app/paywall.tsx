@@ -61,7 +61,7 @@ export default function Paywall() {
       await purchasePackage(annualPackage);
       
       console.log('✅ Purchase successful, navigating to home');
-      Alert.alert('Success', 'Welcome to Regent Premium!');
+      Alert.alert('Success', 'Welcome to WorthView Premium!');
       router.replace('/home');
       
     } catch (error: any) {
