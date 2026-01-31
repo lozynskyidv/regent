@@ -1,9 +1,105 @@
 # WorthView - Project Context
 
-**Version:** 1.0.0  
+**Version:** 1.0.0 (Build 6 pending)  
 **Platform:** iOS (React Native + Expo)  
-**Status:** Production Ready - Live on TestFlight  
+**Status:** In TestFlight Review - Resubmitting with Fixes  
 **Tagline:** Everything you own and owe, in one place
+
+---
+
+## 🚨 CRITICAL STATUS UPDATE (Jan 31, 2026)
+
+### What We Just Fixed
+
+**Problem 1: Missing App Icons in TestFlight**
+- ✅ **FIXED:** Regenerated WV monogram icons (black background, white "WV")
+- ✅ Icons copied to `/assets/` folder
+- ✅ Build number incremented to 6
+- ⏳ **Next:** Build 6 will have proper icons
+
+**Problem 2: App Store Rejection**
+- ✅ **FIXED:** Created demo account (dmy@gmail.com / 5Q69q25q)
+- ✅ Account exists and works in Supabase
+- ⏳ **Next:** Submit Build 6 with demo credentials
+
+**Problem 3: Only 1 Build in TestFlight Despite Multiple Builds**
+- ✅ **ROOT CAUSE IDENTIFIED:** Builds weren't being submitted to TestFlight
+- ✅ **FIXED:** Updated `eas.json` with auto-submit configuration
+- ✅ Set `appVersionSource: "local"` to read build number from app.json
+- ⏳ **Next:** Future builds will auto-submit
+
+**Problem 4: "Subscription Not Available" Error**
+- ⚠️ **BLOCKING ISSUE:** In-app purchase not configured
+- ⚠️ **REQUIRED:** Configure IAP in App Store Connect + RevenueCat
+- 📋 **SEE:** `SUBSCRIPTION_SETUP.md` for complete fix guide
+
+---
+
+## 🔴 CRITICAL: What You MUST Do Before Next Build
+
+### 1. Configure In-App Purchase (App Store Connect)
+
+**Why:** Subscription won't work until IAP is created and submitted for review
+
+**Steps:**
+1. Go to [App Store Connect](https://appstoreconnect.apple.com/apps/6758517452)
+2. **Features** → **In-App Purchases** → **"+"**
+3. Create Auto-Renewable Subscription:
+   - **Product ID:** `worthview_annual`
+   - **Price:** £49.99/year
+   - **Trial:** 7 days
+   - **Group:** "WorthView Subscriptions" (create new)
+4. **CRITICAL:** Click **"Submit for Review"**
+
+### 2. Configure RevenueCat
+
+**Why:** App fetches subscription products from RevenueCat
+
+**Steps:**
+1. Go to [RevenueCat Dashboard](https://app.revenuecat.com)
+2. **Products** → Add `worthview_annual`
+3. **Entitlements** → Create "premium" → Link to `worthview_annual`
+4. **Offerings** → "Current" → Add Annual package → Select `worthview_annual`
+
+**Complete Guide:** See `SUBSCRIPTION_SETUP.md`
+
+---
+
+## 📋 Build & Submit Workflow (Updated Jan 31)
+
+### Build 6 (Ready to Build)
+
+```bash
+# Build with auto-submit to TestFlight
+cd "/Users/dmytrolozynskyi/Documents/Regent App/WorthView"
+eas build --platform ios --profile production --auto-submit
+```
+
+**What's Included:**
+- ✅ WV monogram icon (proper, not placeholder)
+- ✅ Build number 6 (tracked correctly)
+- ✅ Auto-submits to TestFlight
+- ✅ Demo account configured
+
+**Timeline:**
+- Build: ~10-15 min
+- Auto-submit: ~5 min
+- TestFlight processing: ~15-30 min
+- **Total: ~30-45 min until testable**
+
+### After Build 6 is in TestFlight
+
+1. **Test on Device:**
+   - Install from TestFlight
+   - Verify WV icon shows
+   - Test login with dmy@gmail.com / 5Q69q25q
+   - (Subscription won't work until IAP configured)
+
+2. **Submit for App Store Review:**
+   - Go to [Distribution Tab](https://appstoreconnect.apple.com/apps/6758517452/distribution/ios/version/inflight)
+   - Select **Build 6** (not Build 5)
+   - Add demo credentials to review notes
+   - Submit for review
 
 ---
 
@@ -253,7 +349,32 @@ All prefixed with `worthview_`:
 
 ## Known Issues
 
-**None!** All critical issues resolved. App is production-ready.
+### ⚠️ ACTIVE ISSUES (Jan 31, 2026)
+
+**Issue: Subscription "Not Available" Error**
+- **Status:** BLOCKING - needs configuration
+- **Cause:** In-app purchase not created in App Store Connect
+- **Impact:** Users cannot subscribe, paywall doesn't work
+- **Fix:** See `SUBSCRIPTION_SETUP.md` for step-by-step guide
+- **ETA:** ~1-2 hours to configure + Apple review time
+
+**Issue: Build 5 Has Placeholder Icon**
+- **Status:** FIXED in Build 6
+- **Cause:** Icons weren't the proper WV monogram
+- **Fix:** Regenerated icons, ready for Build 6
+- **ETA:** Will be fixed when Build 6 is built and submitted
+
+### ✅ RESOLVED ISSUES
+
+**Issue: Only 1 Build in TestFlight**
+- **Fixed:** Jan 31, 2026
+- **Cause:** Builds weren't being submitted to TestFlight
+- **Solution:** Updated eas.json with auto-submit configuration
+
+**Issue: App Store Rejection (Guideline 2.1)**
+- **Fixed:** Jan 31, 2026
+- **Cause:** Invalid demo account credentials
+- **Solution:** Created working demo account (dmy@gmail.com / 5Q69q25q)
 
 ---
 
@@ -268,13 +389,21 @@ eas submit --platform ios
 ### Build Configuration
 - Bundle ID: `com.dmy.networth`
 - Version: 1.0.0
-- Build Number: 2 (increment for each submission)
+- Build Number: 6 (auto-increments from app.json)
 - Slug: `regent` (EAS project name, internal only)
 
 ### Required Configuration
 - Supabase redirect URLs: `worthview://auth/callback`
 - RevenueCat production iOS key: `appl_YsKPtpcVpohFQoThbTiytPNKxPB`
 - Apple OAuth configured in Supabase
+- **NEW:** Auto-submit configured in eas.json
+- **NEW:** Local app version source (reads from app.json)
+
+### Demo Account (Apple Review)
+- **Email:** dmy@gmail.com
+- **Password:** 5Q69q25q
+- **Status:** Active in Supabase
+- **Created:** Jan 31, 2026
 
 ---
 
@@ -310,6 +439,13 @@ eas submit --platform ios
 - **RevenueCat:** https://app.revenuecat.com
 - **App Store Checklist:** `APP_STORE_SUBMISSION_CHECKLIST.md`
 - **Build Guide:** `BUILD_AND_SHIP.md`
+
+### 🆘 Troubleshooting Guides (NEW - Jan 31, 2026)
+
+- **SUBSCRIPTION_SETUP.md** - Complete guide to fix subscription error
+- **TESTFLIGHT_FIX.md** - Why builds weren't appearing in TestFlight
+- **TESTFLIGHT_RESUBMISSION.md** - Build 4 submission details (archived)
+- **create-demo-account.sh** - Script to create demo account in Supabase
 
 ---
 

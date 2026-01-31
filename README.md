@@ -6,6 +6,58 @@ Track your complete net worth across stocks, crypto, property, bank accounts, an
 
 ---
 
+## 🚨 Current Status
+
+**Version:** 1.0.0 (Build 6)  
+**TestFlight:** Active (Build 5 live, Build 6 pending)  
+**App Store:** Rejected - resubmitting with fixes  
+**Last Updated:** January 31, 2026
+
+### Recent Work (Jan 31, 2026)
+
+**✅ Completed:**
+- Fixed app icon issue (regenerated WV monogram icons)
+- Configured EAS auto-submit to TestFlight
+- Incremented build number to 6
+- Created demo account for Apple review (dmy@gmail.com)
+- Updated eas.json for proper build number tracking
+
+**⚠️ Critical Issues Found:**
+1. **App Icons Missing:** Build 5 had placeholder icons - FIXED, ready for Build 6
+2. **Subscription Not Available:** In-app purchase not configured - NEEDS ACTION
+
+### Next Steps (Priority Order)
+
+**🔴 CRITICAL - Before Next Build:**
+1. **Configure In-App Purchase in App Store Connect**
+   - Product ID: `worthview_annual`
+   - Price: £49.99/year, 7-day trial
+   - Submit for review
+   - See: `SUBSCRIPTION_SETUP.md` for step-by-step guide
+
+2. **Configure RevenueCat Dashboard**
+   - Add product `worthview_annual`
+   - Create "premium" entitlement
+   - Create "Current" offering with annual package
+
+**🟡 THEN - Build & Submit:**
+3. **Build 6 with proper icons:**
+   ```bash
+   eas build --platform ios --profile production --auto-submit
+   ```
+
+4. **Test on TestFlight:**
+   - Verify WV icon appears
+   - Test demo account login (dmy@gmail.com / 5Q69q25q)
+   - Test subscription flow (after IAP configured)
+
+5. **Submit Build 6 for App Store Review**
+   - Select Build 6 (not Build 5)
+   - Add demo credentials to review notes
+   - Reply to previous rejection
+
+---
+
 ## Features
 
 - **Complete Net Worth Tracking** - See all your assets and liabilities at a glance
@@ -157,6 +209,11 @@ Located at `/Users/dmytrolozynskyi/Documents/Regent App/WorthView/app-store-icon
 - **App Store Checklist:** `APP_STORE_SUBMISSION_CHECKLIST.md`
 - **Build & Ship Guide:** `BUILD_AND_SHIP.md`
 - **Project Context:** `PROJECT_CONTEXT.md`
+
+### 🆘 Troubleshooting Guides (NEW)
+- **SUBSCRIPTION_SETUP.md** - Fix "subscription not available" error
+- **TESTFLIGHT_FIX.md** - Why builds weren't showing in TestFlight
+- **create-demo-account.sh** - Script to create Apple review demo account
 
 ---
 
