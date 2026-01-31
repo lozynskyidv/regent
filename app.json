@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "WorthView",
-    "slug": "regent",
+    "slug": "worthview",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -14,7 +14,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.dmy.networth",
-      "buildNumber": "2",
+      "buildNumber": "3",
       "infoPlist": {
         "NSFaceIDUsageDescription": "WorthView uses Face ID to securely access your financial data.",
         "UIRequiresFullScreen": true,

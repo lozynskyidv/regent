@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="29" height="29" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background with rounded corners -->
+  <rect width="120" height="120" rx="26" fill="#1A1A1A" />
+  
+  <!-- WV Monogram -->
+  <text
+    x="60"
+    y="78"
+    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif"
+    font-size="52"
+    font-weight="300"
+    fill="#FAFAFA"
+    text-anchor="middle"
+    letter-spacing="-2"
+  >WV</text>
+</svg>
