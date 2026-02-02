@@ -325,7 +325,11 @@ export default function AddCryptoModal({ visible, onClose }: AddCryptoModalProps
                     <TextInput
                       style={styles.holdingInput}
                       value={holding.quantity}
-                      onChangeText={text => handleQuantityChange(holding.id, text)}
+                      onChangeText={text => {
+                        // Replace comma with dot for European keyboards
+                        const normalizedText = text.replace(',', '.');
+                        handleQuantityChange(holding.id, normalizedText);
+                      }}
                       placeholder="0.5"
                       placeholderTextColor={Colors.mutedForeground}
                       keyboardType="decimal-pad"

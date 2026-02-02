@@ -133,8 +133,10 @@ export default function AddStocksModal({ visible, onClose }: AddStocksModalProps
   };
 
   const handleQuantityChange = (id: string, quantity: string) => {
+    // Replace comma with dot for European keyboards
+    const normalized = quantity.replace(',', '.');
     // Allow only numbers and decimal point
-    const formatted = quantity.replace(/[^0-9.]/g, '');
+    const formatted = normalized.replace(/[^0-9.]/g, '');
     setHoldings(prev => prev.map(h => (h.id === id ? { ...h, quantity: formatted } : h)));
   };
 

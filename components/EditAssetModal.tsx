@@ -109,7 +109,9 @@ export default function EditAssetModal({ visible, onClose, asset }: EditAssetMod
   };
 
   const formatValueInput = (input: string) => {
-    const numeric = input.replace(/[^0-9.]/g, '');
+    // Replace comma with dot for European keyboards
+    const normalized = input.replace(',', '.');
+    const numeric = normalized.replace(/[^0-9.]/g, '');
     const parts = numeric.split('.');
     if (parts.length > 2) {
       return parts[0] + '.' + parts.slice(1).join('');

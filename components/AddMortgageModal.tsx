@@ -83,9 +83,16 @@ export default function AddMortgageModal({ visible, onClose }: AddMortgageModalP
   };
 
   const formatNumberInput = (value: string) => {
-    const num = value.replace(/,/g, '');
-    if (!num) return '';
-    return parseFloat(num).toLocaleString('en-GB');
+    // Replace decimal comma with dot for European keyboards
+    const normalized = value.replace(',', '.');
+    // Remove any non-numeric characters except dots
+    const cleaned = normalized.replace(/[^0-9.]/g, '');
+    // Ensure only one decimal point
+    const parts = cleaned.split('.');
+    if (parts.length > 2) {
+      return parts[0] + '.' + parts.slice(1).join('');
+    }
+    return cleaned;
   };
 
   const getCurrencySymbol = () => {

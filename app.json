@@ -9,12 +9,12 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#FAFAFA"
+      "backgroundColor": "#1A1A1A"
     },
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.dmy.networth",
-      "buildNumber": "6",
+      "buildNumber": "7",
       "config": {
         "usesNonExemptEncryption": false
       },
