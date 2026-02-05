@@ -3,6 +3,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import * as WebBrowser from 'expo-web-browser';
+import * as AppleAuthentication from 'expo-apple-authentication';
 import { makeRedirectUri } from 'expo-auth-session';
 import Svg, { Path } from 'react-native-svg';
 import { Colors, Typography, Spacing, Layout, BorderRadius } from '../constants';
@@ -141,73 +142,56 @@ export default function SignUpScreen() {
     
     try {
       setIsLoadingApple(true);
-      console.log('🔐 Starting Apple OAuth...');
+      console.log('🍎 Starting Native Apple Sign In...');
       
-      const supabase = getSupabaseClient();
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'apple',
-        options: {
-          redirectTo: redirectUri, // Use Expo's proper redirect URI
-          skipBrowserRedirect: true,
-        },
+      // Use native Apple authentication
+      const credential = await AppleAuthentication.signInAsync({
+        requestedScopes: [
+          AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
+          AppleAuthentication.AppleAuthenticationScope.EMAIL,
+        ],
       });
-
-      if (error) throw error;
-
-      // Open the OAuth URL in browser
-      if (data?.url) {
-        console.log('🌐 Opening browser for OAuth...');
-        console.log('📍 OAuth URL:', data.url);
-        const result = await WebBrowser.openAuthSessionAsync(
-          data.url,
-          redirectUri // Use the same redirect URI
-        );
-        
-        console.log('📱 Browser result:', result);
-        
-        if (result.type === 'success' && result.url) {
-          console.log('✅ Redirect URL:', result.url);
-          const url = new URL(result.url);
-          
-          let access_token = url.searchParams.get('access_token');
-          let refresh_token = url.searchParams.get('refresh_token');
-          
-          if (!access_token && url.hash) {
-            const hashParams = new URLSearchParams(url.hash.substring(1));
-            access_token = hashParams.get('access_token');
-            refresh_token = hashParams.get('refresh_token');
-          }
-          
-          if (access_token && refresh_token) {
-            console.log('🔑 Setting session with tokens');
-            console.log('📊 Token lengths:', { access: access_token.length, refresh: refresh_token.length });
-            console.log('⏱️ Calling supabase.auth.setSession...');
-            
-            const setSessionStart = Date.now();
-            await supabase.auth.setSession({
-              access_token,
-              refresh_token,
-            });
-            const setSessionDuration = Date.now() - setSessionStart;
-            
-            console.log('✅ setSession returned successfully!');
-            console.log('⏱️ setSession took:', setSessionDuration, 'ms');
-            console.log('🎯 Waiting for auth state to settle...');
-            
-            // Small delay to let auth listener complete
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            console.log('✅ Session set successfully! Auth flow complete.');
-          } else {
-            throw new Error('No authentication tokens received');
-          }
-        } else if (result.type === 'cancel') {
-          console.log('❌ User cancelled OAuth');
-          Alert.alert('Cancelled', 'Sign in was cancelled.');
-        }
+      
+      console.log('✅ Apple credential received');
+      console.log('📊 Identity token length:', credential.identityToken?.length);
+      
+      if (!credential.identityToken) {
+        throw new Error('No identity token received from Apple');
       }
-    } catch (err) {
+      
+      // Sign in to Supabase with Apple identity token
+      const supabase = getSupabaseClient();
+      console.log('🔑 Signing in to Supabase with Apple token...');
+      
+      const { data, error } = await supabase.auth.signInWithIdToken({
+        provider: 'apple',
+        token: credential.identityToken,
+        nonce: credential.identityToken, // Apple requires nonce for security
+      });
+      
+      if (error) {
+        console.error('❌ Supabase sign-in error:', error);
+        throw error;
+      }
+      
+      console.log('✅ Supabase session created');
+      console.log('👤 User ID:', data.user?.id);
+      console.log('📧 Email:', data.user?.email);
+      
+      // Small delay to let auth listener complete
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      console.log('✅ Apple Sign In complete!');
+      
+    } catch (err: any) {
       console.error('❌ Apple sign-in error:', err);
+      
+      // Handle user cancellation gracefully
+      if (err.code === 'ERR_REQUEST_CANCELED') {
+        console.log('ℹ️ User cancelled Apple Sign In');
+        return; // Don't show error alert for cancellation
+      }
+      
       Alert.alert(
         'Sign In Failed',
         'Could not sign in with Apple. Please try again.',

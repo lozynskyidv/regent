@@ -8,61 +8,78 @@ Track your complete net worth across stocks, crypto, property, bank accounts, an
 
 ## 🚨 Current Status
 
-**Version:** 1.0.0 (Build 6)  
-**TestFlight:** Active (Build 5 live, Build 6 pending)  
-**App Store:** Rejected - resubmitting with fixes  
-**Last Updated:** January 31, 2026
+**Version:** 1.0.0 (Build 8)  
+**TestFlight:** Build 7 active  
+**App Store:** Rejected (Build 7) - **Build 8 ready with fixes**  
+**Last Updated:** February 5, 2026
 
-### Recent Work (Jan 31, 2026)
+### Latest Rejection (Feb 4, 2026)
+- **Issue:** Apple Sign In not working (tested on iPad Air 11-inch M3)
+- **Fix:** ✅ Implemented native Apple authentication
+- **Status:** Ready to build & resubmit
+- **Details:** See `APPLE_SIGNIN_FIX.md`
+
+### Recent Work (Feb 5, 2026)
 
 **✅ Completed:**
-- Fixed app icon issue (regenerated WV monogram icons)
-- Configured EAS auto-submit to TestFlight
-- Incremented build number to 6
-- Created demo account for Apple review (dmy@gmail.com)
-- Updated eas.json for proper build number tracking
+- **Fixed Apple Sign In rejection** - Implemented native Apple authentication
+- **Fixed flat chart issue** - Implemented automatic daily price refresh on app launch
+- Enabled iPad support (reviewer tested on iPad Air)
+- Added `expo-apple-authentication` for native iOS Sign in with Apple
+- Replaced web-based OAuth with native authentication flow
+- Added AppState listener for automatic price refresh when app opens/foregrounds
+- Prices now refresh automatically if >24 hours old
+- Daily snapshots create historical performance chart data
+- Incremented build number to 8
+- Previous fixes: App icons, demo account, EAS auto-submit
 
-**⚠️ Critical Issues Found:**
-1. **App Icons Missing:** Build 5 had placeholder icons - FIXED, ready for Build 6
-2. **Subscription Not Available:** In-app purchase not configured - NEEDS ACTION
+**⚠️ Still Outstanding:**
+1. **Subscription Not Available:** In-app purchase not configured - NEEDS ACTION (see `SUBSCRIPTION_SETUP.md`)
 
 ### Next Steps (Priority Order)
 
-**🔴 CRITICAL - Before Next Build:**
-1. **Configure In-App Purchase in App Store Connect**
-   - Product ID: `worthview_annual`
-   - Price: £49.99/year, 7-day trial
-   - Submit for review
-   - See: `SUBSCRIPTION_SETUP.md` for step-by-step guide
+**🟢 IMMEDIATE - Build 8 (Apple Sign In Fix):**
+1. **Install new dependency:**
+   ```bash
+   npm install
+   ```
 
-2. **Configure RevenueCat Dashboard**
-   - Add product `worthview_annual`
-   - Create "premium" entitlement
-   - Create "Current" offering with annual package
-
-**🟡 THEN - Build & Submit:**
-3. **Build 6 with proper icons:**
+2. **Build 8 with native Apple Sign In:**
    ```bash
    eas build --platform ios --profile production --auto-submit
    ```
 
-4. **Test on TestFlight:**
-   - Verify WV icon appears
-   - Test demo account login (dmy@gmail.com / 5Q69q25q)
-   - Test subscription flow (after IAP configured)
+3. **Test on TestFlight (MUST test on physical device):**
+   - Install Build 8 from TestFlight
+   - Test "Continue with Apple" (should show native Apple Sign In sheet)
+   - Test on iPad if possible (reviewer used iPad Air)
+   - Test demo account (dmy@gmail.com / 5Q69q25q)
 
-5. **Submit Build 6 for App Store Review**
-   - Select Build 6 (not Build 5)
-   - Add demo credentials to review notes
-   - Reply to previous rejection
+4. **Reply to App Store rejection:**
+   - Go to App Store Connect → Your App → App Review
+   - Use the reply template in `APPLE_SIGNIN_FIX.md`
+   - Inform Apple that Build 8 fixes the Apple Sign In issue
+
+**🔴 STILL NEEDED - Before Production:**
+5. **Configure In-App Purchase in App Store Connect**
+   - Product ID: `worthview_annual`
+   - Price: £49.99/year, 7-day trial
+   - See: `SUBSCRIPTION_SETUP.md` for step-by-step guide
+
+6. **Configure RevenueCat Dashboard**
+   - Add product `worthview_annual`
+   - Create "premium" entitlement
+   - Create "Current" offering with annual package
 
 ---
 
 ## Features
 
 - **Complete Net Worth Tracking** - See all your assets and liabilities at a glance
-- **Live Investment Prices** - Stocks, ETFs, crypto, and commodities with real-time data
+- **Live Investment Prices** - Stocks, ETFs, crypto, and commodities with automatic daily updates
 - **Interactive Charts** - Visualize your net worth over time with beautiful performance charts
+- **Automatic Price Refresh** - Prices update automatically when you open the app (if >24h old)
+- **Daily Snapshots** - Historical performance tracking with daily net worth snapshots
 - **Privacy First** - Your data stays on your device, encrypted and secure
 - **Face ID / PIN** - Biometric authentication for quick, secure access
 - **Multi-Currency** - Support for GBP, USD, and EUR

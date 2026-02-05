@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, ImageBackground, RefreshControl } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, ImageBackground, RefreshControl, AppState, AppStateStatus } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Settings, Plus } from 'lucide-react-native';
@@ -22,6 +22,8 @@ export default function HomeScreen() {
   const [animationKey, setAnimationKey] = useState(0);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const [paywallTimerStarted, setPaywallTimerStarted] = useState(false);
+  const appState = useRef(AppState.currentState);
+  const [lastPriceRefreshCheck, setLastPriceRefreshCheck] = useState<Date | null>(null);
 
   // 🎯 TRIGGER PAYWALL: Show after 7 seconds of viewing data (aha moment)
   useEffect(() => {
@@ -53,9 +55,93 @@ export default function HomeScreen() {
     }
   }, [assets.length, liabilities.length, hasSeenPaywall]); // Removed paywallTimerStarted to prevent clearing timer
 
+  // 🔄 AUTO-REFRESH PRICES: On app launch & foreground (Option 2 Implementation)
+  useEffect(() => {
+    const checkAndRefreshPrices = async () => {
+      // Don't refresh if already refreshing or no investment assets
+      if (refreshing) {
+        console.log('⏸️ Auto-refresh skipped: Already refreshing');
+        return;
+      }
+
+      const investmentAssets = assets.filter(a => 
+        ['portfolio', 'stocks', 'crypto', 'etf', 'commodities'].includes(a.type)
+      );
+
+      if (investmentAssets.length === 0) {
+        console.log('⏸️ Auto-refresh skipped: No investments to refresh');
+        return;
+      }
+
+      // Check if we need to refresh (last update was >24 hours ago)
+      const now = new Date();
+      let shouldRefresh = false;
+
+      // Check metadata of investment assets for lastPriceUpdate
+      const lastPriceUpdates = investmentAssets
+        .map(a => a.metadata?.lastPriceUpdate)
+        .filter(Boolean)
+        .map(timestamp => new Date(timestamp as string))
+        .sort((a, b) => b.getTime() - a.getTime()); // Most recent first
+
+      if (lastPriceUpdates.length === 0) {
+        // No price updates yet - definitely refresh
+        shouldRefresh = true;
+        console.log('📊 Auto-refresh: No price history found, refreshing...');
+      } else {
+        const lastUpdate = lastPriceUpdates[0];
+        const hoursSinceUpdate = (now.getTime() - lastUpdate.getTime()) / (1000 * 60 * 60);
+        
+        if (hoursSinceUpdate >= 24) {
+          shouldRefresh = true;
+          console.log(`📊 Auto-refresh: Last update was ${hoursSinceUpdate.toFixed(1)} hours ago, refreshing...`);
+        } else {
+          console.log(`✅ Auto-refresh skipped: Last update was ${hoursSinceUpdate.toFixed(1)} hours ago (< 24h)`);
+        }
+      }
+
+      // Prevent duplicate refreshes within 1 minute
+      if (shouldRefresh && lastPriceRefreshCheck) {
+        const secondsSinceLastCheck = (now.getTime() - lastPriceRefreshCheck.getTime()) / 1000;
+        if (secondsSinceLastCheck < 60) {
+          console.log('⏸️ Auto-refresh throttled: Checked < 1 minute ago');
+          return;
+        }
+      }
+
+      if (shouldRefresh) {
+        setLastPriceRefreshCheck(now);
+        console.log('🚀 Auto-refresh: Starting automatic price refresh...');
+        await refreshPortfolioPrices();
+        console.log('✅ Auto-refresh: Complete!');
+      }
+    };
+
+    // Check on mount (app launch)
+    checkAndRefreshPrices();
+
+    // Listen for app state changes (foreground/background)
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      console.log(`📱 App state changed: ${appState.current} → ${nextAppState}`);
+      
+      // App came to foreground from background
+      if (appState.current.match(/inactive|background/) && nextAppState === 'active') {
+        console.log('🌅 App returned to foreground - checking for price refresh...');
+        checkAndRefreshPrices();
+      }
+      
+      appState.current = nextAppState;
+    });
+
+    return () => {
+      subscription.remove();
+    };
+  }, [assets, refreshing]); // Re-run when assets change
+
   // Refresh portfolio prices (pull-to-refresh)
   const refreshPortfolioPrices = async () => {
     console.log('🔄 Pull-to-refresh: Starting price refresh...');
+    console.log(`💎 Current Net Worth: ${netWorth.toFixed(2)} ${primaryCurrency}`);
     setRefreshing(true);
 
     try {
@@ -86,18 +172,26 @@ export default function HomeScreen() {
       // Fetch fresh prices from Supabase Edge Function
       const supabase = getSupabaseClient();
       const { data: prices, error } = await supabase.functions.invoke('fetch-asset-prices', {
-        body: { symbols, forceRefresh: false }, // Use cache if fresh (< 1 hour)
+        body: { symbols, forceRefresh: true }, // ALWAYS get fresh prices on refresh
       });
 
       if (error) throw error;
 
       console.log('✅ Prices fetched:', prices);
 
-      // Update each investment with fresh prices
-      for (const investment of investmentAssets) {
+      // Track net worth changes for logging
+      let totalOldValue = 0;
+      let totalNewValue = 0;
+
+      // Build updated investments list (batch update for better React performance)
+      const updatedInvestments = investmentAssets.map(investment => {
+        const oldValue = investment.value;
+        totalOldValue += oldValue;
+
         const updatedHoldings = investment.metadata?.holdings?.map(holding => {
           const priceData = prices[holding.symbol];
           if (priceData && priceData.price) {
+            console.log(`💰 ${holding.symbol}: $${holding.currentPrice?.toFixed(2) || '0'} → $${priceData.price.toFixed(2)} (${holding.shares} shares)`);
             return {
               ...holding,
               currentPrice: priceData.price,
@@ -109,17 +203,40 @@ export default function HomeScreen() {
 
         // Calculate new total value
         const newTotalValue = updatedHoldings?.reduce((sum, h) => sum + h.totalValue, 0) || 0;
+        totalNewValue += newTotalValue;
 
-        // Update the investment asset
-        await updateAsset(investment.id, {
+        const changePercent = oldValue > 0 ? ((newTotalValue - oldValue) / oldValue * 100) : 0;
+        console.log(`📊 ${investment.name}: $${oldValue.toFixed(2)} → $${newTotalValue.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)`);
+
+        return {
+          ...investment,
           value: newTotalValue,
           metadata: {
             ...investment.metadata,
             holdings: updatedHoldings,
             lastPriceUpdate: new Date().toISOString(),
           },
+          updatedAt: new Date().toISOString(),
+        };
+      });
+
+      // Apply all updates at once (better for React batching)
+      console.log(`🔄 Updating ${updatedInvestments.length} investment assets...`);
+      for (const updatedInvestment of updatedInvestments) {
+        await updateAsset(updatedInvestment.id, {
+          value: updatedInvestment.value,
+          metadata: updatedInvestment.metadata,
         });
       }
+      console.log(`✅ All ${updatedInvestments.length} assets updated`);
+
+      // Log total net worth change
+      const netWorthChange = totalNewValue - totalOldValue;
+      const expectedNewNetWorth = netWorth + netWorthChange;
+      
+      console.log(`🎯 Investment value change: ${totalOldValue.toFixed(2)} → ${totalNewValue.toFixed(2)} (${netWorthChange >= 0 ? '+' : ''}${netWorthChange.toFixed(2)})`);
+      console.log(`📈 Expected net worth: ${netWorth.toFixed(2)} → ${expectedNewNetWorth.toFixed(2)} (${netWorthChange >= 0 ? '+' : ''}${netWorthChange.toFixed(2)})`);
+      console.log(`💡 If net worth doesn't update on screen, check if assets array is updating correctly`);
 
       // Update timestamp and trigger animation
       await updateLastDataSync();

@@ -12,9 +12,9 @@
       "backgroundColor": "#1A1A1A"
     },
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "com.dmy.networth",
-      "buildNumber": "7",
+      "buildNumber": "8",
       "config": {
         "usesNonExemptEncryption": false
       },
@@ -23,6 +23,11 @@
         "UIRequiresFullScreen": true,
         "UIStatusBarStyle": "UIStatusBarStyleLightContent",
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "entitlements": {
+        "com.apple.developer.applesignin": [
+          "Default"
+        ]
       }
     },
     "android": {
@@ -47,6 +52,7 @@
           "faceIDPermission": "WorthView uses Face ID to securely access your financial data."
         }
       ],
+      "expo-apple-authentication",
       "expo-asset",
       "expo-font"
     ],
