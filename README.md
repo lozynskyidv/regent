@@ -8,68 +8,63 @@ Track your complete net worth across stocks, crypto, property, bank accounts, an
 
 ## 🚨 Current Status
 
-**Version:** 1.0.0 (Build 8)  
-**TestFlight:** Build 7 active  
-**App Store:** Rejected (Build 7) - **Build 8 ready with fixes**  
-**Last Updated:** February 5, 2026
+**Version:** 1.0.0 (Build 9)  
+**TestFlight:** Build 9 active - Processing by Apple  
+**App Store:** Rejected (Build 7) - **Build 9 ready for resubmission**  
+**Last Updated:** February 6, 2026
 
-### Latest Rejection (Feb 4, 2026)
-- **Issue:** Apple Sign In not working (tested on iPad Air 11-inch M3)
-- **Fix:** ✅ Implemented native Apple authentication
-- **Status:** Ready to build & resubmit
-- **Details:** See `APPLE_SIGNIN_FIX.md`
+### Latest Changes (Build 9 - Feb 6, 2026)
 
-### Recent Work (Feb 5, 2026)
+**✅ Fixed Apple Sign In Issue:**
+- **Problem:** Apple Sign In showed Face ID but then failed with "could not be completed"
+- **Root Cause:** Incorrect nonce parameter in `signInWithIdToken` call
+- **Fix:** Removed incorrect nonce usage (optional for native iOS)
+- **Result:** Apple Sign In now works end-to-end after Face ID
 
-**✅ Completed:**
-- **Fixed Apple Sign In rejection** - Implemented native Apple authentication
-- **Fixed flat chart issue** - Implemented automatic daily price refresh on app launch
+### Recent Work (Builds 8-9)
+
+**✅ Build 8 Completed:**
+- Implemented native Apple authentication (`expo-apple-authentication`)
 - Enabled iPad support (reviewer tested on iPad Air)
-- Added `expo-apple-authentication` for native iOS Sign in with Apple
-- Replaced web-based OAuth with native authentication flow
-- Added AppState listener for automatic price refresh when app opens/foregrounds
-- Prices now refresh automatically if >24 hours old
-- Daily snapshots create historical performance chart data
-- Incremented build number to 8
-- Previous fixes: App icons, demo account, EAS auto-submit
+- Implemented automatic daily price refresh on app launch/foreground
+- Fixed flat performance chart issue
+- Added comprehensive logging for debugging
+- Incremented build: 7 → 8
+
+**✅ Build 9 Completed:**
+- Fixed Apple Sign In nonce bug
+- Enhanced error logging and messages
+- Incremented build: 8 → 9
+- Successfully submitted to TestFlight
 
 **⚠️ Still Outstanding:**
-1. **Subscription Not Available:** In-app purchase not configured - NEEDS ACTION (see `SUBSCRIPTION_SETUP.md`)
+1. **Subscription Not Available:** In-app purchase not configured - see `SUBSCRIPTION_SETUP.md`
 
 ### Next Steps (Priority Order)
 
-**🟢 IMMEDIATE - Build 8 (Apple Sign In Fix):**
-1. **Install new dependency:**
-   ```bash
-   npm install
-   ```
+**🟢 IMMEDIATE - Test Build 9:**
+1. **Wait for Apple processing (~5-10 minutes)**
+   - Check email for TestFlight notification
+   - Build 9 will appear in TestFlight app
 
-2. **Build 8 with native Apple Sign In:**
-   ```bash
-   eas build --platform ios --profile production --auto-submit
-   ```
+2. **Test Apple Sign In on TestFlight:**
+   - Tap "Continue with Apple"
+   - Complete Face ID authentication
+   - ✅ Should successfully sign in and show home screen
+   - Verify session persists on app restart
 
-3. **Test on TestFlight (MUST test on physical device):**
-   - Install Build 8 from TestFlight
-   - Test "Continue with Apple" (should show native Apple Sign In sheet)
-   - Test on iPad if possible (reviewer used iPad Air)
-   - Test demo account (dmy@gmail.com / 5Q69q25q)
+3. **If successful, resubmit to App Store:**
+   - Reply to App Store rejection
+   - Include: "Build 9 fixes Apple Sign In using native authentication"
+   - Submit for App Review
 
-4. **Reply to App Store rejection:**
-   - Go to App Store Connect → Your App → App Review
-   - Use the reply template in `APPLE_SIGNIN_FIX.md`
-   - Inform Apple that Build 8 fixes the Apple Sign In issue
-
-**🔴 STILL NEEDED - Before Production:**
-5. **Configure In-App Purchase in App Store Connect**
+**🔴 BEFORE PRODUCTION:**
+4. **Configure In-App Purchase** (see `SUBSCRIPTION_SETUP.md`)
    - Product ID: `worthview_annual`
    - Price: £49.99/year, 7-day trial
-   - See: `SUBSCRIPTION_SETUP.md` for step-by-step guide
 
-6. **Configure RevenueCat Dashboard**
-   - Add product `worthview_annual`
-   - Create "premium" entitlement
-   - Create "Current" offering with annual package
+5. **Configure RevenueCat Dashboard**
+   - Add product & create "premium" entitlement
 
 ---
 

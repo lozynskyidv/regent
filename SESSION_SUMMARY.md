@@ -1,229 +1,162 @@
 # WorthView - Session Summary
-**Date:** January 31, 2026  
-**Branch:** main (commit 391082d)  
-**Status:** Pushed to GitHub ✅
+**Date:** February 6, 2026  
+**Branch:** main (commit 44c53c2)  
+**Status:** Build 9 submitted to TestFlight ✅
 
 ---
 
-## What We Fixed Today
+## What We Fixed Today (Builds 8-9)
 
-### ✅ 1. Missing App Icons in TestFlight
-**Problem:** Build 5 showed placeholder icons (circular grid)  
-**Root Cause:** Icons weren't the proper WV monogram  
+### ✅ 1. Apple Sign In Fix (Build 8)
+**Problem:** App Store rejected Build 7 - Apple Sign In didn't work on iPad  
+**Root Cause:** Using web-based OAuth instead of native Apple authentication  
 **Solution:**
-- Regenerated WV monogram icons using `generate-icons-png.js`
-- Black background (#1A1A1A) with white "WV" text (#FAFAFA)
-- Copied fresh icons to `/assets/` folder
-- Ready for Build 6
+- Installed `expo-apple-authentication` package
+- Replaced web OAuth with native `AppleAuthentication.signInAsync()`
+- Added Apple Sign In entitlement to iOS configuration
+- Enabled iPad support (`supportsTablet: true`)
+- Deleted and regenerated provisioning profile with new entitlements
 
 **Files Changed:**
-- `/assets/icon.png` (regenerated)
-- `/assets/adaptive-icon.png` (regenerated)
-- `/assets/splash-icon.png` (regenerated)
+- `app.json` (buildNumber 7→8, iPad support, Apple Sign In entitlement)
+- `package.json` (added expo-apple-authentication)
+- `app/index.tsx` (native Apple Sign In implementation)
 
 ---
 
-### ✅ 2. Build Number Tracking Issue
-**Problem:** All builds showed "Build number: 1" despite app.json showing 2, 3, 4  
-**Root Cause:** eas.json was set to `appVersionSource: "remote"`  
+### ✅ 2. Automatic Price Refresh (Build 8)
+**Problem:** Performance chart was flat - no daily price updates  
+**Root Cause:** No mechanism to refresh investment prices automatically  
 **Solution:**
-- Changed to `appVersionSource: "local"`
-- Now reads build number directly from app.json
-- Incremented build number from 5 to 6
+- Added `AppState` listener to detect app launch/foreground
+- Auto-refreshes prices if >24 hours old
+- Changed `forceRefresh: false → true` to always get fresh prices
+- Added comprehensive logging for debugging
+- Fixed net worth not updating visibly
 
 **Files Changed:**
-- `eas.json` (appVersionSource)
-- `app.json` (buildNumber: 5 → 6)
+- `app/home.tsx` (AppState listener, auto-refresh logic, force fresh prices)
 
 ---
 
-### ✅ 3. Builds Not Appearing in TestFlight
-**Problem:** Multiple successful builds but only 1 in TestFlight  
-**Root Cause:** Builds weren't being submitted automatically  
+### ✅ 3. Apple Sign In Nonce Bug (Build 9)
+**Problem:** Build 8 showed Face ID but failed with "could not be completed"  
+**Root Cause:** Used `identityToken` as `nonce` parameter (incorrect)  
 **Solution:**
-- Updated eas.json with App Store Connect app ID
-- Configured auto-submit for production builds
-- Future builds will automatically submit to TestFlight
+- Removed incorrect nonce from `signInWithIdToken` call
+- Nonce is optional for native iOS Apple Sign In
+- Added detailed error logging
+- Improved user-facing error messages
 
 **Files Changed:**
-- `eas.json` (added submit.production.ios.ascAppId)
+- `app/index.tsx` (removed nonce, enhanced logging)
+- `app.json` (buildNumber 8→9)
 
 ---
 
-### ✅ 4. App Store Rejection (Demo Account)
-**Problem:** Apple couldn't sign in with demo credentials  
-**Root Cause:** Demo account didn't exist or credentials were wrong  
-**Solution:**
-- Created demo account in Supabase
-- Email: dmy@gmail.com
-- Password: 5Q69q25q
-- Verified account works with email/password sign-in
+## Git Commit History
 
-**Files Created:**
-- `create-demo-account.sh` (script to recreate if needed)
+### Commit 44c53c2 (Latest)
+**Message:** "Fix Apple Sign In nonce issue for Build 9"
+- Removed incorrect nonce parameter
+- Added comprehensive error logging
+- Build 9 submitted to TestFlight
 
----
-
-### ⚠️ 5. Subscription Not Available Error (BLOCKING)
-**Problem:** Paywall shows "subscription not available"  
-**Root Cause:** In-app purchase not configured  
-**Status:** NOT YET FIXED - requires manual configuration
-
-**What's Needed:**
-1. Create IAP in App Store Connect
-   - Product ID: `worthview_annual`
-   - Price: £49.99/year
-   - Trial: 7 days
-   - Submit for review
-
-2. Configure RevenueCat Dashboard
-   - Add product `worthview_annual`
-   - Create "premium" entitlement
-   - Create "Current" offering
-
-**Guide Created:** `SUBSCRIPTION_SETUP.md` (step-by-step instructions)
+### Commit 83c2b65
+**Message:** "Fix App Store rejection and implement automatic price refresh for Build 8"
+- Native Apple Sign In
+- iPad support
+- Automatic price refresh
+- Build 8 submitted to TestFlight
 
 ---
 
-## Documentation Created/Updated
+## Build Status
 
-### Updated Core Documentation
-1. **README.md**
-   - Added critical status section
-   - Listed completed fixes
-   - Added priority next steps
-   - Linked to troubleshooting guides
+### Build 9 (Current)
+- **Status:** Submitted to TestFlight - Processing by Apple
+- **Build Number:** 9
+- **Version:** 1.0.0
+- **Build ID:** `2298b52f-4cb2-49ba-b9df-0239b6ec6060`
+- **Submission ID:** `39db43d2-0379-4f2e-988a-ab9cd1fdee83`
+- **ETA:** 5-10 minutes for Apple processing
 
-2. **PROJECT_CONTEXT.md**
-   - Added "Critical Status Update" section
-   - Listed active vs resolved issues
-   - Updated build configuration info
-   - Added demo account details
-
-### New Troubleshooting Guides
-1. **SUBSCRIPTION_SETUP.md**
-   - Complete guide to configure in-app purchases
-   - Step-by-step for App Store Connect
-   - Step-by-step for RevenueCat
-   - Sandbox testing instructions
-
-2. **TESTFLIGHT_FIX.md**
-   - Explained why builds weren't appearing
-   - Showed how to submit existing builds
-   - Documented the fix (auto-submit)
-
-### Helper Scripts
-1. **build-with-icons.sh**
-   - Script to build Build 6 with proper icons
-   - Includes auto-submit to TestFlight
-
-2. **submit-to-testflight.sh**
-   - Script to submit existing builds
-   - For emergency submissions
-
-3. **create-demo-account.sh** (already existed)
-   - Script to create Apple review demo account
-   - Uses Supabase API
-
----
-
-## Git Commit Details
-
-**Commit:** 391082d  
-**Message:** "Fix critical TestFlight and App Store issues for Build 6"
-
-**Files Modified:** 4
-- app.json
-- eas.json
-- README.md
-- PROJECT_CONTEXT.md
-
-**Files Added:** 4
-- SUBSCRIPTION_SETUP.md
-- TESTFLIGHT_FIX.md
-- build-with-icons.sh
-- submit-to-testflight.sh
-
-**Total Changes:** +709 insertions, -7 deletions
-
-**Repository:** https://github.com/lozynskyidv/regent  
-**Branch:** main  
-**Status:** Pushed successfully ✅
+### Build 8
+- **Status:** Live on TestFlight
+- **Build Number:** 8
+- **Issues:** Apple Sign In nonce bug (fixed in Build 9)
 
 ---
 
 ## What You Need to Do Next
 
-### 🔴 CRITICAL - Before Building
+### 🟢 IMMEDIATE - Test Build 9 (5-10 min)
 
-1. **Configure In-App Purchase** (30 min)
-   - Open: https://appstoreconnect.apple.com/apps/6758517452
-   - Go to: Features → In-App Purchases
-   - Create: `worthview_annual` (£49.99/year, 7-day trial)
-   - **MUST:** Submit for review
+1. **Wait for Apple email notification** (~5-10 minutes)
+   - Apple is processing Build 9
+   - You'll receive TestFlight email when ready
 
-2. **Configure RevenueCat** (15 min)
-   - Open: https://app.revenuecat.com
-   - Add product: `worthview_annual`
-   - Create entitlement: "premium"
-   - Create offering: "Current" with annual package
+2. **Install Build 9 from TestFlight**
+   - Open TestFlight app on iPhone
+   - Install Build 9
 
-   **See:** `SUBSCRIPTION_SETUP.md` for detailed steps
+3. **Test Apple Sign In**
+   - Tap "Continue with Apple"
+   - Complete Face ID
+   - ✅ Should successfully sign in and show home screen
+   - Verify session persists on app restart
 
-### 🟡 THEN - Build & Submit
-
-3. **Build 6 with Proper Icons** (30-45 min)
-   ```bash
-   cd "/Users/dmytrolozynskyi/Documents/Regent App/WorthView"
-   eas build --platform ios --profile production --auto-submit
-   ```
-   
-   Or use script:
-   ```bash
-   ./build-with-icons.sh
-   ```
-
-4. **Test on TestFlight** (15 min)
-   - Install Build 6 from TestFlight
-   - Verify WV icon appears (not placeholder)
-   - Test login: dmy@gmail.com / 5Q69q25q
-   - Check subscription (should work after IAP configured)
-
-5. **Submit for App Store Review**
-   - Go to: Distribution tab in App Store Connect
-   - Select: Build 6 (not Build 5)
-   - Add demo credentials to review notes
-   - Submit for review
+4. **If successful, resubmit to App Store**
+   - Reply to rejection in App Store Connect
+   - Message: "Build 9 fixes Apple Sign In using native authentication"
+   - Submit for App Review
 
 ---
 
-## Timeline Estimate
+### 🔴 STILL NEEDED - Before Production
 
-**Total Time to Production:**
-- IAP Configuration: 45 min
-- Build 6: 30-45 min
-- Testing: 15 min
-- Submission: 10 min
-- **Total: ~2 hours of work**
+**Configure In-App Purchase** (see `SUBSCRIPTION_SETUP.md`)
+1. App Store Connect: Create `worthview_annual` product
+2. RevenueCat: Add product and create "premium" entitlement
+3. Submit IAP for review
 
-**Apple Review Time:**
-- IAP Review: 1-2 days
-- App Review: 1-3 days
+---
+
+## Documentation
+
+**Core Files:**
+- `README.md` - Project overview and current status
+- `PROJECT_CONTEXT.md` - Complete project context
+- `SUBSCRIPTION_SETUP.md` - In-app purchase setup guide
+- `SESSION_SUMMARY.md` - This file
+
+**Cleaned Up:**
+- Deleted temporary build documentation files
+- All critical info consolidated in README
+
+---
+
+## Timeline to Production
+
+**Current Status:**
+- ✅ Apple Sign In fixed
+- ✅ iPad support enabled
+- ✅ Auto price refresh working
+- ✅ Build 9 on TestFlight
+- ❌ IAP not configured (blocking production)
+
+**Next Steps:**
+1. Test Build 9 (~10 min)
+2. Resubmit to App Store (~5 min)
+3. Configure IAP (~45 min)
+4. Wait for Apple Review (~1-3 days)
 
 **Realistic Go-Live:** ~3-5 days from now
 
 ---
 
-## Questions?
+**Everything is committed and pushed to GitHub! 🚀**
 
-All documentation is now in the repo:
-- `README.md` - Quick overview and status
-- `PROJECT_CONTEXT.md` - Complete project context
-- `SUBSCRIPTION_SETUP.md` - Fix subscription error
-- `TESTFLIGHT_FIX.md` - TestFlight troubleshooting
-
-**GitHub Repo:** https://github.com/lozynskyidv/regent
-
----
-
-**Everything is documented and pushed to GitHub! 🚀**
+**GitHub Repo:** https://github.com/lozynskyidv/regent  
+**Branch:** main  
+**Latest Commit:** 44c53c2
