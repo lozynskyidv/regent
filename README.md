@@ -38,7 +38,7 @@ Track your complete net worth across stocks, crypto, property, bank accounts, an
 - Successfully submitted to TestFlight
 
 **⚠️ Still Outstanding:**
-1. **Subscription Not Available:** In-app purchase not configured - see `SUBSCRIPTION_SETUP.md`
+1. **Subscription Not Available:** In-app purchase not configured (see PROJECT_CONTEXT.md)
 
 ### Next Steps (Priority Order)
 
@@ -59,12 +59,10 @@ Track your complete net worth across stocks, crypto, property, bank accounts, an
    - Submit for App Review
 
 **🔴 BEFORE PRODUCTION:**
-4. **Configure In-App Purchase** (see `SUBSCRIPTION_SETUP.md`)
+4. **Configure In-App Purchase:**
    - Product ID: `worthview_annual`
    - Price: £49.99/year, 7-day trial
-
-5. **Configure RevenueCat Dashboard**
-   - Add product & create "premium" entitlement
+   - Configure RevenueCat Dashboard
 
 ---
 
@@ -205,7 +203,7 @@ eas submit --platform ios
 
 ### App Store
 
-See `APP_STORE_SUBMISSION_CHECKLIST.md` for complete submission guide.
+Submit via App Store Connect when ready for production.
 
 ---
 
@@ -218,14 +216,8 @@ Located at `/Users/dmytrolozynskyi/Documents/Regent App/WorthView/app-store-icon
 - See folder README for export instructions
 
 ### Documentation
-- **App Store Checklist:** `APP_STORE_SUBMISSION_CHECKLIST.md`
-- **Build & Ship Guide:** `BUILD_AND_SHIP.md`
-- **Project Context:** `PROJECT_CONTEXT.md`
-
-### 🆘 Troubleshooting Guides (NEW)
-- **SUBSCRIPTION_SETUP.md** - Fix "subscription not available" error
-- **TESTFLIGHT_FIX.md** - Why builds weren't showing in TestFlight
-- **create-demo-account.sh** - Script to create Apple review demo account
+- **README.md** - Project overview and current status
+- **PROJECT_CONTEXT.md** - Complete project context and configuration details
 
 ---
 

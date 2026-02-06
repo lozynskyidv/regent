@@ -1,105 +1,80 @@
 # WorthView - Project Context
 
-**Version:** 1.0.0 (Build 6 pending)  
+**Version:** 1.0.0 (Build 9)  
 **Platform:** iOS (React Native + Expo)  
-**Status:** In TestFlight Review - Resubmitting with Fixes  
+**Status:** Build 9 on TestFlight - Ready for App Store Resubmission  
 **Tagline:** Everything you own and owe, in one place
 
 ---
 
-## 🚨 CRITICAL STATUS UPDATE (Jan 31, 2026)
+## 🚨 CRITICAL STATUS UPDATE (Feb 6, 2026)
 
-### What We Just Fixed
+### Build 9 - Latest Status
 
-**Problem 1: Missing App Icons in TestFlight**
-- ✅ **FIXED:** Regenerated WV monogram icons (black background, white "WV")
-- ✅ Icons copied to `/assets/` folder
-- ✅ Build number incremented to 6
-- ⏳ **Next:** Build 6 will have proper icons
+**✅ Apple Sign In - FIXED:**
+- Build 8: Implemented native Apple authentication
+- Build 9: Fixed nonce bug (was causing "could not be completed" error)
+- Status: Ready for testing on TestFlight
 
-**Problem 2: App Store Rejection**
-- ✅ **FIXED:** Created demo account (dmy@gmail.com / 5Q69q25q)
-- ✅ Account exists and works in Supabase
-- ⏳ **Next:** Submit Build 6 with demo credentials
+**✅ Automatic Price Refresh - WORKING:**
+- Prices refresh automatically on app launch if >24 hours old
+- Force fresh prices enabled (no cached data)
+- Performance chart shows daily trends
 
-**Problem 3: Only 1 Build in TestFlight Despite Multiple Builds**
-- ✅ **ROOT CAUSE IDENTIFIED:** Builds weren't being submitted to TestFlight
-- ✅ **FIXED:** Updated `eas.json` with auto-submit configuration
-- ✅ Set `appVersionSource: "local"` to read build number from app.json
-- ⏳ **Next:** Future builds will auto-submit
+**✅ iPad Support - ENABLED:**
+- App works on both iPhone and iPad
+- Reviewer tested on iPad Air (reason for rejection)
 
-**Problem 4: "Subscription Not Available" Error**
-- ⚠️ **BLOCKING ISSUE:** In-app purchase not configured
-- ⚠️ **REQUIRED:** Configure IAP in App Store Connect + RevenueCat
-- 📋 **SEE:** `SUBSCRIPTION_SETUP.md` for complete fix guide
+**⚠️ Subscription Not Available:**
+- In-app purchase not configured
+- Requires App Store Connect + RevenueCat setup
+- Blocking production release
 
 ---
 
-## 🔴 CRITICAL: What You MUST Do Before Next Build
+## 📋 Build History
 
-### 1. Configure In-App Purchase (App Store Connect)
+### Build 9 (Current - Feb 6, 2026)
+- **Status:** Submitted to TestFlight, processing by Apple
+- **Build ID:** `2298b52f-4cb2-49ba-b9df-0239b6ec6060`
+- **Fixed:** Apple Sign In nonce bug
+- **Changes:** Removed incorrect nonce parameter, enhanced error logging
 
-**Why:** Subscription won't work until IAP is created and submitted for review
+### Build 8 (Feb 6, 2026)
+- **Status:** Live on TestFlight
+- **Fixed:** Native Apple Sign In, iPad support, auto price refresh
+- **Issue:** Nonce bug prevented sign in completion
 
-**Steps:**
-1. Go to [App Store Connect](https://appstoreconnect.apple.com/apps/6758517452)
-2. **Features** → **In-App Purchases** → **"+"**
-3. Create Auto-Renewable Subscription:
-   - **Product ID:** `worthview_annual`
-   - **Price:** £49.99/year
-   - **Trial:** 7 days
-   - **Group:** "WorthView Subscriptions" (create new)
-4. **CRITICAL:** Click **"Submit for Review"**
-
-### 2. Configure RevenueCat
-
-**Why:** App fetches subscription products from RevenueCat
-
-**Steps:**
-1. Go to [RevenueCat Dashboard](https://app.revenuecat.com)
-2. **Products** → Add `worthview_annual`
-3. **Entitlements** → Create "premium" → Link to `worthview_annual`
-4. **Offerings** → "Current" → Add Annual package → Select `worthview_annual`
-
-**Complete Guide:** See `SUBSCRIPTION_SETUP.md`
+### Build 7 (Feb 4, 2026)
+- **Status:** Rejected by App Store
+- **Issue:** Apple Sign In not working (web OAuth unreliable on iPad)
 
 ---
 
-## 📋 Build & Submit Workflow (Updated Jan 31)
+## 🔴 CRITICAL: Next Steps
 
-### Build 6 (Ready to Build)
+### 1. Test Build 9 on TestFlight (~10 min)
+- Wait for Apple processing email (~5-10 minutes)
+- Install Build 9 from TestFlight
+- Test Apple Sign In: Tap → Face ID → Should reach home screen ✅
+- Verify session persists on restart
 
-```bash
-# Build with auto-submit to TestFlight
-cd "/Users/dmytrolozynskyi/Documents/Regent App/WorthView"
-eas build --platform ios --profile production --auto-submit
-```
+### 2. Resubmit to App Store (~5 min)
+If Build 9 Apple Sign In works:
+- Reply to App Store rejection
+- Message: "Build 9 fixes Apple Sign In using native authentication"
+- Submit for App Review
 
-**What's Included:**
-- ✅ WV monogram icon (proper, not placeholder)
-- ✅ Build number 6 (tracked correctly)
-- ✅ Auto-submits to TestFlight
-- ✅ Demo account configured
+### 3. Configure In-App Purchase (~45 min)
+**App Store Connect:**
+- Product ID: `worthview_annual`
+- Price: £49.99/year, 7-day trial
+- Submit for review
 
-**Timeline:**
-- Build: ~10-15 min
-- Auto-submit: ~5 min
-- TestFlight processing: ~15-30 min
-- **Total: ~30-45 min until testable**
-
-### After Build 6 is in TestFlight
-
-1. **Test on Device:**
-   - Install from TestFlight
-   - Verify WV icon shows
-   - Test login with dmy@gmail.com / 5Q69q25q
-   - (Subscription won't work until IAP configured)
-
-2. **Submit for App Store Review:**
-   - Go to [Distribution Tab](https://appstoreconnect.apple.com/apps/6758517452/distribution/ios/version/inflight)
-   - Select **Build 6** (not Build 5)
-   - Add demo credentials to review notes
-   - Submit for review
+**RevenueCat:**
+- Add product `worthview_annual`
+- Create "premium" entitlement
+- Create "Current" offering
 
 ---
 
@@ -221,10 +196,10 @@ utils/
 ## Key Features
 
 ### 1. Authentication
-- Apple Sign In (production)
-- Google OAuth
-- Email/Password
-- Face ID / PIN (SecureStore)
+- **Apple Sign In** - Native iOS authentication (expo-apple-authentication)
+- **Google OAuth** - Web-based OAuth flow
+- **Email/Password** - Supabase auth
+- **Face ID / PIN** - Local biometric + encrypted PIN (SecureStore)
 
 ### 2. Subscription (RevenueCat)
 - £49/year with 7-day free trial
@@ -349,32 +324,31 @@ All prefixed with `worthview_`:
 
 ## Known Issues
 
-### ⚠️ ACTIVE ISSUES (Jan 31, 2026)
+### ⚠️ ACTIVE ISSUES (Feb 6, 2026)
 
 **Issue: Subscription "Not Available" Error**
-- **Status:** BLOCKING - needs configuration
+- **Status:** BLOCKING production release
 - **Cause:** In-app purchase not created in App Store Connect
 - **Impact:** Users cannot subscribe, paywall doesn't work
-- **Fix:** See `SUBSCRIPTION_SETUP.md` for step-by-step guide
-- **ETA:** ~1-2 hours to configure + Apple review time
-
-**Issue: Build 5 Has Placeholder Icon**
-- **Status:** FIXED in Build 6
-- **Cause:** Icons weren't the proper WV monogram
-- **Fix:** Regenerated icons, ready for Build 6
-- **ETA:** Will be fixed when Build 6 is built and submitted
+- **Fix:** Configure IAP in App Store Connect + RevenueCat
+- **ETA:** ~1 hour to configure + Apple review time (1-2 days)
 
 ### ✅ RESOLVED ISSUES
 
-**Issue: Only 1 Build in TestFlight**
-- **Fixed:** Jan 31, 2026
-- **Cause:** Builds weren't being submitted to TestFlight
-- **Solution:** Updated eas.json with auto-submit configuration
+**Issue: Apple Sign In Not Working**
+- **Fixed:** Build 9 (Feb 6, 2026)
+- **Cause:** Build 7 used web OAuth (unreliable), Build 8 had nonce bug
+- **Solution:** Native Apple authentication + removed incorrect nonce
 
-**Issue: App Store Rejection (Guideline 2.1)**
-- **Fixed:** Jan 31, 2026
-- **Cause:** Invalid demo account credentials
-- **Solution:** Created working demo account (dmy@gmail.com / 5Q69q25q)
+**Issue: Flat Performance Chart**
+- **Fixed:** Build 8 (Feb 5, 2026)
+- **Cause:** No automatic price refresh mechanism
+- **Solution:** AppState listener for daily auto-refresh
+
+**Issue: Net Worth Not Updating**
+- **Fixed:** Build 8 (Feb 5, 2026)
+- **Cause:** Using cached prices (forceRefresh: false)
+- **Solution:** Changed to forceRefresh: true, added comprehensive logging
 
 ---
 
@@ -389,15 +363,17 @@ eas submit --platform ios
 ### Build Configuration
 - Bundle ID: `com.dmy.networth`
 - Version: 1.0.0
-- Build Number: 6 (auto-increments from app.json)
+- Build Number: 9 (reads from app.json)
 - Slug: `regent` (EAS project name, internal only)
+- iPad Support: Enabled
+- Apple Sign In: Native authentication enabled
 
 ### Required Configuration
 - Supabase redirect URLs: `worthview://auth/callback`
 - RevenueCat production iOS key: `appl_YsKPtpcVpohFQoThbTiytPNKxPB`
 - Apple OAuth configured in Supabase
-- **NEW:** Auto-submit configured in eas.json
-- **NEW:** Local app version source (reads from app.json)
+- Auto-submit configured in eas.json
+- Apple Sign In entitlement enabled
 
 ### Demo Account (Apple Review)
 - **Email:** dmy@gmail.com
@@ -437,15 +413,6 @@ eas submit --platform ios
 - **TestFlight:** https://appstoreconnect.apple.com/apps/6758517452/testflight/ios
 - **Supabase:** https://supabase.com/dashboard/project/jkseowelliyafkoizjzx
 - **RevenueCat:** https://app.revenuecat.com
-- **App Store Checklist:** `APP_STORE_SUBMISSION_CHECKLIST.md`
-- **Build Guide:** `BUILD_AND_SHIP.md`
-
-### 🆘 Troubleshooting Guides (NEW - Jan 31, 2026)
-
-- **SUBSCRIPTION_SETUP.md** - Complete guide to fix subscription error
-- **TESTFLIGHT_FIX.md** - Why builds weren't appearing in TestFlight
-- **TESTFLIGHT_RESUBMISSION.md** - Build 4 submission details (archived)
-- **create-demo-account.sh** - Script to create demo account in Supabase
 
 ---
 
