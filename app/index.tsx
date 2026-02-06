@@ -154,8 +154,10 @@ export default function SignUpScreen() {
       
       console.log('✅ Apple credential received');
       console.log('📊 Identity token length:', credential.identityToken?.length);
-      console.log('👤 Full name:', credential.fullName);
+      console.log('👤 Full name object:', JSON.stringify(credential.fullName, null, 2));
       console.log('📧 Email:', credential.email);
+      console.log('🔍 Credential keys:', Object.keys(credential));
+      console.log('🔍 Full credential:', JSON.stringify(credential, null, 2));
       
       if (!credential.identityToken) {
         throw new Error('No identity token received from Apple');
@@ -165,13 +167,25 @@ export default function SignUpScreen() {
       let fullName = 'User';
       if (credential.fullName) {
         const { givenName, familyName } = credential.fullName;
+        console.log('🔍 givenName:', givenName);
+        console.log('🔍 familyName:', familyName);
         if (givenName && familyName) {
           fullName = `${givenName} ${familyName}`;
+          console.log('✅ Full name extracted (both names):', fullName);
         } else if (givenName) {
           fullName = givenName;
+          console.log('✅ Full name extracted (given name only):', fullName);
+        } else {
+          console.log('⚠️ fullName object exists but givenName/familyName are null/undefined');
         }
+      } else {
+        console.log('❌ credential.fullName is null/undefined - Apple did NOT send name');
+        console.log('💡 This means either:');
+        console.log('   1. Not a "first sign in" (Apple already sent name before)');
+        console.log('   2. Apple Sign In authorization was not fully revoked');
+        console.log('   3. User cancelled name sharing in Apple prompt');
       }
-      console.log('💾 Saving name:', fullName);
+      console.log('💾 Final name being saved:', fullName);
       
       // Sign in to Supabase with Apple identity token
       const supabase = getSupabaseClient();
@@ -198,10 +212,28 @@ export default function SignUpScreen() {
       // Update Supabase user metadata with Apple name (if available)
       if (fullName !== 'User') {
         console.log('📝 Updating Supabase user metadata with name...');
-        await supabase.auth.updateUser({
+        const { data: updateData, error: updateError } = await supabase.auth.updateUser({
           data: { full_name: fullName }
         });
-        console.log('✅ User metadata updated');
+        
+        if (updateError) {
+          console.error('❌ Failed to update user metadata:', updateError);
+        } else {
+          console.log('✅ User metadata update response:', JSON.stringify(updateData, null, 2));
+          
+          // Force refresh session to get updated metadata
+          console.log('🔄 Refreshing session to get updated metadata...');
+          const { data: sessionData, error: refreshError } = await supabase.auth.refreshSession();
+          
+          if (refreshError) {
+            console.error('❌ Failed to refresh session:', refreshError);
+          } else {
+            console.log('✅ Session refreshed');
+            console.log('👤 Updated user metadata:', JSON.stringify(sessionData.user?.user_metadata, null, 2));
+          }
+        }
+      } else {
+        console.log('⏭️ Skipping user metadata update - name is "User" (not provided by Apple)');
       }
       
       // Small delay to let auth listener complete
