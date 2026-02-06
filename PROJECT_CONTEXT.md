@@ -1,19 +1,20 @@
 # WorthView - Project Context
 
-**Version:** 1.0.0 (Build 9)  
+**Version:** 1.0.0 (Build 10)  
 **Platform:** iOS (React Native + Expo)  
-**Status:** Build 9 on TestFlight - Ready for App Store Resubmission  
+**Status:** Build 10 ready for TestFlight - Ready for App Store Resubmission  
 **Tagline:** Everything you own and owe, in one place
 
 ---
 
 ## 🚨 CRITICAL STATUS UPDATE (Feb 6, 2026)
 
-### Build 9 - Latest Status
+### Build 10 - Latest Status
 
-**✅ Apple Sign In - FIXED:**
+**✅ Apple Sign In - FULLY FIXED:**
 - Build 8: Implemented native Apple authentication
 - Build 9: Fixed nonce bug (was causing "could not be completed" error)
+- Build 10: Fixed user name not appearing (now saves Apple user's full name)
 - Status: Ready for testing on TestFlight
 
 **✅ Automatic Price Refresh - WORKING:**
@@ -34,7 +35,16 @@
 
 ## 📋 Build History
 
-### Build 9 (Current - Feb 6, 2026)
+### Build 10 (Current - Feb 6, 2026)
+- **Status:** Ready for build
+- **Fixed:** User name not appearing after Apple Sign In
+- **Changes:** 
+  - Extract full name from Apple credential (`givenName` + `familyName`)
+  - Save to Supabase user metadata as `full_name`
+  - Display real name in app (e.g., "J. Rothschild")
+  - Added logging for name extraction
+
+### Build 9 (Feb 6, 2026)
 - **Status:** Submitted to TestFlight, processing by Apple
 - **Build ID:** `2298b52f-4cb2-49ba-b9df-0239b6ec6060`
 - **Fixed:** Apple Sign In nonce bug
@@ -53,16 +63,17 @@
 
 ## 🔴 CRITICAL: Next Steps
 
-### 1. Test Build 9 on TestFlight (~10 min)
-- Wait for Apple processing email (~5-10 minutes)
-- Install Build 9 from TestFlight
-- Test Apple Sign In: Tap → Face ID → Should reach home screen ✅
+### 1. Build & Test Build 10 on TestFlight (~15 min)
+- Run: `eas build --platform ios --profile production`
+- Wait for Apple processing (~5-10 minutes)
+- **IMPORTANT:** Delete app and reinstall (Apple only sends name on FIRST sign in)
+- Test Apple Sign In: Tap → Face ID → Should show real name ✅
 - Verify session persists on restart
 
 ### 2. Resubmit to App Store (~5 min)
-If Build 9 Apple Sign In works:
+If Build 10 Apple Sign In works:
 - Reply to App Store rejection
-- Message: "Build 9 fixes Apple Sign In using native authentication"
+- Message: "Build 10 fixes Apple Sign In with native authentication and user profile"
 - Submit for App Review
 
 ### 3. Configure In-App Purchase (~45 min)

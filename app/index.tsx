@@ -154,10 +154,24 @@ export default function SignUpScreen() {
       
       console.log('✅ Apple credential received');
       console.log('📊 Identity token length:', credential.identityToken?.length);
+      console.log('👤 Full name:', credential.fullName);
+      console.log('📧 Email:', credential.email);
       
       if (!credential.identityToken) {
         throw new Error('No identity token received from Apple');
       }
+      
+      // Extract user's full name from Apple (only available on first sign in)
+      let fullName = 'User';
+      if (credential.fullName) {
+        const { givenName, familyName } = credential.fullName;
+        if (givenName && familyName) {
+          fullName = `${givenName} ${familyName}`;
+        } else if (givenName) {
+          fullName = givenName;
+        }
+      }
+      console.log('💾 Saving name:', fullName);
       
       // Sign in to Supabase with Apple identity token
       const supabase = getSupabaseClient();
@@ -180,6 +194,15 @@ export default function SignUpScreen() {
       console.log('✅ Supabase session created');
       console.log('👤 User ID:', data.user?.id);
       console.log('📧 Email:', data.user?.email);
+      
+      // Update Supabase user metadata with Apple name (if available)
+      if (fullName !== 'User') {
+        console.log('📝 Updating Supabase user metadata with name...');
+        await supabase.auth.updateUser({
+          data: { full_name: fullName }
+        });
+        console.log('✅ User metadata updated');
+      }
       
       // Small delay to let auth listener complete
       await new Promise(resolve => setTimeout(resolve, 500));

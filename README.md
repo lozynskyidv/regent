@@ -8,18 +8,19 @@ Track your complete net worth across stocks, crypto, property, bank accounts, an
 
 ## 🚨 Current Status
 
-**Version:** 1.0.0 (Build 9)  
-**TestFlight:** Build 9 active - Processing by Apple  
-**App Store:** Rejected (Build 7) - **Build 9 ready for resubmission**  
+**Version:** 1.0.0 (Build 10)  
+**TestFlight:** Build 10 ready for submission  
+**App Store:** Rejected (Build 7) - **Build 10 ready for resubmission**  
 **Last Updated:** February 6, 2026
 
-### Latest Changes (Build 9 - Feb 6, 2026)
+### Latest Changes (Build 10 - Feb 6, 2026)
 
-**✅ Fixed Apple Sign In Issue:**
-- **Problem:** Apple Sign In showed Face ID but then failed with "could not be completed"
-- **Root Cause:** Incorrect nonce parameter in `signInWithIdToken` call
-- **Fix:** Removed incorrect nonce usage (optional for native iOS)
-- **Result:** Apple Sign In now works end-to-end after Face ID
+**✅ Fixed Apple Sign In User Name:**
+- **Problem:** App showed "User" instead of actual name from Apple account
+- **Root Cause:** Not extracting and saving user's name from Apple credential
+- **Fix:** Extract `fullName` from Apple Sign In and save to Supabase user metadata
+- **Result:** App now displays user's real name (e.g., "J. Rothschild")
+- **Note:** Name only available on FIRST Apple Sign In (Apple privacy feature)
 
 ### Recent Work (Builds 8-9)
 
@@ -37,25 +38,32 @@ Track your complete net worth across stocks, crypto, property, bank accounts, an
 - Incremented build: 8 → 9
 - Successfully submitted to TestFlight
 
+**✅ Build 10 In Progress:**
+- Fixed user name not appearing after Apple Sign In
+- Extract and save Apple user's full name to Supabase
+- Incremented build: 9 → 10
+
 **⚠️ Still Outstanding:**
 1. **Subscription Not Available:** In-app purchase not configured (see PROJECT_CONTEXT.md)
 
 ### Next Steps (Priority Order)
 
-**🟢 IMMEDIATE - Test Build 9:**
-1. **Wait for Apple processing (~5-10 minutes)**
-   - Check email for TestFlight notification
-   - Build 9 will appear in TestFlight app
+**🟢 IMMEDIATE - Build & Test Build 10:**
+1. **Build for TestFlight:**
+   ```bash
+   eas build --platform ios --profile production
+   ```
 
 2. **Test Apple Sign In on TestFlight:**
+   - **IMPORTANT:** Delete app and reinstall (Apple only sends name on FIRST sign in)
    - Tap "Continue with Apple"
    - Complete Face ID authentication
-   - ✅ Should successfully sign in and show home screen
+   - ✅ Should show your real name (e.g., "J. Rothschild")
    - Verify session persists on app restart
 
 3. **If successful, resubmit to App Store:**
    - Reply to App Store rejection
-   - Include: "Build 9 fixes Apple Sign In using native authentication"
+   - Include: "Build 10 fixes Apple Sign In with native authentication and user profile"
    - Submit for App Review
 
 **🔴 BEFORE PRODUCTION:**
