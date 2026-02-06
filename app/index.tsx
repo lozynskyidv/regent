@@ -166,11 +166,14 @@ export default function SignUpScreen() {
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: 'apple',
         token: credential.identityToken,
-        nonce: credential.identityToken, // Apple requires nonce for security
+        // Nonce is optional for native iOS Apple Sign In
       });
       
       if (error) {
         console.error('❌ Supabase sign-in error:', error);
+        console.error('📋 Error details:', JSON.stringify(error, null, 2));
+        console.error('🔍 Error message:', error.message);
+        console.error('🔍 Error status:', error.status);
         throw error;
       }
       
@@ -192,9 +195,11 @@ export default function SignUpScreen() {
         return; // Don't show error alert for cancellation
       }
       
+      // Provide more helpful error message
+      const errorMsg = err.message || 'Could not sign in with Apple. Please try again.';
       Alert.alert(
         'Sign In Failed',
-        'Could not sign in with Apple. Please try again.',
+        errorMsg,
         [{ text: 'OK' }]
       );
     } finally {
