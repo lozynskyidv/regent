@@ -281,6 +281,19 @@ export default function SettingsScreen() {
               <Text style={styles.accountLabel}>Email</Text>
               <Text style={styles.accountValue}>{supabaseUser?.email || 'Not signed in'}</Text>
             </View>
+            
+            {/* DEBUG: Show raw user metadata */}
+            {supabaseUser && (
+              <>
+                <View style={styles.divider} />
+                <View style={[styles.accountInfoRow, { flexDirection: 'column', alignItems: 'flex-start' }]}>
+                  <Text style={[styles.accountLabel, { marginBottom: 8 }]}>🔍 Debug: User Metadata</Text>
+                  <Text style={[styles.accountValue, { fontSize: 12, fontFamily: 'monospace' }]}>
+                    {JSON.stringify(supabaseUser.user_metadata, null, 2)}
+                  </Text>
+                </View>
+              </>
+            )}
           </View>
 
           <TouchableOpacity
