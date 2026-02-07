@@ -209,31 +209,48 @@ export default function SignUpScreen() {
       console.log('👤 User ID:', data.user?.id);
       console.log('📧 Email:', data.user?.email);
       
-      // Update Supabase user metadata with Apple name (if available)
-      if (fullName !== 'User') {
-        console.log('📝 Updating Supabase user metadata with name...');
-        const { data: updateData, error: updateError } = await supabase.auth.updateUser({
+      // CRITICAL FIX: Update database directly with name to avoid race condition
+      if (fullName !== 'User' && data.user) {
+        console.log('💾 Saving name directly to database (fixes race condition)...');
+        
+        // Update auth metadata first
+        console.log('📝 Step 1: Updating auth user metadata...');
+        const { error: updateError } = await supabase.auth.updateUser({
           data: { full_name: fullName }
         });
         
         if (updateError) {
-          console.error('❌ Failed to update user metadata:', updateError);
+          console.error('❌ Auth metadata update failed:', updateError);
         } else {
-          console.log('✅ User metadata update response:', JSON.stringify(updateData, null, 2));
-          
-          // Force refresh session to get updated metadata
-          console.log('🔄 Refreshing session to get updated metadata...');
-          const { data: sessionData, error: refreshError } = await supabase.auth.refreshSession();
-          
-          if (refreshError) {
-            console.error('❌ Failed to refresh session:', refreshError);
-          } else {
-            console.log('✅ Session refreshed');
-            console.log('👤 Updated user metadata:', JSON.stringify(sessionData.user?.user_metadata, null, 2));
-          }
+          console.log('✅ Auth metadata updated');
+        }
+        
+        // Wait a moment for auth to settle
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Update database users table directly (guarantees name is stored)
+        console.log('📝 Step 2: Updating users table in database...');
+        const { error: dbError } = await supabase
+          .from('users')
+          .upsert({
+            id: data.user.id,
+            email: data.user.email || '',
+            name: fullName, // THIS is what populates Display name column!
+            photo_url: data.user.user_metadata?.avatar_url || null,
+            primary_currency: 'GBP',
+            last_login_at: new Date().toISOString(),
+          }, {
+            onConflict: 'id',
+            ignoreDuplicates: false
+          });
+        
+        if (dbError) {
+          console.error('❌ Database update failed:', dbError);
+        } else {
+          console.log('✅ Database updated with name:', fullName);
         }
       } else {
-        console.log('⏭️ Skipping user metadata update - name is "User" (not provided by Apple)');
+        console.log('⏭️ Skipping name save - name is "User" (not provided by Apple)');
       }
       
       // Small delay to let auth listener complete
