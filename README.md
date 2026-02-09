@@ -226,8 +226,6 @@ Located at `/Users/dmytrolozynskyi/Documents/Regent App/WorthView/app-store-icon
 ### Documentation
 - **README.md** - Project overview and current status
 - **PROJECT_CONTEXT.md** - Complete project context and configuration details
-- **APPLE_SIGNIN_NAME_ISSUE.md** - Deep dive into Apple Sign In name bug (Builds 10-14)
-- **CHART_DATE_BUG.md** - Performance chart date display issue investigation
 
 ---
 
