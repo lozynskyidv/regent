@@ -190,11 +190,18 @@ export default function SignUpScreen() {
       // Sign in to Supabase with Apple identity token
       const supabase = getSupabaseClient();
       console.log('🔑 Signing in to Supabase with Apple token...');
+      console.log('💾 Passing name to Supabase during sign-in:', fullName);
       
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: 'apple',
         token: credential.identityToken,
-        // Nonce is optional for native iOS Apple Sign In
+        options: {
+          data: {
+            full_name: fullName,
+            given_name: credential.fullName?.givenName || null,
+            family_name: credential.fullName?.familyName || null,
+          }
+        }
       });
       
       if (error) {
@@ -208,53 +215,13 @@ export default function SignUpScreen() {
       console.log('✅ Supabase session created');
       console.log('👤 User ID:', data.user?.id);
       console.log('📧 Email:', data.user?.email);
+      console.log('📋 User metadata from sign-in:', JSON.stringify(data.user?.user_metadata, null, 2));
       
-      // CRITICAL FIX: Update database directly with name to avoid race condition
-      if (fullName !== 'User' && data.user) {
-        console.log('💾 Saving name directly to database (fixes race condition)...');
-        
-        // Update auth metadata first
-        console.log('📝 Step 1: Updating auth user metadata...');
-        const { error: updateError } = await supabase.auth.updateUser({
-          data: { full_name: fullName }
-        });
-        
-        if (updateError) {
-          console.error('❌ Auth metadata update failed:', updateError);
-        } else {
-          console.log('✅ Auth metadata updated');
-        }
-        
-        // Wait a moment for auth to settle
-        await new Promise(resolve => setTimeout(resolve, 300));
-        
-        // Update database users table directly (guarantees name is stored)
-        console.log('📝 Step 2: Updating users table in database...');
-        const { error: dbError } = await supabase
-          .from('users')
-          .upsert({
-            id: data.user.id,
-            email: data.user.email || '',
-            name: fullName, // THIS is what populates Display name column!
-            photo_url: data.user.user_metadata?.avatar_url || null,
-            primary_currency: 'GBP',
-            last_login_at: new Date().toISOString(),
-          }, {
-            onConflict: 'id',
-            ignoreDuplicates: false
-          });
-        
-        if (dbError) {
-          console.error('❌ Database update failed:', dbError);
-        } else {
-          console.log('✅ Database updated with name:', fullName);
-        }
-      } else {
-        console.log('⏭️ Skipping name save - name is "User" (not provided by Apple)');
-      }
+      // Name should already be in user_metadata from sign-in options!
+      // syncUserProfile() in DataContext will read it and save to database
       
-      // Small delay to let auth listener complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Small delay to let auth listener and sync complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       console.log('✅ Apple Sign In complete!');
       

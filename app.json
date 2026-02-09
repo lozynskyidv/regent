@@ -14,7 +14,7 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.dmy.networth",
-      "buildNumber": "13",
+      "buildNumber": "14",
       "config": {
         "usesNonExemptEncryption": false
       },
