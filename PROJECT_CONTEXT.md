@@ -1,21 +1,30 @@
 # WorthView - Project Context
 
-**Version:** 1.0.0 (Build 10)  
+**Version:** 1.0.0 (Build 14)  
 **Platform:** iOS (React Native + Expo)  
-**Status:** Build 10 ready for TestFlight - Ready for App Store Resubmission  
+**Status:** ❌ BLOCKED - Critical bugs preventing App Store submission  
 **Tagline:** Everything you own and owe, in one place
 
 ---
 
-## 🚨 CRITICAL STATUS UPDATE (Feb 6, 2026)
+## 🚨 CRITICAL STATUS UPDATE (Feb 9, 2026)
 
-### Build 10 - Latest Status
+### Build 14 - Current Status
 
-**✅ Apple Sign In - FULLY FIXED:**
-- Build 8: Implemented native Apple authentication
-- Build 9: Fixed nonce bug (was causing "could not be completed" error)
-- Build 10: Fixed user name not appearing (now saves Apple user's full name)
-- Status: Ready for testing on TestFlight
+**❌ Apple Sign In Name - UNRESOLVED (5 builds, 3 days):**
+- Builds 10-14: All attempts failed
+- Problem: Shows "User" instead of real name
+- Cause: Race condition between auth and profile sync
+- **BLOCKING:** App Store submission
+- **Solution:** Implement manual name input (30 min)
+- **Details:** See `APPLE_SIGNIN_NAME_ISSUE.md`
+
+**❌ Performance Chart Dates - BROKEN:**
+- Problem: Shows future dates (Feb 26 when today is Feb 9)
+- Cause: Likely timezone parsing issue
+- **Impact:** Confusing, unprofessional
+- **Solution:** Store dates as YYYY-MM-DD strings (15 min)
+- **Details:** See `CHART_DATE_BUG.md`
 
 **✅ Automatic Price Refresh - WORKING:**
 - Prices refresh automatically on app launch if >24 hours old
@@ -24,59 +33,84 @@
 
 **✅ iPad Support - ENABLED:**
 - App works on both iPhone and iPad
-- Reviewer tested on iPad Air (reason for rejection)
+- Native Apple authentication implemented
 
 **⚠️ Subscription Not Available:**
 - In-app purchase not configured
 - Requires App Store Connect + RevenueCat setup
-- Blocking production release
+- Not blocking testing, but required for launch
 
 ---
 
 ## 📋 Build History
 
-### Build 10 (Current - Feb 6, 2026)
-- **Status:** Ready for build
-- **Fixed:** User name not appearing after Apple Sign In
-- **Changes:** 
-  - Extract full name from Apple credential (`givenName` + `familyName`)
-  - Save to Supabase user metadata as `full_name`
-  - Display real name in app (e.g., "J. Rothschild")
-  - Added logging for name extraction
+### Build 14 (Current - Feb 9, 2026)
+- **Status:** On TestFlight, **FAILED** to fix name issue
+- **Build ID:** `863c0f1b-dcf3-4399-bf30-cae63802b75f`
+- **Attempted:** Pass name in `signInWithIdToken` options
+- **Result:** ❌ Still shows "User"
+- **Impact:** BLOCKING App Store submission
+
+### Build 13 (Feb 7, 2026)
+- **Status:** **FAILED**
+- **Attempted:** Direct database upsert with name
+- **Result:** ❌ Race condition, database record created before upsert
+
+### Build 12 (Feb 7, 2026)
+- **Status:** **FAILED**
+- **Added:** Debug view in Settings to show user metadata
+- **Result:** ❌ Confirmed metadata is empty
+
+### Build 11 (Feb 6, 2026)
+- **Status:** ✅ Diagnostic success
+- **Added:** Extensive logging for Apple credential
+- **Result:** ✅ Confirmed Apple sends name, extraction works
+
+### Build 10 (Feb 6, 2026)
+- **Status:** **FAILED**
+- **Attempted:** Basic `updateUser()` metadata call
+- **Result:** ❌ Name not appearing
 
 ### Build 9 (Feb 6, 2026)
-- **Status:** Submitted to TestFlight, processing by Apple
+- **Status:** ✅ SUCCESS
 - **Build ID:** `2298b52f-4cb2-49ba-b9df-0239b6ec6060`
 - **Fixed:** Apple Sign In nonce bug
-- **Changes:** Removed incorrect nonce parameter, enhanced error logging
 
-### Build 8 (Feb 6, 2026)
-- **Status:** Live on TestFlight
+### Build 8 (Feb 5, 2026)
+- **Status:** ✅ SUCCESS
 - **Fixed:** Native Apple Sign In, iPad support, auto price refresh
-- **Issue:** Nonce bug prevented sign in completion
 
 ### Build 7 (Feb 4, 2026)
-- **Status:** Rejected by App Store
-- **Issue:** Apple Sign In not working (web OAuth unreliable on iPad)
+- **Status:** ❌ REJECTED by App Store
+- **Issue:** Apple Sign In not working (web OAuth unreliable)
 
 ---
 
 ## 🔴 CRITICAL: Next Steps
 
-### 1. Build & Test Build 10 on TestFlight (~15 min)
-- Run: `eas build --platform ios --profile production`
-- Wait for Apple processing (~5-10 minutes)
-- **IMPORTANT:** Delete app and reinstall (Apple only sends name on FIRST sign in)
-- Test Apple Sign In: Tap → Face ID → Should show real name ✅
-- Verify session persists on restart
+### 1. Fix Apple Sign In Name (30 min) - HIGHEST PRIORITY
+**Recommended Approach:** Manual name input screen
+```typescript
+// Add to app/welcome-name.tsx
+if (getUserFullName() === 'User') {
+  // Show "What's your name?" input
+  // Save to Supabase users.name
+}
+```
+**Why:** Guaranteed to work, industry standard, no Apple limitations  
+**Details:** See `APPLE_SIGNIN_NAME_ISSUE.md`
 
-### 2. Resubmit to App Store (~5 min)
-If Build 10 Apple Sign In works:
-- Reply to App Store rejection
-- Message: "Build 10 fixes Apple Sign In with native authentication and user profile"
-- Submit for App Review
+### 2. Fix Chart Date Bug (15 min)
+**Approach:** Store dates as YYYY-MM-DD strings
+```typescript
+// Change from:
+timestamp: now.toISOString()
+// To:
+timestamp: now.toISOString().split('T')[0]
+```
+**Details:** See `CHART_DATE_BUG.md`
 
-### 3. Configure In-App Purchase (~45 min)
+### 3. Configure In-App Purchase (45 min)
 **App Store Connect:**
 - Product ID: `worthview_annual`
 - Price: £49.99/year, 7-day trial
@@ -86,6 +120,11 @@ If Build 10 Apple Sign In works:
 - Add product `worthview_annual`
 - Create "premium" entitlement
 - Create "Current" offering
+
+### 4. Build 15 & Resubmit to App Store
+- Test all fixes on TestFlight
+- Reply to App Store rejection with detailed fix list
+- Submit for App Review
 
 ---
 
@@ -335,21 +374,40 @@ All prefixed with `worthview_`:
 
 ## Known Issues
 
-### ⚠️ ACTIVE ISSUES (Feb 6, 2026)
+### ⚠️ ACTIVE ISSUES (Feb 9, 2026)
 
-**Issue: Subscription "Not Available" Error**
-- **Status:** BLOCKING production release
+**Issue 1: Apple Sign In Name Shows "User"**
+- **Status:** ❌ CRITICAL - BLOCKING App Store submission
+- **Builds Affected:** 10, 11, 12, 13, 14 (5 failed attempts)
+- **Cause:** Race condition - syncUserProfile() runs before name is set
+- **Impact:** Poor UX, unprofessional, likely rejection
+- **Fix:** Manual name input screen (30 min)
+- **Documentation:** `APPLE_SIGNIN_NAME_ISSUE.md`
+- **ETA:** 30 minutes to implement + 1 build cycle
+
+**Issue 2: Performance Chart Shows Wrong Dates**
+- **Status:** ❌ MEDIUM - Confusing but not blocking
+- **Symptom:** Shows "Feb 26" when today is Feb 9
+- **Cause:** Timezone parsing or date calculation bug
+- **Impact:** Confusing date labels on chart
+- **Fix:** Store dates as YYYY-MM-DD strings (15 min)
+- **Documentation:** `CHART_DATE_BUG.md`
+- **ETA:** 15 minutes to implement + 1 build cycle
+
+**Issue 3: Subscription "Not Available" Error**
+- **Status:** ⚠️ LOW - Blocks monetization but not testing
 - **Cause:** In-app purchase not created in App Store Connect
 - **Impact:** Users cannot subscribe, paywall doesn't work
 - **Fix:** Configure IAP in App Store Connect + RevenueCat
-- **ETA:** ~1 hour to configure + Apple review time (1-2 days)
+- **ETA:** 45 minutes to configure + Apple review time (1-2 days)
 
 ### ✅ RESOLVED ISSUES
 
-**Issue: Apple Sign In Not Working**
+**Issue: Apple Sign In Authentication**
 - **Fixed:** Build 9 (Feb 6, 2026)
 - **Cause:** Build 7 used web OAuth (unreliable), Build 8 had nonce bug
 - **Solution:** Native Apple authentication + removed incorrect nonce
+- **Note:** Sign-in WORKS, only the name display is broken
 
 **Issue: Flat Performance Chart**
 - **Fixed:** Build 8 (Feb 5, 2026)

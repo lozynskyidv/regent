@@ -8,69 +8,69 @@ Track your complete net worth across stocks, crypto, property, bank accounts, an
 
 ## 🚨 Current Status
 
-**Version:** 1.0.0 (Build 10)  
-**TestFlight:** Build 10 ready for submission  
-**App Store:** Rejected (Build 7) - **Build 10 ready for resubmission**  
-**Last Updated:** February 6, 2026
+**Version:** 1.0.0 (Build 14)  
+**TestFlight:** Build 14 submitted (Feb 9, 2026)  
+**App Store:** Rejected (Build 7) - **Blocked by critical bugs**  
+**Last Updated:** February 9, 2026
 
-### Latest Changes (Build 10 - Feb 6, 2026)
+### 🔴 CRITICAL ISSUES BLOCKING LAUNCH
 
-**✅ Fixed Apple Sign In User Name:**
-- **Problem:** App showed "User" instead of actual name from Apple account
-- **Root Cause:** Not extracting and saving user's name from Apple credential
-- **Fix:** Extract `fullName` from Apple Sign In and save to Supabase user metadata
-- **Result:** App now displays user's real name (e.g., "J. Rothschild")
-- **Note:** Name only available on FIRST Apple Sign In (Apple privacy feature)
+**❌ Apple Sign In Name Bug (Builds 10-14)**
+- **Status:** UNRESOLVED after 5 build attempts
+- **Problem:** App shows "User" instead of real name from Apple account
+- **Impact:** Poor UX, likely App Store rejection
+- **Cause:** Race condition between auth state and profile sync
+- **Documentation:** See `APPLE_SIGNIN_NAME_ISSUE.md` for complete analysis
+- **Recommendation:** Implement manual name input screen (30 min fix)
 
-### Recent Work (Builds 8-9)
+**❌ Performance Chart Date Bug**
+- **Status:** UNRESOLVED
+- **Problem:** Chart shows future dates (e.g., "Feb 26" when today is Feb 9)
+- **Impact:** Confusing, unprofessional appearance
+- **Cause:** Likely timezone parsing issue
+- **Documentation:** See `CHART_DATE_BUG.md` for investigation
+- **Recommendation:** Store dates as YYYY-MM-DD strings (15 min fix)
 
-**✅ Build 8 Completed:**
-- Implemented native Apple authentication (`expo-apple-authentication`)
-- Enabled iPad support (reviewer tested on iPad Air)
-- Implemented automatic daily price refresh on app launch/foreground
-- Fixed flat performance chart issue
-- Added comprehensive logging for debugging
-- Incremented build: 7 → 8
+**⚠️ Subscription Not Configured**
+- **Status:** Not started
+- **Problem:** In-app purchase not set up
+- **Impact:** Users cannot subscribe
+- **Fix:** Configure App Store Connect + RevenueCat (~45 min)
 
-**✅ Build 9 Completed:**
-- Fixed Apple Sign In nonce bug
-- Enhanced error logging and messages
-- Incremented build: 8 → 9
-- Successfully submitted to TestFlight
+### Recent Build History (Feb 6-9, 2026)
 
-**✅ Build 10 In Progress:**
-- Fixed user name not appearing after Apple Sign In
-- Extract and save Apple user's full name to Supabase
-- Incremented build: 9 → 10
-
-**⚠️ Still Outstanding:**
-1. **Subscription Not Available:** In-app purchase not configured (see PROJECT_CONTEXT.md)
+**Build 14** (Feb 9) - Pass name in signInWithIdToken options - **FAILED** ❌  
+**Build 13** (Feb 7) - Direct database upsert - **FAILED** ❌  
+**Build 12** (Feb 7) - Debug UI in Settings - **FAILED** ❌  
+**Build 11** (Feb 6) - Diagnostic logging - Confirmed name extraction works ✅  
+**Build 10** (Feb 6) - Basic metadata update - **FAILED** ❌  
+**Build 9** (Feb 6) - Fixed nonce bug - **SUCCESS** ✅  
+**Build 8** (Feb 5) - Native Apple auth, iPad support - **SUCCESS** ✅  
+**Build 7** (Feb 4) - **REJECTED** by App Store ❌
 
 ### Next Steps (Priority Order)
 
-**🟢 IMMEDIATE - Build & Test Build 10:**
-1. **Build for TestFlight:**
-   ```bash
-   eas build --platform ios --profile production
-   ```
+**🔴 CRITICAL - Fix Blocking Bugs:**
 
-2. **Test Apple Sign In on TestFlight:**
-   - **IMPORTANT:** Delete app and reinstall (Apple only sends name on FIRST sign in)
-   - Tap "Continue with Apple"
-   - Complete Face ID authentication
-   - ✅ Should show your real name (e.g., "J. Rothschild")
-   - Verify session persists on app restart
+1. **Implement Manual Name Input** (~30 min)
+   - Add "What's your name?" welcome screen
+   - Save to Supabase on sign-up/sign-in
+   - Guaranteed to work, industry standard
+   - See `APPLE_SIGNIN_NAME_ISSUE.md` for details
 
-3. **If successful, resubmit to App Store:**
-   - Reply to App Store rejection
-   - Include: "Build 10 fixes Apple Sign In with native authentication and user profile"
-   - Submit for App Review
+2. **Fix Chart Date Bug** (~15 min)
+   - Store snapshots as YYYY-MM-DD strings
+   - Fix timezone parsing
+   - See `CHART_DATE_BUG.md` for investigation
 
-**🔴 BEFORE PRODUCTION:**
-4. **Configure In-App Purchase:**
-   - Product ID: `worthview_annual`
-   - Price: £49.99/year, 7-day trial
-   - Configure RevenueCat Dashboard
+3. **Configure In-App Purchase** (~45 min)
+   - App Store Connect: Create worthview_annual product
+   - RevenueCat: Add product, create offering
+   - Test subscription flow
+
+4. **Build 15 & Submit to App Store**
+   - Test all three fixes on TestFlight
+   - Resubmit to App Store with confidence
 
 ---
 
@@ -226,6 +226,8 @@ Located at `/Users/dmytrolozynskyi/Documents/Regent App/WorthView/app-store-icon
 ### Documentation
 - **README.md** - Project overview and current status
 - **PROJECT_CONTEXT.md** - Complete project context and configuration details
+- **APPLE_SIGNIN_NAME_ISSUE.md** - Deep dive into Apple Sign In name bug (Builds 10-14)
+- **CHART_DATE_BUG.md** - Performance chart date display issue investigation
 
 ---
 
